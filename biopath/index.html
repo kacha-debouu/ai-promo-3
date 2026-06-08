@@ -1,0 +1,686 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>BioPathAI – RNA Sequence Review · promo</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+  <style>
+    *{font-family:'Inter',sans-serif;box-sizing:border-box}
+    html,body{height:100%;margin:0;background:#111;overflow:hidden}
+    ::-webkit-scrollbar{width:4px}
+    ::-webkit-scrollbar-track{background:transparent}
+    ::-webkit-scrollbar-thumb{background:rgba(0,0,0,0.18);border-radius:2px}
+
+    @keyframes shimmer{0%{background-position:-600px 0}100%{background-position:600px 0}}
+    @keyframes bounce-dot{0%,100%{transform:translateY(0);opacity:.5}50%{transform:translateY(-5px);opacity:1}}
+    @keyframes fade-in-up{from{opacity:0;transform:translateY(14px)}to{opacity:1;transform:translateY(0)}}
+    @keyframes fade-in{from{opacity:0}to{opacity:1}}
+    @keyframes msg-appear{from{opacity:0;transform:translateY(12px) scale(.98)}to{opacity:1;transform:translateY(0) scale(1)}}
+    @keyframes modal-pop{from{transform:translate(-50%,-50%) scale(.96)}to{transform:translate(-50%,-50%) scale(1)}}
+    @keyframes toast-slide{from{transform:translate(-50%,8px)}to{transform:translate(-50%,0)}}
+    @keyframes pulse-dot{0%,100%{opacity:.4;transform:scale(.8)}50%{opacity:1;transform:scale(1)}}
+    @keyframes progress-spin{from{transform:rotate(0deg)}to{transform:rotate(360deg)}}
+
+    .skeleton{background:linear-gradient(90deg,rgba(5,5,5,0.05) 25%,rgba(5,5,5,0.11) 50%,rgba(5,5,5,0.05) 75%);background-size:600px 100%;animation:shimmer 1.5s infinite;border-radius:8px}
+    .skeleton-row{display:flex;flex-direction:column;gap:6px}
+    .skeleton-row .skeleton{height:9px}
+
+    .msg-appear{animation:msg-slide .45s cubic-bezier(0,.6,.3,1) forwards;opacity:1}
+    @keyframes msg-slide{from{transform:translateY(10px)}to{transform:translateY(0)}}
+    .history-row{animation:slide-in-up .45s cubic-bezier(0,.6,.4,1) forwards;cursor:default;opacity:1}
+    @keyframes slide-in-up{from{transform:translateY(10px)}to{transform:translateY(0)}}
+    .activity-item{transition:background .12s}
+    .activity-item.is-active{background:rgba(5,5,5,0.05)}
+    .cbtn{transition:background .12s}
+    .nav-btn{transition:background .15s}
+    .nav-btn:hover{background:rgba(255,255,255,0.1)}
+
+    /* Active ring on history avatar */
+    .hist-ring{position:absolute;left:8px;top:5px;width:48px;height:48px;border-radius:20px;border:2px solid #050505;pointer-events:none}
+
+    /* Modal */
+    .modal-backdrop{position:fixed;inset:0;background:rgba(5,5,5,0.4);z-index:80;backdrop-filter:blur(2px)}
+    .modal{position:fixed;left:50%;top:50%;transform:translate(-50%,-50%);width:520px;max-height:88vh;background:#fff;border-radius:20px;box-shadow:0 30px 80px rgba(0,0,0,0.32);z-index:81;overflow:hidden;display:flex;flex-direction:column;animation:modal-pop .25s cubic-bezier(0,.6,.3,1) forwards}
+    .modal-hdr{display:flex;align-items:center;gap:8px;padding:18px 22px;border-bottom:1px solid #ebebeb}
+    .modal-body{padding:18px 22px;display:flex;flex-direction:column;gap:18px;overflow-y:auto;flex:1}
+    .modal-sec-label{display:flex;align-items:center;justify-content:space-between;font-size:13px;font-weight:500;color:#050505}
+    .modal-sec-label .up{display:flex;align-items:center;gap:6px;color:#373636;font-weight:500;cursor:default}
+    .modal-input{width:100%;border:1px solid #e8e8e8;border-radius:12px;padding:12px 14px;font-size:13.5px;line-height:18px;color:#373636;outline:none;background:#fff;font-family:Inter,sans-serif;resize:none;font-weight:400;min-height:62px}
+    .modal-foot{display:flex;justify-content:flex-end;gap:8px;padding:14px 22px;border-top:1px solid #ebebeb}
+    .modal-foot button{height:36px;padding:0 16px;border-radius:10px;font-size:13.5px;font-weight:500;cursor:default;border:none;letter-spacing:-0.1px}
+    .modal-btn-cancel{background:#fff;border:1px solid #e0e0e0!important;color:#050505}
+    .modal-btn-primary{background:#050505;color:#fff}
+    .upload-zone{border:2px dashed #d8d8d8;border-radius:14px;padding:18px;display:flex;flex-direction:column;align-items:center;gap:6px;color:#9a9a9a;font-size:13px}
+    .upload-file{display:flex;align-items:center;gap:10px;background:#fff;border:1px solid #ebebeb;border-radius:12px;padding:10px 12px}
+    .upload-file.is-uploading{background:#f7f7f7}
+    .spinner-ring{width:14px;height:14px;border-radius:50%;border:2px solid #d8d8d8;border-top-color:#373636;animation:progress-spin 1s linear infinite}
+
+    /* Toast */
+    .toast{position:absolute;left:50%;bottom:18px;transform:translate(-50%,0);background:#1a4f3f;color:#fff;border-radius:14px;padding:10px 14px;display:flex;align-items:center;gap:10px;z-index:60;box-shadow:0 18px 40px rgba(0,0,0,0.25);font-size:13.5px;animation:toast-slide .35s cubic-bezier(0,.6,.3,1) forwards}
+    .toast button{background:transparent;border:none;color:#fff;font-size:13.5px;font-weight:500;cursor:default;padding:0;margin-left:4px}
+    .toast .undo{color:rgba(255,255,255,0.85);text-decoration:underline}
+
+    .msgArrow{flex-shrink:0}
+  </style>
+</head>
+<body>
+
+<!-- ─────────────────  TOP NAV  ───────────────── -->
+<nav style="background:#111;height:64px" class="flex items-center px-6 gap-4 w-full flex-shrink-0">
+  <div class="flex items-center gap-2 flex-1 min-w-0">
+    <button class="nav-btn w-8 h-8 rounded-2xl flex items-center justify-center flex-shrink-0">
+      <svg width="16" height="16" fill="none"><path d="M2 4.5h12M2 8.5h12M2 12.5h12" stroke="white" stroke-width="1.4" stroke-linecap="round"/></svg>
+    </button>
+    <div class="w-8 h-8 rounded-xl overflow-hidden flex-shrink-0 flex items-center justify-center" style="background:rgba(255,255,255,0.9)">
+      <svg width="16" height="14" viewBox="0 0 16 14" fill="none"><path d="M3 11.5V2.5l5 4.5L13 2.5v9" stroke="#050505" stroke-width="1.6" stroke-linejoin="round"/></svg>
+    </div>
+    <div class="flex items-center gap-1">
+      <button class="nav-btn px-2.5 h-6 rounded-xl"><span class="text-white font-medium text-sm">BioPathAI</span></button>
+      <span style="color:#b1b1b1" class="font-medium text-sm">/</span>
+      <button class="nav-btn px-2.5 h-6 rounded-xl"><span style="color:#b1b1b1" class="font-medium text-sm">RNA Sequence Review</span></button>
+    </div>
+  </div>
+  <div class="flex items-center gap-4 flex-shrink-0">
+    <button class="flex items-center gap-2 px-5 rounded-[20px]" style="background:#164e43;height:48px">
+      <svg width="16" height="16" fill="none"><path d="M3 8.5l3.5 3.5 6.5-7" stroke="white" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>
+      <span class="text-white font-medium text-base" style="letter-spacing:-0.2px">Set as complete</span>
+    </button>
+    <button class="nav-btn px-5 rounded-[20px] text-white font-medium text-base" style="height:48px;border:1px solid rgba(255,255,255,0.2);letter-spacing:-0.2px">Skip</button>
+    <div class="w-12 h-12 rounded-full overflow-hidden flex-shrink-0" style="border:2px solid rgba(255,255,255,0.2);background:linear-gradient(135deg,#8eb6c6,#5a809a)">
+      <svg viewBox="0 0 48 48" width="48" height="48"><circle cx="24" cy="20" r="9" fill="rgba(255,255,255,0.45)"/><path d="M6 46c0-9.94 8.06-18 18-18s18 8.06 18 18" fill="rgba(255,255,255,0.45)"/></svg>
+    </div>
+    <button class="nav-btn w-8 h-8 rounded-2xl flex items-center justify-center flex-shrink-0">
+      <svg width="16" height="16" fill="none"><circle cx="8" cy="8" r="2.2" stroke="white" stroke-width="1.3"/><path d="M8 1.5v1M8 13.5v1M1.5 8h1M13.5 8h1M3.4 3.4l.7.7M11.9 11.9l.7.7M3.4 12.6l.7-.7M11.9 4.1l.7-.7" stroke="white" stroke-width="1.3" stroke-linecap="round"/></svg>
+    </button>
+    <div class="relative flex-shrink-0">
+      <button class="nav-btn w-8 h-8 rounded-2xl flex items-center justify-center">
+        <svg width="16" height="16" fill="none"><path d="M8 2a4.5 4.5 0 00-4.5 4.5V10l-1 1.5h11L12.5 10V6.5A4.5 4.5 0 008 2z" stroke="white" stroke-width="1.3"/><path d="M6.5 12a1.5 1.5 0 003 0" stroke="white" stroke-width="1.3"/></svg>
+      </button>
+      <span class="absolute top-1 right-1 w-2 h-2 rounded-full" style="background:#e84040"></span>
+    </div>
+  </div>
+</nav>
+
+<!-- ─────────────────  3-COLUMN LAYOUT  ───────────────── -->
+<div class="flex" style="height:calc(100vh - 64px);overflow:hidden;position:relative">
+
+  <!-- LEFT: History -->
+  <div class="flex flex-col bg-white border-r border-[#e5e5e5] flex-shrink-0" style="width:261px;border-top-left-radius:20px;overflow:hidden">
+    <div class="flex items-center gap-2 px-6 flex-shrink-0" style="height:48px;padding-top:10px;padding-bottom:6px">
+      <span class="flex-1 text-[#050505] font-medium leading-5" style="font-size:16px;letter-spacing:-0.2px">History</span>
+      <button class="w-8 h-8 rounded-xl flex items-center justify-center flex-shrink-0" style="background:rgba(5,5,5,0.25)">
+        <svg width="16" height="16" fill="none"><path d="M2 4h12M4 8h8M6.5 12h3" stroke="white" stroke-width="1.4" stroke-linecap="round"/></svg>
+      </button>
+      <button class="w-8 h-8 rounded-xl flex items-center justify-center flex-shrink-0" style="background:rgba(5,5,5,0.1)">
+        <svg width="16" height="16" fill="none"><path d="M8 3v10M3 8h10" stroke="#050505" stroke-width="1.5" stroke-linecap="round"/></svg>
+      </button>
+    </div>
+    <div id="historyList" class="flex-1 overflow-y-auto px-2 pb-2 flex flex-col"></div>
+  </div>
+
+  <!-- CENTER: Messages -->
+  <div class="flex-1 bg-white flex flex-col" style="overflow:hidden;position:relative">
+    <div class="px-6 flex items-center flex-shrink-0 border-b border-[#ebebeb]" style="height:52px;gap:12px">
+      <h2 class="text-[#050505] font-medium leading-5 flex-1" style="font-size:16px;letter-spacing:-0.2px">Messages</h2>
+    </div>
+    <div id="messagesList" class="flex-1 overflow-y-auto px-5 py-3 flex flex-col gap-4"></div>
+    <div id="toastSlot"></div>
+  </div>
+
+  <!-- RIGHT: Activity -->
+  <div class="flex-shrink-0 flex flex-col gap-1" style="width:261px;background:#eee;padding:4px 4px 4px 6px;border-top-right-radius:20px;overflow:hidden">
+    <div class="flex items-center px-4 flex-shrink-0 gap-2" style="height:44px;padding-top:10px;padding-bottom:6px">
+      <span class="flex-1 font-medium leading-5" style="font-size:16px;letter-spacing:-0.2px;color:#373636">Activity</span>
+      <button class="w-8 h-8 rounded-xl flex items-center justify-center" style="background:rgba(5,5,5,0.1)">
+        <svg width="16" height="16" fill="none"><rect x="2" y="2" width="4.5" height="12" rx="1.5" stroke="#373636" stroke-width="1.3"/><rect x="9.5" y="2" width="4.5" height="12" rx="1.5" stroke="#373636" stroke-width="1.3"/></svg>
+      </button>
+    </div>
+
+    <!-- Agents card -->
+    <div class="bg-white rounded-[20px] flex flex-col border border-black/10 flex-1" style="overflow:hidden;min-height:0">
+      <div class="flex items-center px-4 gap-2 flex-shrink-0" style="height:44px;padding-top:10px;padding-bottom:6px">
+        <span class="flex-1 text-[#050505] text-sm leading-5">Agents</span>
+        <button class="w-8 h-8 rounded-xl flex items-center justify-center" style="background:rgba(5,5,5,0.1)">
+          <svg width="16" height="16" fill="none"><path d="M2 4h12M4 8h8M6.5 12h3" stroke="#050505" stroke-width="1.4" stroke-linecap="round"/></svg>
+        </button>
+      </div>
+      <div id="agentsList" class="overflow-y-auto flex-1 flex flex-col gap-px px-2 pb-2"></div>
+    </div>
+
+    <!-- Tools card -->
+    <div class="bg-white rounded-[20px] flex flex-col border border-black/10 flex-1" style="overflow:hidden;min-height:0">
+      <div class="flex items-center px-4 gap-2 flex-shrink-0" style="height:44px;padding-top:10px;padding-bottom:6px">
+        <span class="flex-1 text-[#050505] text-sm leading-5">Tools</span>
+        <button class="w-8 h-8 rounded-xl flex items-center justify-center" style="background:rgba(5,5,5,0.1)">
+          <svg width="16" height="16" fill="none"><path d="M2 4h12M4 8h8M6.5 12h3" stroke="#050505" stroke-width="1.4" stroke-linecap="round"/></svg>
+        </button>
+      </div>
+      <div id="toolsList" class="overflow-y-auto flex-1 flex flex-col gap-px px-2 pb-2"></div>
+    </div>
+
+    <!-- Files card -->
+    <div class="bg-white rounded-[20px] flex flex-col border border-black/10 flex-1" style="overflow:hidden;min-height:0">
+      <div class="flex items-center px-4 gap-2 flex-shrink-0" style="height:44px;padding-top:10px;padding-bottom:6px">
+        <span class="flex-1 text-[#050505] text-sm leading-5">Files</span>
+        <button class="w-8 h-8 rounded-xl flex items-center justify-center" style="background:rgba(5,5,5,0.1)">
+          <svg width="16" height="16" fill="none"><path d="M2 4h12M4 8h8M6.5 12h3" stroke="#050505" stroke-width="1.4" stroke-linecap="round"/></svg>
+        </button>
+      </div>
+      <div id="filesList" class="overflow-y-auto flex-1 flex flex-col gap-px px-2 pb-2"></div>
+    </div>
+  </div>
+
+  <!-- Modal slot -->
+  <div id="modalSlot"></div>
+</div>
+
+<!-- back-to-gallery link -->
+<a href="../" style="position:fixed;left:14px;bottom:10px;font-size:11px;color:rgba(255,255,255,0.5);text-decoration:none;letter-spacing:0.3px;font-weight:500;background:rgba(0,0,0,0.4);padding:5px 9px;border-radius:6px;backdrop-filter:blur(4px)">← Gallery</a>
+
+<script>
+/* ───── ICON SYSTEM (inline, no remote assets) ─────
+ * Inspired by the Figma comp's character-avatar style but built with
+ * SVG so the deploy is self-contained.
+ */
+function agentSvg(name, bg, fg){
+  // Cute character-card with rounded-square plate, big eyes, soft cheeks.
+  fg = fg || '#fff';
+  const cheek = 'rgba(255,255,255,0.18)';
+  const tag = (n)=>n.split(' ').map(p=>p[0]).slice(0,2).join('').toUpperCase();
+  // Per-name variation: hair-color band on top
+  const banner = {
+    'Core Agent':  '#7b6258',
+    'PaperQA':     '#251338',
+    'Paper QA':    '#251338',
+    'BADCrow':     '#a39085',
+    'ProteinCrow': '#0a3445',
+    'ChemCrow':    '#9b8478',
+    'CloningCrow': '#7b6258',
+    'DNA Master':  '#3b3033',
+    'AlgorithmYYZ':'#0a3445',
+  }[name] || '#3a3a3a';
+  return `
+  <svg viewBox="0 0 48 48" width="100%" height="100%" preserveAspectRatio="xMidYMid slice">
+    <rect width="48" height="48" fill="${bg||'#888'}"/>
+    <rect y="0" width="48" height="18" fill="${banner}"/>
+    <ellipse cx="13" cy="29" rx="6" ry="4" fill="${cheek}"/>
+    <ellipse cx="35" cy="29" rx="6" ry="4" fill="${cheek}"/>
+    <circle cx="17" cy="23" r="3" fill="${fg}"/>
+    <circle cx="31" cy="23" r="3" fill="${fg}"/>
+    <circle cx="18" cy="22.2" r="1" fill="#1a1a1a"/>
+    <circle cx="32" cy="22.2" r="1" fill="#1a1a1a"/>
+    <path d="M19 33 q5 3 10 0" stroke="${fg}" stroke-width="1.6" fill="none" stroke-linecap="round"/>
+    <text x="40" y="46" text-anchor="end" font-family="Inter,sans-serif" font-size="6" font-weight="700" fill="rgba(255,255,255,0.55)">${tag(name)}</text>
+  </svg>`;
+}
+
+function toolSvgFor(name){
+  // White-on-black glyph per tool — distinct enough to scan
+  const map = {
+    'DataVolt':    '<rect x="5" y="3" width="6" height="10" rx="1.2" stroke="white" stroke-width="1.2" fill="none"/><path d="M8 6v4M6 8h4" stroke="white" stroke-width="1.2" stroke-linecap="round"/>',
+    'MetaBase':    '<ellipse cx="8" cy="5" rx="5" ry="2" stroke="white" stroke-width="1.2" fill="none"/><path d="M3 5v6c0 1.1 2.2 2 5 2s5-.9 5-2V5" stroke="white" stroke-width="1.2" fill="none"/>',
+    'LaunchPro':   '<path d="M8 2l1.5 4H13l-2.7 2 1 4-3.3-2.4L4.7 12l1-4L3 6h3.5L8 2z" stroke="white" stroke-width="1.2" fill="none" stroke-linejoin="round"/>',
+    'CloudSphere': '<path d="M4 10a3 3 0 010-6 4 4 0 017.8.7A2.5 2.5 0 0112 11H4.5" stroke="white" stroke-width="1.2" fill="none" stroke-linejoin="round"/>',
+    'FrostCore':   '<path d="M8 2v12M3 5l10 6M3 11l10-6" stroke="white" stroke-width="1.2" stroke-linecap="round"/>',
+    'VoltFlow':    '<path d="M9 2L4 9h3l-1 5 6-8h-3.5L9 2z" fill="white"/>',
+    'SignalHub':   '<circle cx="8" cy="8" r="1.5" fill="white"/><path d="M4 8a4 4 0 018 0M2 8a6 6 0 0112 0" stroke="white" stroke-width="1.2" fill="none"/>',
+    'WaveSync':    '<path d="M2 8c1.5-3 3-3 4.5 0s3 3 4.5 0 3-3 4.5 0" stroke="white" stroke-width="1.2" fill="none" stroke-linecap="round"/>',
+    'BuildStack':  '<rect x="3" y="9" width="10" height="3" rx="0.5" stroke="white" stroke-width="1.2" fill="none"/><rect x="4" y="5.5" width="8" height="3" rx="0.5" stroke="white" stroke-width="1.2" fill="none"/><rect x="5" y="2" width="6" height="3" rx="0.5" stroke="white" stroke-width="1.2" fill="none"/>',
+    'WaveSyn2':    '<path d="M2 6c1-2 2-2 3 0s2 2 3 0 2-2 3 0 2 2 3 0M2 10c1-2 2-2 3 0s2 2 3 0 2-2 3 0 2 2 3 0" stroke="white" stroke-width="1.1" fill="none" stroke-linecap="round"/>',
+  };
+  const inner = map[name] || '<circle cx="8" cy="8" r="3" stroke="white" stroke-width="1.2" fill="none"/>';
+  return `<svg width="16" height="16" viewBox="0 0 16 16" fill="none">${inner}</svg>`;
+}
+
+function fileSvgFor(name){
+  const ext = (name.split('.').pop()||'').toUpperCase();
+  const palette = { PDF:['#e0e0e0','#d94545'], CSV:['#e0e0e0','#1f8a4c'], JS:['#e0e0e0','#d9b023'], TXT:['#e0e0e0','#6c6c6c'] };
+  const [bg,tag] = palette[ext] || palette.TXT;
+  return `<svg width="32" height="32" viewBox="0 0 32 32" fill="none">
+    <path d="M6 4h14l6 6v18H6z" fill="#fff" stroke="${bg}" stroke-width="1.2" stroke-linejoin="round"/>
+    <path d="M20 4v6h6" stroke="${bg}" stroke-width="1.2" fill="none" stroke-linejoin="round"/>
+    <rect x="6" y="18" width="14" height="7" rx="1.5" fill="${tag}"/>
+    <text x="13" y="23.2" text-anchor="middle" font-family="Inter,sans-serif" font-weight="700" font-size="6.5" fill="#fff">${ext}</text>
+  </svg>`;
+}
+
+/* Agent "A" registry — returns SVG strings (no remote assets) */
+const A = (()=>{
+  const agentEntry = (name)=> ({_agent:name});
+  return {
+    coreAgent:    agentEntry('Core Agent'),
+    coreAgentSm:  agentEntry('Core Agent'),
+    coreAgentMsg: agentEntry('Core Agent'),
+    paperqa:      agentEntry('PaperQA'),
+    paperqaSm:    agentEntry('Paper QA'),
+    paperqaMsg:   agentEntry('PaperQA'),
+    badcrowSm:    agentEntry('BADCrow'),
+    proteinCrow:  agentEntry('ProteinCrow'),
+    chemcrowSm:   agentEntry('ChemCrow'),
+    cloningCrow:  agentEntry('CloningCrow'),
+    dnaMasterSm:  agentEntry('DNA Master'),
+    algYYZ:       agentEntry('AlgorithmYYZ'),
+    pdfIcon:      {_file:'.pdf'},
+    pdfIcon2:     {_file:'.pdf'},
+    csvIcon:      {_file:'.csv'},
+    jsIcon:       {_file:'.js'},
+    dataVolt:     {_tool:'DataVolt'},
+    metaBase:     {_tool:'MetaBase'},
+    launchPro:    {_tool:'LaunchPro'},
+    cloudSphere:  {_tool:'CloudSphere'},
+    frostCore:    {_tool:'FrostCore'},
+    voltFlow:     {_tool:'VoltFlow'},
+    signalHub:    {_tool:'SignalHub'},
+    waveSync:     {_tool:'WaveSync'},
+    buildStack:   {_tool:'BuildStack'},
+    waveSyn2:     {_tool:'WaveSyn2'},
+  };
+})();
+
+/* Render any A[...] entry as inline markup */
+function iconHtml(entry, opts){
+  if (!entry) return '';
+  if (entry._agent) return agentSvg(entry._agent, opts && opts.bg);
+  if (entry._file)  return fileSvgFor('x'+entry._file);
+  if (entry._tool)  return toolSvgFor(entry._tool);
+  return '';
+}
+
+/* ───── SVG snippets ───── */
+const arrowSvg  = `<svg width="12" height="12" fill="none"><path d="M3 2v6l4-3" stroke="#6c6c6c" stroke-width="1.1" stroke-linecap="round" stroke-linejoin="round"/></svg>`;
+const personSvg = `<svg width="12" height="12" fill="none"><circle cx="6" cy="4.5" r="2" stroke="#6c6c6c" stroke-width="1.1"/><path d="M1.5 11c0-2.485 2.015-4.5 4.5-4.5s4.5 2.015 4.5 4.5" stroke="#6c6c6c" stroke-width="1.1"/></svg>`;
+const fileSvg   = `<svg width="12" height="12" fill="none"><path d="M3 1.5h4.5L9.5 4v6.5H3V1.5z" stroke="#6c6c6c" stroke-width="1.1"/><path d="M7.5 1.5v2.5h2" stroke="#6c6c6c" stroke-width="1.1"/></svg>`;
+const toolSvg   = `<svg width="12" height="12" fill="none"><path d="M3 9.5V7L6.5 3.5l3.5 3.5-3.5 3.5" stroke="#6c6c6c" stroke-width="1.1" stroke-linecap="round" stroke-linejoin="round"/></svg>`;
+const msgArrow  = `<svg class="msgArrow" width="16" height="16" fill="none"><path d="M4 5v7l5-4" stroke="#050505" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round"/></svg>`;
+
+/* ───── Static side-panel data ───── */
+const AGENTS_DATA = [
+  {name:'Core Agent',  bg:'#c5b0ab',img:A.coreAgentSm},
+  {name:'Paper QA',    bg:'#3e264f',img:A.paperqaSm},
+  {name:'BADCrow',     bg:'#c5b0ab',img:A.badcrowSm},
+  {name:'ProteinCrow', bg:'#11495b',img:A.proteinCrow},
+  {name:'ChemCrow',    bg:'',       img:A.chemcrowSm},
+  {name:'CloningCrow', bg:'',       img:A.cloningCrow},
+];
+const TOOLS_DATA = [
+  {name:'DataVolt',    icon:A.dataVolt},
+  {name:'MetaBase',    icon:A.metaBase},
+  {name:'LaunchPro',   icon:A.launchPro},
+  {name:'CloudSphere', icon:A.cloudSphere},
+  {name:'FrostCore',   icon:A.frostCore},
+  {name:'VoltFlow',    icon:A.voltFlow},
+  {name:'SignalHub',   icon:A.signalHub},
+  {name:'WaveSync',    icon:A.waveSync},
+  {name:'BuildStack',  icon:A.buildStack},
+  {name:'WaveSyn2',    icon:A.waveSyn2},
+];
+const FILES_LIBRARY = [
+  {name:'RNA specification.pdf',      icon:A.pdfIcon,  date:'Jan 1, 2023'},
+  {name:'Cancer Pathway Analysis.pdf',icon:A.pdfIcon2, date:'Jan 1, 2023'},
+  {name:'API Docs.csv',               icon:A.csvIcon,  date:'Jan 1, 2023'},
+  {name:'Protein Sequences.csv',      icon:A.csvIcon,  date:'Jan 1, 2023'},
+  {name:'API Documentation.js',       icon:A.jsIcon,   date:'Jan 1, 2023'},
+];
+
+/* ───── Avatar helpers ───── */
+function avatar(img, bg, size=40, radius=16){
+  return `<div style="width:${size}px;height:${size}px;border-radius:${radius}px;background:${bg||'#888'};border:1px solid rgba(5,5,5,0.16);overflow:hidden;flex-shrink:0">${iconHtml(img,{bg})}</div>`;
+}
+
+/* ───── HISTORY rows for the 13-frame flow ───── */
+const HIST = {
+  CORE_FROST:  {agent:'Core Agent', bg:'#c5b0ab',img:A.coreAgent, verb:'use', ri:toolSvg,   ref:'FrostCore',                              detail:''},
+  CORE_PQA:    {agent:'Core Agent', bg:'#c5b0ab',img:A.coreAgent, verb:'call',ri:personSvg, ref:'PaperQA',                                detail:''},
+  PQA_LOAD:    {agent:'PaperQA',    bg:'#3e264f',img:A.paperqa,   verb:'load',ri:'',         ref:'',                                       detail:'',loading:true},
+  PQA_RODRIG:  {agent:'PaperQA',    bg:'#3e264f',img:A.paperqa,   verb:'',    ri:'',         ref:'I need to understand how R…',       detail:''},
+  PQA_3FILES:  {agent:'PaperQA',    bg:'#3e264f',img:A.paperqa,   verb:'Updates',ri:fileSvg, ref:'3 files',                                detail:''},
+  PQA_FROST_E: {agent:'PaperQA',    bg:'#3e264f',img:A.paperqa,   verb:'use', ri:toolSvg,    ref:'FrostCore to gather e…',            detail:''},
+};
+
+/* ───── MESSAGES for the flow ───── */
+const MSG = {
+  CORE_DOCS:     {agent:'Core Agent',bg:'#c5b0ab',img:A.coreAgentMsg,text:'I need to check the Docs Tool.',
+                  action:{label:'Gather evidence with',avatar:{bg:'#050505',img:A.frostCore,inset:true},name:'FrostCore'}},
+  CORE_CALL_PQA: {agent:'Core Agent',bg:'#c5b0ab',img:A.coreAgentMsg,text:'',
+                  action:{label:'Call',avatar:{bg:'#3e264f',img:A.paperqaMsg},name:'PaperQA'}},
+  PQA_RODRIG:    {agent:'PaperQA',   bg:'#3e264f',img:A.paperqaMsg, text:'I need to understand how Rodriques et al. conducted their analysis. I will ask PaperQA to summarize the Rodriques et al. paper for me. Search term: "Rodriques et al. 2019"'},
+  PQA_FOUND_P:   {agent:'PaperQA',   bg:'#3e264f',img:A.paperqaMsg, text:'I have found a bunch of papers.',
+                  files:[FILES_LIBRARY[0],FILES_LIBRARY[1],FILES_LIBRARY[2]]},
+  PQA_SUMMARIZE: {agent:'PaperQA',   bg:'#3e264f',img:A.paperqaMsg, text:'It looks like I got the Rodriques paper. Now I need to summarize the analysis method.',
+                  action:{label:'Gather evidence with',avatar:{bg:'#050505',img:A.frostCore,inset:true},name:'FrostCore'}},
+};
+
+/* ───── Render: history ───── */
+function renderHistory(items, ringIdx){
+  const el = document.getElementById('historyList');
+  el.innerHTML = items.map((h,i)=>{
+    const stripe = i < items.length-1 ? '<div style="border-top:1px solid #ebebeb;margin:0 8px"></div>' : '';
+    if (h.loading){
+      return `<div class="history-row flex items-center gap-3 px-2 py-2 pr-4 rounded-xl relative" style="animation-delay:${Math.min(i*40,160)}ms">
+        ${avatar(h.img,h.bg)}
+        ${i===ringIdx?'<div class="hist-ring"></div>':''}
+        <div style="flex:1;min-width:0;display:flex;flex-direction:column;gap:6px">
+          <p style="color:#050505;font-weight:500;font-size:14px;line-height:20px">${h.agent}</p>
+          <div class="skeleton" style="width:120px;height:8px"></div>
+          <div class="skeleton" style="width:80px;height:8px"></div>
+        </div>
+      </div>${stripe}`;
+    }
+    return `<div class="history-row flex items-center gap-3 px-2 py-2 pr-4 rounded-xl relative" style="animation-delay:${Math.min(i*40,160)}ms">
+      ${avatar(h.img,h.bg)}
+      ${i===ringIdx?'<div class="hist-ring"></div>':''}
+      <div style="flex:1;min-width:0;display:flex;flex-direction:column;gap:2px">
+        <p style="color:#050505;font-weight:500;font-size:14px;line-height:20px;white-space:nowrap">${h.agent}</p>
+        <div style="display:flex;align-items:center;gap:3px;font-size:12px;color:#6c6c6c;line-height:16px;overflow:hidden">
+          ${h.verb && h.verb!=='review'&&h.verb!=='use'&&h.verb!=='Updates'?arrowSvg:''}
+          ${h.verb?`<span>${h.verb}</span>`:''}
+          ${h.ref?`<span style="display:flex;align-items:center;gap:2px;padding:0 2px">${h.ri||''}<span style="font-weight:500;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:120px">${h.ref}</span></span>`:''}
+          ${h.detail?`<span style="overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${h.detail}</span>`:''}
+        </div>
+      </div>
+    </div>${stripe}`;
+  }).join('');
+}
+
+/* ───── Render: messages ───── */
+function renderMessages(msgs){
+  const el = document.getElementById('messagesList');
+  el.innerHTML = msgs.map((m,i)=>{
+    if (m._skeleton){
+      return `<div class="msg-appear" style="display:flex;gap:8px;align-items:flex-start;animation-delay:${i*60}ms">
+        ${avatar(m.img,m.bg,48,16)}
+        <div style="flex:1;border-radius:20px;padding:14px 18px;background:rgba(5,5,5,0.05);display:flex;flex-direction:column;gap:10px">
+          <div class="skeleton" style="width:180px;height:9px"></div>
+          <div class="skeleton" style="width:62%;height:9px"></div>
+        </div>
+      </div>`;
+    }
+    const filesHtml = (m.files||[]).map(f=>`
+      <div style="display:flex;align-items:center;gap:8px;padding:4px;border-radius:8px">
+        ${msgArrow}
+        <span style="width:32px;height:32px;flex-shrink:0;display:inline-flex">${fileSvgFor(f.name)}</span>
+        <div style="display:flex;flex-direction:column">
+          <span style="color:#050505;font-weight:500;font-size:14px;line-height:20px">${f.name}</span>
+          <span style="color:#6a7887;font-size:10px;letter-spacing:0.2px">${f.date}</span>
+        </div>
+      </div>`).join('');
+
+    const actionHtml = m.action ? `
+      <div style="display:flex;align-items:center;gap:6px">
+        ${msgArrow}
+        <span style="color:#050505;font-weight:500;font-size:14px;line-height:20px">${m.action.label}</span>
+        <div style="width:24px;height:24px;border-radius:8px;background:${m.action.avatar.bg||'transparent'};border:1px solid ${m.action.avatar.bg==='#050505'?'rgba(255,255,255,0.4)':'rgba(5,5,5,0.16)'};overflow:hidden;flex-shrink:0;display:flex;align-items:center;justify-content:center">${m.action.avatar.inset?`<span style="width:16px;height:16px;display:inline-flex">${iconHtml(m.action.avatar.img)}</span>`:`<span style="width:100%;height:100%;display:inline-flex">${iconHtml(m.action.avatar.img,{bg:m.action.avatar.bg})}</span>`}</div>
+        <span style="color:#050505;font-weight:500;font-size:14px;line-height:20px">${m.action.name}</span>
+      </div>` : '';
+
+    const buttonsHtml = m._hover ? `
+      <div style="display:flex;align-items:center;gap:4px">
+        <button class="cbtn flex items-center gap-1.5 px-3 h-8 rounded-xl text-sm" style="background:rgba(5,5,5,0.1)">
+          <svg width="12" height="14" fill="none"><path d="M2 1.5h6l2.5 2.5v8.5H2V1.5z" stroke="#050505" stroke-width="1.2"/><path d="M8 1.5v2.5h2.5" stroke="#050505" stroke-width="1.2"/></svg>
+          Overwrite
+        </button>
+        <button class="cbtn w-8 h-8 rounded-xl flex items-center justify-center" style="background:rgba(5,5,5,0.1)">
+          <svg width="16" height="16" fill="none"><path d="M5 7l2-4.5c.6 0 1 .4 1 1V6h4l-1 5H5V7z" stroke="#050505" stroke-width="1.2" stroke-linejoin="round"/><path d="M5 7H3v4h2V7z" stroke="#050505" stroke-width="1.2"/></svg>
+        </button>
+        <button class="cbtn w-8 h-8 rounded-xl flex items-center justify-center" style="background:rgba(5,5,5,0.1)">
+          <svg width="16" height="16" fill="none"><path d="M11 9l-2 4.5c-.6 0-1-.4-1-1V10H4l1-5h6v4z" stroke="#050505" stroke-width="1.2" stroke-linejoin="round"/><path d="M11 9h2V5h-2v4z" stroke="#050505" stroke-width="1.2"/></svg>
+        </button>
+      </div>` : '';
+
+    return `<div class="msg-appear" style="display:flex;gap:8px;align-items:flex-start;animation-delay:${i*60}ms">
+      ${avatar(m.img,m.bg,48,16)}
+      <div style="flex:1;border-radius:20px;padding:12px 16px;background:rgba(5,5,5,0.05);display:flex;flex-direction:column;gap:14px">
+        <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:8px">
+          <p style="color:#050505;font-weight:500;font-size:16px;line-height:20px;letter-spacing:-0.2px;white-space:nowrap">${m.agent}</p>
+          ${buttonsHtml}
+        </div>
+        <div style="display:flex;flex-direction:column;gap:8px">
+          ${m.text?`<p style="color:#373636;font-size:14px;line-height:20px">${m.text}</p>`:''}
+          ${filesHtml}
+          ${actionHtml}
+        </div>
+      </div>
+    </div>`;
+  }).join('');
+
+  // scroll to bottom
+  requestAnimationFrame(()=>{ el.scrollTop = el.scrollHeight; });
+}
+
+/* ───── Render: side panels ───── */
+function renderAgents(activeName){
+  const list = document.getElementById('agentsList');
+  list.innerHTML = AGENTS_DATA.map(a=>{
+    const active = a.name===activeName;
+    return `<div class="activity-item ${active?'is-active':''}" style="display:flex;align-items:center;gap:10px;padding:4px;border-radius:8px;position:relative">
+      <div style="width:24px;height:24px;border-radius:8px;background:${a.bg||'#888'};border:1px solid rgba(5,5,5,0.16);overflow:hidden;flex-shrink:0">${iconHtml(a.img,{bg:a.bg})}</div>
+      ${active?'<div style="position:absolute;left:3px;top:3px;width:30px;height:30px;border-radius:10px;border:2px solid #050505;pointer-events:none"></div>':''}
+      <span style="color:#050505;font-size:14px;line-height:20px;${active?'font-weight:500':''}">${a.name}</span>
+    </div>`;
+  }).join('');
+}
+function renderTools(activeName){
+  const list = document.getElementById('toolsList');
+  list.innerHTML = TOOLS_DATA.map(t=>{
+    const active = t.name===activeName;
+    return `<div class="activity-item ${active?'is-active':''}" style="display:flex;align-items:center;gap:10px;padding:4px;border-radius:8px;position:relative">
+      <div style="width:24px;height:24px;border-radius:8px;background:#050505;border:1px solid rgba(255,255,255,0.4);display:flex;align-items:center;justify-content:center;flex-shrink:0">${toolSvgFor(t.name)}</div>
+      ${active?'<div style="position:absolute;left:3px;top:3px;width:30px;height:30px;border-radius:10px;border:2px solid #050505;pointer-events:none"></div>':''}
+      <span style="color:#050505;font-size:14px;line-height:20px;${active?'font-weight:500':''}">${t.name}</span>
+    </div>`;
+  }).join('');
+}
+function renderFiles(files){
+  const list = document.getElementById('filesList');
+  list.innerHTML = files.map(f=>`
+    <div class="activity-item" style="display:flex;align-items:center;gap:10px;padding:4px;border-radius:8px;background:white;animation:slide-in-up .4s cubic-bezier(0,.6,.4,1) forwards">
+      <span style="width:32px;height:32px;flex-shrink:0;display:inline-flex">${fileSvgFor(f.name)}</span>
+      <div style="display:flex;flex-direction:column;min-width:0">
+        <span style="color:#050505;font-size:12px;line-height:16px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${f.name}</span>
+        <span style="color:#6a7887;font-size:10px;letter-spacing:0.2px">${f.date}</span>
+      </div>
+    </div>`).join('');
+}
+
+/* ───── Modal ───── */
+function renderModal(modal){
+  const slot = document.getElementById('modalSlot');
+  if (!modal){ slot.innerHTML = ''; return; }
+  const filesHtml = (modal.outputFiles||[]).map(f=>`
+    <div style="display:flex;align-items:center;gap:8px;padding:4px 0">
+      ${msgArrow}
+      <span style="width:32px;height:32px;flex-shrink:0;display:inline-flex">${fileSvgFor(f.name)}</span>
+      <div><div style="font-size:14px;font-weight:500;color:#050505">${f.name}</div><div style="font-size:10px;color:#6a7887;letter-spacing:0.2px">${f.date}</div></div>
+    </div>`).join('');
+  const uploadFiles = (modal.uploads||[]).map(u=>`
+    <div class="upload-file ${u.uploading?'is-uploading':''}">
+      <span style="width:28px;height:28px;flex-shrink:0;display:inline-flex">${fileSvgFor(u.name)}</span>
+      <div style="flex:1"><div style="font-size:13px;color:#050505;font-weight:500">${u.name}</div><div style="font-size:11px;color:#9a9a9a">${u.meta||''}</div></div>
+      ${u.uploading?'<div class="spinner-ring"></div>':'<svg width="16" height="16" fill="none"><path d="M5 7l1.5 1.5L11 4" stroke="#1a4f3f" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>'}
+    </div>`).join('');
+  slot.innerHTML = `
+    <div class="modal-backdrop"></div>
+    <div class="modal">
+      <div class="modal-hdr">
+        <div style="font-weight:500;font-size:16px;flex:1;color:#050505;letter-spacing:-0.2px">Review action</div>
+        <div style="display:flex;gap:4px;align-items:center;background:#f5f5f5;border-radius:10px;padding:3px">
+          <div style="width:22px;height:22px;border-radius:6px;background:#3e264f;display:flex;align-items:center;justify-content:center;overflow:hidden">${iconHtml(A.paperqaMsg,{bg:'#3e264f'})}</div>
+          <div style="width:22px;height:22px;border-radius:6px;background:#c5b0ab;display:flex;align-items:center;justify-content:center;overflow:hidden">${iconHtml(A.coreAgentMsg,{bg:'#c5b0ab'})}</div>
+        </div>
+        <button class="w-8 h-8 rounded-xl flex items-center justify-center" style="background:rgba(5,5,5,0.05)"><svg width="14" height="14" fill="none"><path d="M5 7l2-4.5c.6 0 1 .4 1 1V6h4l-1 5H5V7z" stroke="#050505" stroke-width="1.2" stroke-linejoin="round"/></svg></button>
+        <button class="w-8 h-8 rounded-xl flex items-center justify-center" style="background:rgba(5,5,5,0.05)"><svg width="14" height="14" fill="none"><path d="M11 9l-2 4.5c-.6 0-1-.4-1-1V10H4l1-5h6v4z" stroke="#050505" stroke-width="1.2" stroke-linejoin="round"/></svg></button>
+        <button class="w-8 h-8 rounded-xl flex items-center justify-center" style="background:rgba(5,5,5,0.05)"><svg width="14" height="14" fill="none"><path d="M3 3l8 8M11 3l-8 8" stroke="#050505" stroke-width="1.4" stroke-linecap="round"/></svg></button>
+      </div>
+      <div class="modal-body">
+        <div>
+          <div class="modal-sec-label"><span>Thought</span></div>
+          <textarea class="modal-input" rows="3" readonly>${modal.thought||''}</textarea>
+        </div>
+        <div>
+          <div class="modal-sec-label"><span>Inputs</span>${modal.showUpload?'<span class="up"><svg width="12" height="12" fill="none"><path d="M6 9V3M3 6l3-3 3 3" stroke="#373636" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round"/></svg>Upload files</span>':''}</div>
+          <textarea class="modal-input" rows="2" readonly>${modal.inputs||''}</textarea>
+          ${modal.showUploadZone?`<div style="margin-top:10px;display:flex;flex-direction:column;gap:8px">
+            <div class="upload-zone"><svg width="22" height="22" fill="none"><path d="M11 14V6M6 10l5-5 5 5" stroke="#9a9a9a" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>Click or drop files to upload</div>
+            ${uploadFiles}
+          </div>`:''}
+        </div>
+        <div>
+          <div class="modal-sec-label"><span>Output</span>${modal.showUpload?'<span class="up"><svg width="12" height="12" fill="none"><path d="M6 9V3M3 6l3-3 3 3" stroke="#373636" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round"/></svg>Upload files</span>':''}</div>
+          <textarea class="modal-input" rows="2" readonly>${modal.output||''}</textarea>
+          ${filesHtml?`<div style="margin-top:8px;display:flex;flex-direction:column;gap:2px">${filesHtml}</div>`:''}
+        </div>
+      </div>
+      <div class="modal-foot">
+        <button class="modal-btn-cancel">Cancel</button>
+        <button class="modal-btn-primary">Overwrite</button>
+      </div>
+    </div>`;
+}
+
+/* ───── Toast ───── */
+function renderToast(text){
+  const slot = document.getElementById('toastSlot');
+  if (!text){ slot.innerHTML = ''; return; }
+  slot.innerHTML = `<div class="toast">
+    <svg width="16" height="16" fill="none"><circle cx="8" cy="8" r="6" fill="#2bb380"/><path d="M5.5 8.2l1.6 1.6L10.5 6" stroke="#fff" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+    <span>${text}</span>
+    <span class="undo">Undo</span>
+    <button>×</button>
+  </div>`;
+}
+
+/* ───── 13-state flow definition ───── */
+const STATES = [
+  // 1 — Core Agent asks to gather evidence with FrostCore
+  {history:[HIST.CORE_FROST], ringIdx:0,
+   messages:[MSG.CORE_DOCS],
+   activeAgent:'Core Agent', activeTool:null,
+   files:[FILES_LIBRARY[0]]},
+  // 2 — Core Agent calls PaperQA; PaperQA loading
+  {history:[HIST.CORE_FROST, HIST.CORE_PQA, HIST.PQA_LOAD], ringIdx:2,
+   messages:[MSG.CORE_DOCS, MSG.CORE_CALL_PQA],
+   activeAgent:'Paper QA', activeTool:null,
+   files:[FILES_LIBRARY[0]]},
+  // 3 — PaperQA skeleton message, second file added
+  {history:[HIST.CORE_FROST, HIST.CORE_PQA, HIST.PQA_LOAD], ringIdx:2,
+   messages:[MSG.CORE_DOCS, MSG.CORE_CALL_PQA, {agent:'PaperQA',bg:'#3e264f',img:A.paperqaMsg,_skeleton:true}],
+   activeAgent:'Paper QA', activeTool:null,
+   files:[FILES_LIBRARY[0], FILES_LIBRARY[1]]},
+  // 4 — PaperQA full message ("Rodriques") + more files
+  {history:[HIST.CORE_FROST, HIST.CORE_PQA, HIST.PQA_LOAD], ringIdx:2,
+   messages:[MSG.CORE_DOCS, MSG.CORE_CALL_PQA, MSG.PQA_RODRIG],
+   activeAgent:'Paper QA', activeTool:null,
+   files:[...FILES_LIBRARY]},
+  // 5 — PaperQA attaches found files
+  {history:[HIST.CORE_FROST, HIST.CORE_PQA, HIST.PQA_LOAD, HIST.PQA_3FILES], ringIdx:3,
+   messages:[MSG.CORE_DOCS, MSG.CORE_CALL_PQA, MSG.PQA_RODRIG,
+             {...MSG.PQA_RODRIG, files:[FILES_LIBRARY[0],FILES_LIBRARY[1],FILES_LIBRARY[2]]}],
+   activeAgent:'Paper QA', activeTool:null,
+   files:[...FILES_LIBRARY]},
+  // 6 — message text changes to "I have found a bunch of papers" with hover
+  {history:[HIST.CORE_FROST, HIST.CORE_PQA, HIST.PQA_LOAD, HIST.PQA_3FILES], ringIdx:3,
+   messages:[MSG.CORE_DOCS, MSG.CORE_CALL_PQA, MSG.PQA_RODRIG, {...MSG.PQA_FOUND_P, _hover:true}],
+   activeAgent:'Paper QA', activeTool:null,
+   files:[...FILES_LIBRARY]},
+  // 7 — Review action modal open
+  {history:[HIST.CORE_FROST, HIST.CORE_PQA, HIST.PQA_LOAD, HIST.PQA_3FILES], ringIdx:3,
+   messages:[MSG.CORE_DOCS, MSG.CORE_CALL_PQA, MSG.PQA_RODRIG, MSG.PQA_FOUND_P],
+   activeAgent:'Paper QA', activeTool:null,
+   files:[...FILES_LIBRARY],
+   modal:{thought:MSG.PQA_RODRIG.text, inputs:'Search term: "Rodriques et al. 2019"',
+          output:'I have found a bunch of papers.',
+          outputFiles:[FILES_LIBRARY[0],FILES_LIBRARY[1],FILES_LIBRARY[2]]}},
+  // 8 — back to no modal / no hover
+  {history:[HIST.CORE_FROST, HIST.CORE_PQA, HIST.PQA_LOAD, HIST.PQA_3FILES], ringIdx:3,
+   messages:[MSG.CORE_DOCS, MSG.CORE_CALL_PQA, MSG.PQA_RODRIG, MSG.PQA_FOUND_P],
+   activeAgent:'Paper QA', activeTool:null,
+   files:[...FILES_LIBRARY]},
+  // 9 — 5th message: summarize with FrostCore — FrostCore tool highlighted
+  {history:[HIST.CORE_FROST, HIST.CORE_PQA, HIST.PQA_LOAD, HIST.PQA_3FILES], ringIdx:3,
+   messages:[MSG.CORE_DOCS, MSG.CORE_CALL_PQA, MSG.PQA_RODRIG, MSG.PQA_FOUND_P, MSG.PQA_SUMMARIZE],
+   activeAgent:'Paper QA', activeTool:'FrostCore',
+   files:[...FILES_LIBRARY]},
+  // 10 — hover on 5th message + new history row
+  {history:[HIST.CORE_FROST, HIST.CORE_PQA, HIST.PQA_LOAD, HIST.PQA_3FILES, HIST.PQA_FROST_E], ringIdx:4,
+   messages:[MSG.CORE_DOCS, MSG.CORE_CALL_PQA, MSG.PQA_RODRIG, MSG.PQA_FOUND_P, {...MSG.PQA_SUMMARIZE, _hover:true}],
+   activeAgent:'Paper QA', activeTool:'FrostCore',
+   files:[...FILES_LIBRARY]},
+  // 11 — modal for the summarize step (empty output, Upload files button visible)
+  {history:[HIST.CORE_FROST, HIST.CORE_PQA, HIST.PQA_LOAD, HIST.PQA_3FILES, HIST.PQA_FROST_E], ringIdx:4,
+   messages:[MSG.CORE_DOCS, MSG.CORE_CALL_PQA, MSG.PQA_RODRIG, MSG.PQA_FOUND_P, MSG.PQA_SUMMARIZE],
+   activeAgent:'Paper QA', activeTool:'FrostCore',
+   files:[...FILES_LIBRARY],
+   modal:{thought:MSG.PQA_SUMMARIZE.text, inputs:'Search term: "Rodriques et al. 2019"',
+          output:'', outputFiles:[], showUpload:true}},
+  // 12 — modal with upload-zone and two files uploading
+  {history:[HIST.CORE_FROST, HIST.CORE_PQA, HIST.PQA_LOAD, HIST.PQA_3FILES, HIST.PQA_FROST_E], ringIdx:4,
+   messages:[MSG.CORE_DOCS, MSG.CORE_CALL_PQA, MSG.PQA_RODRIG, MSG.PQA_FOUND_P, MSG.PQA_SUMMARIZE],
+   activeAgent:'Paper QA', activeTool:'FrostCore',
+   files:[...FILES_LIBRARY],
+   modal:{thought:MSG.PQA_RODRIG.text, inputs:'Search term: "Rodriques et al. 2019"',
+          output:'I have found a bunch of papers.', outputFiles:[],
+          showUpload:true, showUploadZone:true,
+          uploads:[{icon:A.csvIcon,name:'Document.csv',meta:'1.2MB'},
+                   {icon:A.csvIcon,name:'Analysis.csv',meta:'3.4MB · 2 seconds left',uploading:true}]}},
+  // 13 — final: 5th message becomes loading skeleton + green toast
+  {history:[HIST.CORE_FROST, HIST.CORE_PQA, HIST.PQA_LOAD, HIST.PQA_3FILES, HIST.PQA_FROST_E], ringIdx:4,
+   messages:[MSG.CORE_DOCS, MSG.CORE_CALL_PQA, MSG.PQA_RODRIG, MSG.PQA_FOUND_P, MSG.PQA_SUMMARIZE,
+             {agent:'PaperQA',bg:'#3e264f',img:A.paperqaMsg,_skeleton:true}],
+   activeAgent:'Paper QA', activeTool:'FrostCore',
+   files:[...FILES_LIBRARY],
+   toast:'New files detected and workflow updated successfully.'},
+];
+
+/* ───── Per-state timings (ms before next state) ───── */
+const HOLD = [
+  2000, // 1
+  1700, // 2
+  1700, // 3
+  2200, // 4
+  2300, // 5
+  1800, // 6 hover
+  3000, // 7 modal
+  1000, // 8
+  2200, // 9
+  1800, // 10 hover
+  2500, // 11 modal
+  3000, // 12 upload modal
+  3500, // 13 toast
+];
+
+/* ───── Apply a state ───── */
+let _modalEl = null;
+function applyState(s){
+  renderHistory(s.history, s.ringIdx);
+  renderMessages(s.messages);
+  renderAgents(s.activeAgent);
+  renderTools(s.activeTool);
+  renderFiles(s.files);
+  renderModal(s.modal);
+  renderToast(s.toast);
+}
+
+/* ───── Main loop (with ?state=N override for QA) ───── */
+function runLoop(){
+  const params = new URLSearchParams(location.search);
+  const pin = params.get('state');
+  if (pin !== null) {
+    applyState(STATES[Math.max(0, Math.min(STATES.length-1, parseInt(pin,10)||0))]);
+    return; // pinned, no loop
+  }
+  let i = 0;
+  function step(){
+    applyState(STATES[i]);
+    const hold = HOLD[i] || 2000;
+    i = (i + 1) % STATES.length;
+    setTimeout(step, hold);
+  }
+  step();
+}
+
+window.addEventListener('DOMContentLoaded', runLoop);
+</script>
+</body>
+</html>
