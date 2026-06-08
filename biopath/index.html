@@ -27,10 +27,18 @@
     .skeleton-row{display:flex;flex-direction:column;gap:6px}
     .skeleton-row .skeleton{height:9px}
 
-    .msg-appear{animation:msg-slide .45s cubic-bezier(0,.6,.3,1) forwards;opacity:1}
-    @keyframes msg-slide{from{transform:translateY(10px)}to{transform:translateY(0)}}
-    .history-row{animation:slide-in-up .45s cubic-bezier(0,.6,.4,1) forwards;cursor:default;opacity:1}
-    @keyframes slide-in-up{from{transform:translateY(10px)}to{transform:translateY(0)}}
+    /* Softer "soft-spring" curve for everything that appears in the chat. */
+    .msg-appear{animation:msg-soft 720ms cubic-bezier(0.22, 1, 0.36, 1) forwards;opacity:1;transform-origin:top left;will-change:transform,opacity,filter}
+    @keyframes msg-soft{
+      0%   { opacity:0; transform:translateY(16px) scale(.985); filter:blur(2px) }
+      60%  { opacity:1; filter:blur(0) }
+      100% { opacity:1; transform:translateY(0) scale(1); filter:blur(0) }
+    }
+    .history-row{animation:hist-soft 680ms cubic-bezier(0.22, 1, 0.36, 1) forwards;cursor:default;opacity:1;will-change:transform,opacity}
+    @keyframes hist-soft{
+      0%   { opacity:0; transform:translateY(12px) }
+      100% { opacity:1; transform:translateY(0) }
+    }
     .activity-item{transition:background .12s}
     .activity-item.is-active{background:rgba(5,5,5,0.05)}
     .cbtn{transition:background .12s}
@@ -335,11 +343,13 @@ function iconHtml(entry, opts){
 }
 
 /* ───── SVG snippets ───── */
-const arrowSvg  = `<svg width="12" height="12" fill="none"><path d="M3 2v6l4-3" stroke="#6c6c6c" stroke-width="1.1" stroke-linecap="round" stroke-linejoin="round"/></svg>`;
+/* Material-style "subdirectory_arrow_right" — small ↳ with arrowhead */
+/* Material "subdirectory_arrow_right" — small ↳ with arrowhead pointing right */
+const arrowSvg  = `<svg width="12" height="12" viewBox="0 0 12 12" fill="none"><path d="M3 2V8H9M6.5 5.5L9 8L6.5 10.5" stroke="#6c6c6c" stroke-width="1.1" stroke-linecap="round" stroke-linejoin="round"/></svg>`;
 const personSvg = `<svg width="12" height="12" fill="none"><circle cx="6" cy="4.5" r="2" stroke="#6c6c6c" stroke-width="1.1"/><path d="M1.5 11c0-2.485 2.015-4.5 4.5-4.5s4.5 2.015 4.5 4.5" stroke="#6c6c6c" stroke-width="1.1"/></svg>`;
 const fileSvg   = `<svg width="12" height="12" fill="none"><path d="M3 1.5h4.5L9.5 4v6.5H3V1.5z" stroke="#6c6c6c" stroke-width="1.1"/><path d="M7.5 1.5v2.5h2" stroke="#6c6c6c" stroke-width="1.1"/></svg>`;
 const toolSvg   = `<svg width="12" height="12" fill="none"><path d="M3 9.5V7L6.5 3.5l3.5 3.5-3.5 3.5" stroke="#6c6c6c" stroke-width="1.1" stroke-linecap="round" stroke-linejoin="round"/></svg>`;
-const msgArrow  = `<svg class="msgArrow" width="16" height="16" fill="none"><path d="M4 5v7l5-4" stroke="#050505" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round"/></svg>`;
+const msgArrow  = `<svg class="msgArrow" width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M4 4V11H11M8 8L11 11L8 14" stroke="#050505" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"/></svg>`;
 
 /* ───── Static side-panel data ───── */
 const AGENTS_DATA = [
@@ -405,7 +415,7 @@ function renderHistory(items, ringIdx){
     const stripe = i < items.length-1 ? '<div style="border-top:1px solid #ebebeb;margin:0 8px"></div>' : '';
     const ringCls = i===ringIdx ? ' avatar-active' : '';
     if (h.loading){
-      return `<div class="history-row flex items-center gap-3 px-2 py-2 pr-4 rounded-xl relative" style="animation-delay:${Math.min(i*40,160)}ms">
+      return `<div class="history-row flex items-center gap-3 px-2 py-2 pr-4 rounded-xl relative" style="animation-delay:${Math.min(i*70,260)}ms">
         <div class="avatar-wrap${ringCls}" style="flex-shrink:0">${avatar(h.img,h.bg)}</div>
         <div style="flex:1;min-width:0;display:flex;flex-direction:column;gap:6px">
           <p style="color:#050505;font-weight:500;font-size:14px;line-height:20px">${h.agent}</p>
@@ -414,7 +424,7 @@ function renderHistory(items, ringIdx){
         </div>
       </div>${stripe}`;
     }
-    return `<div class="history-row flex items-center gap-3 px-2 py-2 pr-4 rounded-xl relative" style="animation-delay:${Math.min(i*40,160)}ms">
+    return `<div class="history-row flex items-center gap-3 px-2 py-2 pr-4 rounded-xl relative" style="animation-delay:${Math.min(i*70,260)}ms">
       <div class="avatar-wrap${ringCls}" style="flex-shrink:0">${avatar(h.img,h.bg)}</div>
       <div style="flex:1;min-width:0;display:flex;flex-direction:column;gap:2px">
         <p style="color:#050505;font-weight:500;font-size:14px;line-height:20px;white-space:nowrap">${h.agent}</p>
@@ -434,7 +444,7 @@ function renderMessages(msgs){
   const el = document.getElementById('messagesList');
   el.innerHTML = msgs.map((m,i)=>{
     if (m._skeleton){
-      return `<div class="msg-appear" style="display:flex;gap:8px;align-items:flex-start;animation-delay:${i*60}ms">
+      return `<div class="msg-appear" style="display:flex;gap:8px;align-items:flex-start;animation-delay:${Math.min(i*110,440)}ms">
         ${avatar(m.img,m.bg,48,16)}
         <div style="flex:1;border-radius:20px;padding:14px 18px;background:rgba(5,5,5,0.05);display:flex;flex-direction:column;gap:10px">
           <div class="skeleton" style="width:180px;height:9px"></div>
@@ -474,7 +484,7 @@ function renderMessages(msgs){
         </button>
       </div>` : '';
 
-    return `<div class="msg-appear" style="display:flex;gap:8px;align-items:flex-start;animation-delay:${i*60}ms">
+    return `<div class="msg-appear" style="display:flex;gap:8px;align-items:flex-start;animation-delay:${Math.min(i*110,440)}ms">
       ${avatar(m.img,m.bg,48,16)}
       <div style="flex:1;border-radius:20px;padding:12px 16px;background:rgba(5,5,5,0.05);display:flex;flex-direction:column;gap:14px">
         <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:8px">
@@ -518,7 +528,7 @@ function renderTools(activeName){
 function renderFiles(files){
   const list = document.getElementById('filesList');
   list.innerHTML = files.map(f=>`
-    <div class="activity-item" style="display:flex;align-items:center;gap:10px;padding:4px;border-radius:8px;background:white;animation:slide-in-up .4s cubic-bezier(0,.6,.4,1) forwards">
+    <div class="activity-item" style="display:flex;align-items:center;gap:10px;padding:4px;border-radius:8px;background:white;animation:hist-soft 560ms cubic-bezier(0.22, 1, 0.36, 1) forwards">
       <span style="width:32px;height:32px;flex-shrink:0;display:inline-flex">${fileSvgFor(f.name)}</span>
       <div style="display:flex;flex-direction:column;min-width:0">
         <span style="color:#050505;font-size:12px;line-height:16px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${f.name}</span>
