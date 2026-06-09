@@ -49,6 +49,12 @@
     .avatar-active{outline:2px solid #050505;outline-offset:3px;border-radius:16px}
     .avatar-active-sm{outline:2px solid #050505;outline-offset:2px;border-radius:10px}
 
+    /* History inset separator — purely CSS so we don't need separator divs
+       (which would force a full re-render). */
+    .history-row + .history-row::before{
+      content:'';position:absolute;top:0;left:8px;right:8px;height:1px;background:#ebebeb;
+    }
+
     /* Modal */
     .modal-backdrop{position:fixed;inset:0;background:rgba(5,5,5,0.4);z-index:80;backdrop-filter:blur(2px)}
     .modal{position:fixed;left:50%;top:50%;transform:translate(-50%,-50%);width:520px;max-height:88vh;background:#fff;border-radius:20px;box-shadow:0 30px 80px rgba(0,0,0,0.32);z-index:81;overflow:hidden;display:flex;flex-direction:column;animation:modal-pop .25s cubic-bezier(0,.6,.3,1) forwards}
@@ -409,98 +415,137 @@ const MSG = {
 };
 
 /* ───── Render: history ───── */
-function renderHistory(items, ringIdx){
-  const el = document.getElementById('historyList');
-  el.innerHTML = items.map((h,i)=>{
-    const stripe = i < items.length-1 ? '<div style="border-top:1px solid #ebebeb;margin:0 8px"></div>' : '';
-    const ringCls = i===ringIdx ? ' avatar-active' : '';
-    if (h.loading){
-      return `<div class="history-row flex items-center gap-3 px-2 py-2 pr-4 rounded-xl relative" style="animation-delay:${Math.min(i*70,260)}ms">
-        <div class="avatar-wrap${ringCls}" style="flex-shrink:0">${avatar(h.img,h.bg)}</div>
-        <div style="flex:1;min-width:0;display:flex;flex-direction:column;gap:6px">
-          <p style="color:#050505;font-weight:500;font-size:14px;line-height:20px">${h.agent}</p>
-          <div class="skeleton" style="width:120px;height:8px"></div>
-          <div class="skeleton" style="width:80px;height:8px"></div>
-        </div>
-      </div>${stripe}`;
+/* ───── In-place reconciler ─────
+ * For each (container, items[]) pair, this keeps existing child nodes alive
+ * across state changes and ONLY animates newly-appended ones. Children whose
+ * inner-HTML changed get updated in place (no flash), children that are no
+ * longer needed get popped from the tail.
+ *
+ * Why: previously every state change did `container.innerHTML = ...` which
+ * tore down every bubble and replayed its `.msg-appear` animation, causing
+ * the whole chat to flicker. With reconciliation, only genuinely new
+ * bubbles trigger the entrance keyframe.
+ */
+function reconcile(container, items, buildInner, makeWrapper){
+  // 1. Drop tail nodes if the list shrunk (e.g. loop wraparound).
+  while (container.children.length > items.length){
+    container.removeChild(container.lastElementChild);
+  }
+  const existing = container.children.length;
+  // 2. For each slot, reuse or create the wrapper, then sync inner content.
+  items.forEach((it, i)=>{
+    let el = container.children[i];
+    if (!el){
+      // newIdx = how-many-new-this-tick; first new item delays 0, second 80ms…
+      el = makeWrapper(it, i, i - existing);
+      container.appendChild(el);
     }
-    return `<div class="history-row flex items-center gap-3 px-2 py-2 pr-4 rounded-xl relative" style="animation-delay:${Math.min(i*70,260)}ms">
-      <div class="avatar-wrap${ringCls}" style="flex-shrink:0">${avatar(h.img,h.bg)}</div>
-      <div style="flex:1;min-width:0;display:flex;flex-direction:column;gap:2px">
-        <p style="color:#050505;font-weight:500;font-size:14px;line-height:20px;white-space:nowrap">${h.agent}</p>
-        <div style="display:flex;align-items:center;gap:3px;font-size:12px;color:#6c6c6c;line-height:16px;overflow:hidden">
-          ${h.verb && h.verb!=='review'&&h.verb!=='use'&&h.verb!=='Updates'?arrowSvg:''}
-          ${h.verb?`<span>${h.verb}</span>`:''}
-          ${h.ref?`<span style="display:flex;align-items:center;gap:2px;padding:0 2px">${h.ri||''}<span style="font-weight:500;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:120px">${h.ref}</span></span>`:''}
-          ${h.detail?`<span style="overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${h.detail}</span>`:''}
-        </div>
-      </div>
-    </div>${stripe}`;
-  }).join('');
+    const html = buildInner(it, i);
+    if (el._lastHtml !== html){
+      el.innerHTML = html;
+      el._lastHtml = html;
+    }
+  });
 }
 
-/* ───── Render: messages ───── */
-function renderMessages(msgs){
-  const el = document.getElementById('messagesList');
-  el.innerHTML = msgs.map((m,i)=>{
-    if (m._skeleton){
-      return `<div class="msg-appear" style="display:flex;gap:8px;align-items:flex-start;animation-delay:${Math.min(i*110,440)}ms">
-        ${avatar(m.img,m.bg,48,16)}
-        <div style="flex:1;border-radius:20px;padding:14px 18px;background:rgba(5,5,5,0.05);display:flex;flex-direction:column;gap:10px">
-          <div class="skeleton" style="width:180px;height:9px"></div>
-          <div class="skeleton" style="width:62%;height:9px"></div>
-        </div>
+/* ───── History ───── */
+function historyInner(h, i, ringIdx){
+  const ringCls = i===ringIdx ? ' avatar-active' : '';
+  if (h.loading){
+    return `<div class="avatar-wrap${ringCls}" style="flex-shrink:0">${avatar(h.img,h.bg)}</div>
+      <div style="flex:1;min-width:0;display:flex;flex-direction:column;gap:6px">
+        <p style="color:#050505;font-weight:500;font-size:14px;line-height:20px">${h.agent}</p>
+        <div class="skeleton" style="width:120px;height:8px"></div>
+        <div class="skeleton" style="width:80px;height:8px"></div>
       </div>`;
-    }
-    const filesHtml = (m.files||[]).map(f=>`
-      <div style="display:flex;align-items:center;gap:8px;padding:4px;border-radius:8px">
-        ${msgArrow}
-        <span style="width:32px;height:32px;flex-shrink:0;display:inline-flex">${fileSvgFor(f.name)}</span>
-        <div style="display:flex;flex-direction:column">
-          <span style="color:#050505;font-weight:500;font-size:14px;line-height:20px">${f.name}</span>
-          <span style="color:#6a7887;font-size:10px;letter-spacing:0.2px">${f.date}</span>
-        </div>
-      </div>`).join('');
-
-    const actionHtml = m.action ? `
-      <div style="display:flex;align-items:center;gap:6px">
-        ${msgArrow}
-        <span style="color:#050505;font-weight:500;font-size:14px;line-height:20px">${m.action.label}</span>
-        <div style="width:24px;height:24px;border-radius:8px;background:${m.action.avatar.bg||'transparent'};overflow:hidden;flex-shrink:0;display:flex;align-items:center;justify-content:center">${m.action.avatar.inset?`<span style="width:16px;height:16px;display:inline-flex">${iconHtml(m.action.avatar.img)}</span>`:`<span style="width:100%;height:100%;display:inline-flex">${iconHtml(m.action.avatar.img,{bg:m.action.avatar.bg})}</span>`}</div>
-        <span style="color:#050505;font-weight:500;font-size:14px;line-height:20px">${m.action.name}</span>
-      </div>` : '';
-
-    const buttonsHtml = m._hover ? `
-      <div style="display:flex;align-items:center;gap:4px">
-        <button class="cbtn flex items-center gap-1.5 px-3 h-8 rounded-xl text-sm" style="background:rgba(5,5,5,0.1)">
-          <svg width="12" height="14" fill="none"><path d="M2 1.5h6l2.5 2.5v8.5H2V1.5z" stroke="#050505" stroke-width="1.2"/><path d="M8 1.5v2.5h2.5" stroke="#050505" stroke-width="1.2"/></svg>
-          Overwrite
-        </button>
-        <button class="cbtn w-8 h-8 rounded-xl flex items-center justify-center" style="background:rgba(5,5,5,0.1)">
-          <svg width="16" height="16" fill="none"><path d="M5 7l2-4.5c.6 0 1 .4 1 1V6h4l-1 5H5V7z" stroke="#050505" stroke-width="1.2" stroke-linejoin="round"/><path d="M5 7H3v4h2V7z" stroke="#050505" stroke-width="1.2"/></svg>
-        </button>
-        <button class="cbtn w-8 h-8 rounded-xl flex items-center justify-center" style="background:rgba(5,5,5,0.1)">
-          <svg width="16" height="16" fill="none"><path d="M11 9l-2 4.5c-.6 0-1-.4-1-1V10H4l1-5h6v4z" stroke="#050505" stroke-width="1.2" stroke-linejoin="round"/><path d="M11 9h2V5h-2v4z" stroke="#050505" stroke-width="1.2"/></svg>
-        </button>
-      </div>` : '';
-
-    return `<div class="msg-appear" style="display:flex;gap:8px;align-items:flex-start;animation-delay:${Math.min(i*110,440)}ms">
-      ${avatar(m.img,m.bg,48,16)}
-      <div style="flex:1;border-radius:20px;padding:12px 16px;background:rgba(5,5,5,0.05);display:flex;flex-direction:column;gap:14px">
-        <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:8px">
-          <p style="color:#050505;font-weight:500;font-size:16px;line-height:20px;letter-spacing:-0.2px;white-space:nowrap">${m.agent}</p>
-          ${buttonsHtml}
-        </div>
-        <div style="display:flex;flex-direction:column;gap:8px">
-          ${m.text?`<p style="color:#373636;font-size:14px;line-height:20px">${m.text}</p>`:''}
-          ${filesHtml}
-          ${actionHtml}
-        </div>
+  }
+  return `<div class="avatar-wrap${ringCls}" style="flex-shrink:0">${avatar(h.img,h.bg)}</div>
+    <div style="flex:1;min-width:0;display:flex;flex-direction:column;gap:2px">
+      <p style="color:#050505;font-weight:500;font-size:14px;line-height:20px;white-space:nowrap">${h.agent}</p>
+      <div style="display:flex;align-items:center;gap:3px;font-size:12px;color:#6c6c6c;line-height:16px;overflow:hidden">
+        ${h.verb && h.verb!=='review'&&h.verb!=='use'&&h.verb!=='Updates'?arrowSvg:''}
+        ${h.verb?`<span>${h.verb}</span>`:''}
+        ${h.ref?`<span style="display:flex;align-items:center;gap:2px;padding:0 2px">${h.ri||''}<span style="font-weight:500;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:120px">${h.ref}</span></span>`:''}
+        ${h.detail?`<span style="overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${h.detail}</span>`:''}
       </div>
     </div>`;
-  }).join('');
+}
+function renderHistory(items, ringIdx){
+  const el = document.getElementById('historyList');
+  reconcile(el, items,
+    (h, i) => historyInner(h, i, ringIdx),
+    (h, i, newIdx) => {
+      const div = document.createElement('div');
+      div.className = 'history-row flex items-center gap-3 px-2 py-2 pr-4 rounded-xl relative';
+      div.style.animationDelay = (Math.max(0, newIdx) * 70) + 'ms';
+      return div;
+    }
+  );
+}
 
-  // scroll to bottom
+/* ───── Messages ───── */
+function messageInner(m, i){
+  if (m._skeleton){
+    return `${avatar(m.img,m.bg,48,16)}
+      <div style="flex:1;border-radius:20px;padding:14px 18px;background:rgba(5,5,5,0.05);display:flex;flex-direction:column;gap:10px">
+        <div class="skeleton" style="width:180px;height:9px"></div>
+        <div class="skeleton" style="width:62%;height:9px"></div>
+      </div>`;
+  }
+  const filesHtml = (m.files||[]).map(f=>`
+    <div style="display:flex;align-items:center;gap:8px;padding:4px;border-radius:8px">
+      ${msgArrow}
+      <span style="width:32px;height:32px;flex-shrink:0;display:inline-flex">${fileSvgFor(f.name)}</span>
+      <div style="display:flex;flex-direction:column">
+        <span style="color:#050505;font-weight:500;font-size:14px;line-height:20px">${f.name}</span>
+        <span style="color:#6a7887;font-size:10px;letter-spacing:0.2px">${f.date}</span>
+      </div>
+    </div>`).join('');
+
+  const actionHtml = m.action ? `
+    <div style="display:flex;align-items:center;gap:6px">
+      ${msgArrow}
+      <span style="color:#050505;font-weight:500;font-size:14px;line-height:20px">${m.action.label}</span>
+      <div style="width:24px;height:24px;border-radius:8px;background:${m.action.avatar.bg||'transparent'};overflow:hidden;flex-shrink:0;display:flex;align-items:center;justify-content:center">${m.action.avatar.inset?`<span style="width:16px;height:16px;display:inline-flex">${iconHtml(m.action.avatar.img)}</span>`:`<span style="width:100%;height:100%;display:inline-flex">${iconHtml(m.action.avatar.img,{bg:m.action.avatar.bg})}</span>`}</div>
+      <span style="color:#050505;font-weight:500;font-size:14px;line-height:20px">${m.action.name}</span>
+    </div>` : '';
+
+  const buttonsHtml = m._hover ? `
+    <div style="display:flex;align-items:center;gap:4px">
+      <button class="cbtn flex items-center gap-1.5 px-3 h-8 rounded-xl text-sm" style="background:rgba(5,5,5,0.1)">
+        <svg width="12" height="14" fill="none"><path d="M2 1.5h6l2.5 2.5v8.5H2V1.5z" stroke="#050505" stroke-width="1.2"/><path d="M8 1.5v2.5h2.5" stroke="#050505" stroke-width="1.2"/></svg>
+        Overwrite
+      </button>
+      <button class="cbtn w-8 h-8 rounded-xl flex items-center justify-center" style="background:rgba(5,5,5,0.1)">
+        <svg width="16" height="16" fill="none"><path d="M5 7l2-4.5c.6 0 1 .4 1 1V6h4l-1 5H5V7z" stroke="#050505" stroke-width="1.2" stroke-linejoin="round"/><path d="M5 7H3v4h2V7z" stroke="#050505" stroke-width="1.2"/></svg>
+      </button>
+      <button class="cbtn w-8 h-8 rounded-xl flex items-center justify-center" style="background:rgba(5,5,5,0.1)">
+        <svg width="16" height="16" fill="none"><path d="M11 9l-2 4.5c-.6 0-1-.4-1-1V10H4l1-5h6v4z" stroke="#050505" stroke-width="1.2" stroke-linejoin="round"/><path d="M11 9h2V5h-2v4z" stroke="#050505" stroke-width="1.2"/></svg>
+      </button>
+    </div>` : '';
+
+  return `${avatar(m.img,m.bg,48,16)}
+    <div style="flex:1;border-radius:20px;padding:12px 16px;background:rgba(5,5,5,0.05);display:flex;flex-direction:column;gap:14px">
+      <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:8px">
+        <p style="color:#050505;font-weight:500;font-size:16px;line-height:20px;letter-spacing:-0.2px;white-space:nowrap">${m.agent}</p>
+        ${buttonsHtml}
+      </div>
+      <div style="display:flex;flex-direction:column;gap:8px">
+        ${m.text?`<p style="color:#373636;font-size:14px;line-height:20px">${m.text}</p>`:''}
+        ${filesHtml}
+        ${actionHtml}
+      </div>
+    </div>`;
+}
+function renderMessages(msgs){
+  const el = document.getElementById('messagesList');
+  reconcile(el, msgs, messageInner, (m, i, newIdx) => {
+    const div = document.createElement('div');
+    div.className = 'msg-appear';
+    div.style.cssText = 'display:flex;gap:8px;align-items:flex-start;animation-delay:' + (Math.max(0, newIdx) * 80) + 'ms';
+    return div;
+  });
+  // Scroll to bottom only when a new bubble was actually appended.
   requestAnimationFrame(()=>{ el.scrollTop = el.scrollHeight; });
 }
 
@@ -525,16 +570,21 @@ function renderTools(activeName){
     </div>`;
   }).join('');
 }
+function fileInner(f){
+  return `<span style="width:32px;height:32px;flex-shrink:0;display:inline-flex">${fileSvgFor(f.name)}</span>
+    <div style="display:flex;flex-direction:column;min-width:0">
+      <span style="color:#050505;font-size:12px;line-height:16px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${f.name}</span>
+      <span style="color:#6a7887;font-size:10px;letter-spacing:0.2px">${f.date}</span>
+    </div>`;
+}
 function renderFiles(files){
   const list = document.getElementById('filesList');
-  list.innerHTML = files.map(f=>`
-    <div class="activity-item" style="display:flex;align-items:center;gap:10px;padding:4px;border-radius:8px;background:white;animation:hist-soft 560ms cubic-bezier(0.22, 1, 0.36, 1) forwards">
-      <span style="width:32px;height:32px;flex-shrink:0;display:inline-flex">${fileSvgFor(f.name)}</span>
-      <div style="display:flex;flex-direction:column;min-width:0">
-        <span style="color:#050505;font-size:12px;line-height:16px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${f.name}</span>
-        <span style="color:#6a7887;font-size:10px;letter-spacing:0.2px">${f.date}</span>
-      </div>
-    </div>`).join('');
+  reconcile(list, files, fileInner, (f, i, newIdx) => {
+    const div = document.createElement('div');
+    div.className = 'activity-item';
+    div.style.cssText = 'display:flex;align-items:center;gap:10px;padding:4px;border-radius:8px;background:white;animation:hist-soft 560ms cubic-bezier(0.22, 1, 0.36, 1) forwards;animation-delay:' + (Math.max(0, newIdx) * 80) + 'ms';
+    return div;
+  });
 }
 
 /* ───── Modal ───── */
