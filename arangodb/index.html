@@ -31,10 +31,30 @@
     body{
       min-height:100vh;
       display:flex;align-items:center;justify-content:center;
-      padding:32px;
+      padding:32px;padding-top:80px;
       background:radial-gradient(ellipse at center, var(--stage-1) 0%, var(--stage-2) 100%);
       overflow:hidden;position:relative;
     }
+
+    /* ── Fitch-style proto bar (top) ──────────────────────────────── */
+    .proto-bar{position:fixed;top:0;left:0;right:0;z-index:9999;height:48px;background:#fff;border-bottom:1px solid rgba(0,0,0,0.08);display:flex;align-items:center;padding:0 16px;gap:12px;font-family:'Inter',-apple-system,system-ui,sans-serif}
+    .proto-left{display:flex;align-items:center;gap:8px;flex:1;min-width:0}
+    .proto-brand{display:flex;align-items:center;gap:7px}
+    .proto-brand-mark{width:22px;height:22px;border-radius:5px;background:linear-gradient(135deg,#5bcba5,#36b389);display:flex;align-items:center;justify-content:center;color:#0e1a2b;font-weight:700;font-size:11px;flex-shrink:0}
+    .proto-brand-name{font-size:13px;font-weight:600;color:#1c1c1c;letter-spacing:-0.2px}
+    .proto-tag{font-size:10px;color:#9b9b9b;background:#f3f3f3;border:1px solid rgba(0,0,0,0.07);padding:2px 7px;border-radius:5px;letter-spacing:0.3px;text-transform:uppercase;font-weight:500}
+    .proto-tabs{display:flex;gap:1px;background:rgba(0,0,0,0.06);border-radius:8px;padding:3px;flex-shrink:0}
+    .proto-tab{background:none;border:none;border-radius:6px;padding:6px 14px;font-size:12.5px;font-weight:500;color:#6b6b6b;line-height:1;cursor:pointer;transition:color .15s, background .15s, box-shadow .15s;font-family:inherit}
+    .proto-tab:hover{background:rgba(0,0,0,0.04);color:#1c1c1c}
+    .proto-tab.active{background:#fff;color:#1c1c1c;box-shadow:0 1px 3px rgba(0,0,0,0.10),0 1px 1px rgba(0,0,0,0.06)}
+    .proto-right{flex:1;display:flex;align-items:center;justify-content:flex-end;gap:8px}
+    .proto-auto{display:inline-flex;align-items:center;gap:6px;background:none;border:1px solid rgba(0,0,0,0.10);border-radius:999px;padding:5px 11px;font-size:11.5px;color:#6b6b6b;font-weight:500;cursor:pointer;font-family:inherit;transition:background .15s, border-color .15s, color .15s}
+    .proto-auto:hover{background:rgba(0,0,0,0.04);border-color:rgba(0,0,0,0.18)}
+    .proto-auto .dot{width:6px;height:6px;border-radius:50%;background:#c4c4c4;transition:background .15s}
+    .proto-auto.on{color:#36b389;border-color:rgba(91,203,165,0.45);background:rgba(91,203,165,0.10)}
+    .proto-auto.on .dot{background:#36b389;box-shadow:0 0 6px rgba(91,203,165,0.6);animation:autodot 1.6s ease-in-out infinite}
+    @keyframes autodot{0%,100%{opacity:1}50%{opacity:0.4}}
+
     /* tiny dot noise on the stage */
     body::before{
       content:'';position:fixed;inset:0;pointer-events:none;
@@ -45,7 +65,7 @@
     /* ─── Desktop frame (Mac-style) ─── */
     .frame{
       width:min(1180px, 100vw - 64px);
-      height:min(740px, 100vh - 64px);
+      height:min(740px, 100vh - 112px);
       background:var(--frame-bg);
       border-radius:14px;
       box-shadow:
@@ -287,6 +307,27 @@
   </style>
 </head>
 <body>
+
+<!-- ─── Top scene-tab bar (Fitch-style) ─────────────────────────── -->
+<div class="proto-bar">
+  <div class="proto-left">
+    <div class="proto-brand">
+      <span class="proto-brand-mark">A</span>
+      <span class="proto-brand-name">ArangoDB · Contextual Data Platform</span>
+    </div>
+    <span class="proto-tag">Promo</span>
+  </div>
+  <div class="proto-tabs" id="protoTabs">
+    <button class="proto-tab active" data-tab="dash">Dashboard</button>
+    <button class="proto-tab" data-tab="collections">Collections</button>
+    <button class="proto-tab" data-tab="query">Query</button>
+    <button class="proto-tab" data-tab="graph">Graphs</button>
+    <button class="proto-tab" data-tab="auto">AutoGraph</button>
+  </div>
+  <div class="proto-right">
+    <button class="proto-auto on" id="autoBtn"><span class="dot"></span>Auto-play</button>
+  </div>
+</div>
 
 <div class="frame">
 
@@ -825,31 +866,61 @@
     items.forEach((el, i) => setTimeout(()=>el.classList.add('in'), 120 + i * 130));
   }
 
-  /* ───── Main loop ───── */
+  /* ───── Main loop + scene-tab control ───── */
   const PLAY = { dash: playDashboard, collections: playCollections, query: playQuery, graph: playGraph, auto: playAuto };
 
-  function runLoop(){
-    let i = 0;
-    function step(){
-      const scene = SCENES[i];
-      setView(scene.id);
-      // Reset state for replayable scenes
-      if (scene.id === 'dash') {
-        all('.v-dash .num').forEach(el => { el._done = false; el.textContent = '0'; });
-      }
-      // Defer the play call so the scene-fade has time to start
-      setTimeout(() => PLAY[scene.id] && PLAY[scene.id](), 220);
-      const hold = scene.hold;
-      i = (i + 1) % SCENES.length;
-      setTimeout(step, hold);
+  let LOOP_TIMER = null;
+  let LOOP_ON = true;
+  let LOOP_I = 0;
+
+  function playScene(id){
+    const scene = SCENES.find(s => s.id === id);
+    if (!scene) return;
+    setView(scene.id);
+    if (scene.id === 'dash') {
+      all('.v-dash .num').forEach(el => { el._done = false; el.textContent = '0'; });
     }
+    setSceneTab(id);
+    setTimeout(() => PLAY[scene.id] && PLAY[scene.id](), 220);
+  }
+
+  function setSceneTab(id){
+    all('.proto-tab').forEach(t => t.classList.toggle('active', t.dataset.tab === id));
+  }
+
+  function step(){
+    if (!LOOP_ON) return;
+    const scene = SCENES[LOOP_I];
+    playScene(scene.id);
+    LOOP_I = (LOOP_I + 1) % SCENES.length;
+    LOOP_TIMER = setTimeout(step, scene.hold);
+  }
+  function startLoop(){
+    LOOP_ON = true;
+    sel('#autoBtn').classList.add('on');
     step();
+  }
+  function stopLoop(){
+    LOOP_ON = false;
+    sel('#autoBtn').classList.remove('on');
+    if (LOOP_TIMER) clearTimeout(LOOP_TIMER);
+  }
+  function wireTabs(){
+    all('.proto-tab').forEach(t => {
+      t.addEventListener('click', () => {
+        stopLoop();
+        const idx = SCENES.findIndex(s => s.id === t.dataset.tab);
+        if (idx >= 0) LOOP_I = (idx + 1) % SCENES.length;
+        playScene(t.dataset.tab);
+      });
+    });
+    sel('#autoBtn').addEventListener('click', () => { LOOP_ON ? stopLoop() : startLoop(); });
   }
 
   window.addEventListener('DOMContentLoaded', () => {
-    // First paint: build graph DOM so the canvas isn't empty when we land on it
     buildGraph();
-    runLoop();
+    wireTabs();
+    startLoop();
   });
 </script>
 </body>

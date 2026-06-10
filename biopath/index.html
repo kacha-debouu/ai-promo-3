@@ -9,6 +9,26 @@
   <style>
     *{font-family:'Inter',sans-serif;box-sizing:border-box}
     html,body{height:100%;margin:0;background:#111;overflow:hidden}
+    body{padding-top:48px}
+
+    /* ── Fitch-style proto bar (top) ──────────────────────────────── */
+    .proto-bar{position:fixed;top:0;left:0;right:0;z-index:9999;height:48px;background:#fff;border-bottom:1px solid rgba(0,0,0,0.08);display:flex;align-items:center;padding:0 16px;gap:12px;font-family:'Inter',-apple-system,system-ui,sans-serif}
+    .proto-left{display:flex;align-items:center;gap:8px;flex:1;min-width:0}
+    .proto-brand{display:flex;align-items:center;gap:7px}
+    .proto-brand-mark{width:22px;height:22px;border-radius:5px;background:#050505;display:flex;align-items:center;justify-content:center;color:#fff;font-weight:700;font-size:11px;flex-shrink:0}
+    .proto-brand-name{font-size:13px;font-weight:600;color:#1c1c1c;letter-spacing:-0.2px}
+    .proto-tag{font-size:10px;color:#9b9b9b;background:#f3f3f3;border:1px solid rgba(0,0,0,0.07);padding:2px 7px;border-radius:5px;letter-spacing:0.3px;text-transform:uppercase;font-weight:500}
+    .proto-tabs{display:flex;gap:1px;background:rgba(0,0,0,0.06);border-radius:8px;padding:3px;flex-shrink:0}
+    .proto-tab{background:none;border:none;border-radius:6px;padding:6px 14px;font-size:12.5px;font-weight:500;color:#6b6b6b;line-height:1;cursor:pointer;transition:color .15s, background .15s, box-shadow .15s;font-family:inherit}
+    .proto-tab:hover{background:rgba(0,0,0,0.04);color:#1c1c1c}
+    .proto-tab.active{background:#fff;color:#1c1c1c;box-shadow:0 1px 3px rgba(0,0,0,0.10),0 1px 1px rgba(0,0,0,0.06)}
+    .proto-right{flex:1;display:flex;align-items:center;justify-content:flex-end;gap:8px}
+    .proto-auto{display:inline-flex;align-items:center;gap:6px;background:none;border:1px solid rgba(0,0,0,0.10);border-radius:999px;padding:5px 11px;font-size:11.5px;color:#6b6b6b;font-weight:500;cursor:pointer;font-family:inherit;transition:background .15s, border-color .15s, color .15s}
+    .proto-auto:hover{background:rgba(0,0,0,0.04);border-color:rgba(0,0,0,0.18)}
+    .proto-auto .dot{width:6px;height:6px;border-radius:50%;background:#c4c4c4;transition:background .15s}
+    .proto-auto.on{color:#0a8a3a;border-color:rgba(34,197,94,0.45);background:rgba(34,197,94,0.10)}
+    .proto-auto.on .dot{background:#22c55e;box-shadow:0 0 6px rgba(34,197,94,0.6);animation:autodot 1.6s ease-in-out infinite}
+    @keyframes autodot{0%,100%{opacity:1}50%{opacity:0.4}}
     ::-webkit-scrollbar{width:4px}
     ::-webkit-scrollbar-track{background:transparent}
     ::-webkit-scrollbar-thumb{background:rgba(0,0,0,0.18);border-radius:2px}
@@ -82,6 +102,27 @@
 </head>
 <body>
 
+<!-- ─── Top scene-tab bar (Fitch-style) ─────────────────────────── -->
+<div class="proto-bar">
+  <div class="proto-left">
+    <div class="proto-brand">
+      <span class="proto-brand-mark">B</span>
+      <span class="proto-brand-name">BioPathAI · RNA Sequence Review</span>
+    </div>
+    <span class="proto-tag">Promo</span>
+  </div>
+  <div class="proto-tabs" id="protoTabs">
+    <button class="proto-tab active" data-tab="intake">Intake</button>
+    <button class="proto-tab" data-tab="search">Search</button>
+    <button class="proto-tab" data-tab="found">Found</button>
+    <button class="proto-tab" data-tab="review">Review</button>
+    <button class="proto-tab" data-tab="done">Done</button>
+  </div>
+  <div class="proto-right">
+    <button class="proto-auto on" id="autoBtn"><span class="dot"></span>Auto-play</button>
+  </div>
+</div>
+
 <!-- ─────────────────  TOP NAV  ───────────────── -->
 <nav style="background:#111;height:64px" class="flex items-center px-6 gap-4 w-full flex-shrink-0">
   <div class="flex items-center gap-2 flex-1 min-w-0">
@@ -119,7 +160,7 @@
 </nav>
 
 <!-- ─────────────────  3-COLUMN LAYOUT  ───────────────── -->
-<div class="flex" style="height:calc(100vh - 64px);overflow:hidden;position:relative">
+<div class="flex" style="height:calc(100vh - 112px);overflow:hidden;position:relative">
 
   <!-- LEFT: History -->
   <div class="flex flex-col bg-white border-r border-[#e5e5e5] flex-shrink-0" style="width:261px;border-top-left-radius:20px;overflow:hidden">
@@ -765,22 +806,84 @@ function applyState(s){
   renderToast(s.toast);
 }
 
-/* ───── Main loop (with ?state=N override for QA) ───── */
+/* ───── Main loop + scene-tab control ─────
+ * The 13 underlying STATES are sub-steps of one continuous BioPath
+ * flow. The top tab bar exposes 5 named phases — each maps to a
+ * representative STATE the user can jump to. The phase tabs also light
+ * up automatically as the auto-loop crosses their boundaries.
+ */
+const TAB_TO_STATE = {
+  intake: 0,   // Core Agent issuing the first call
+  search: 2,   // PaperQA loading skeleton
+  found:  5,   // "I have found a bunch of papers"
+  review: 6,   // Review-action modal open
+  done:   12,  // Final state with the success toast
+};
+const TABS = ['intake','search','found','review','done'];
+const STATE_TO_TAB = (i) => {
+  if (i >= TAB_TO_STATE.done)   return 'done';
+  if (i >= TAB_TO_STATE.review) return 'review';
+  if (i >= TAB_TO_STATE.found)  return 'found';
+  if (i >= TAB_TO_STATE.search) return 'search';
+  return 'intake';
+};
+
+let LOOP_TIMER = null;
+let LOOP_ON = true;
+let LOOP_I = 0;
+
+function setSceneTab(id){
+  document.querySelectorAll('.proto-tab').forEach(t => t.classList.toggle('active', t.dataset.tab === id));
+}
+
+function showState(i){
+  LOOP_I = i;
+  applyState(STATES[i]);
+  setSceneTab(STATE_TO_TAB(i));
+}
+
+function step(){
+  if (!LOOP_ON) return;
+  applyState(STATES[LOOP_I]);
+  setSceneTab(STATE_TO_TAB(LOOP_I));
+  const hold = HOLD[LOOP_I] || 2000;
+  LOOP_I = (LOOP_I + 1) % STATES.length;
+  LOOP_TIMER = setTimeout(step, hold);
+}
+function startLoop(){
+  LOOP_ON = true;
+  document.getElementById('autoBtn').classList.add('on');
+  step();
+}
+function stopLoop(){
+  LOOP_ON = false;
+  document.getElementById('autoBtn').classList.remove('on');
+  if (LOOP_TIMER) clearTimeout(LOOP_TIMER);
+}
+function wireTabs(){
+  document.querySelectorAll('.proto-tab').forEach(t => {
+    t.addEventListener('click', () => {
+      stopLoop();
+      const idx = TAB_TO_STATE[t.dataset.tab];
+      if (idx !== undefined) showState(idx);
+    });
+  });
+  document.getElementById('autoBtn').addEventListener('click', () => {
+    LOOP_ON ? stopLoop() : startLoop();
+  });
+}
+
 function runLoop(){
+  // QA pin: ?state=N still works for debugging
   const params = new URLSearchParams(location.search);
   const pin = params.get('state');
+  wireTabs();
   if (pin !== null) {
-    applyState(STATES[Math.max(0, Math.min(STATES.length-1, parseInt(pin,10)||0))]);
-    return; // pinned, no loop
+    stopLoop();
+    showState(Math.max(0, Math.min(STATES.length-1, parseInt(pin,10)||0)));
+    return;
   }
-  let i = 0;
-  function step(){
-    applyState(STATES[i]);
-    const hold = HOLD[i] || 2000;
-    i = (i + 1) % STATES.length;
-    setTimeout(step, hold);
-  }
-  step();
+  startLoop();
 }
 
 window.addEventListener('DOMContentLoaded', runLoop);

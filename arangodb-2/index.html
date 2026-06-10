@@ -52,10 +52,57 @@
     body{
       min-height:100vh;
       display:flex;align-items:center;justify-content:center;
-      padding:32px;
+      padding:32px;padding-top:80px;
       background:radial-gradient(ellipse at center, var(--stage-1) 0%, var(--stage-2) 100%);
       overflow:hidden;position:relative;
     }
+
+    /* ── Fitch-style proto bar (top) ──────────────────────────────── */
+    .proto-bar{
+      position:fixed;top:0;left:0;right:0;z-index:9999;
+      height:48px;background:#fff;
+      border-bottom:1px solid rgba(0,0,0,0.08);
+      display:flex;align-items:center;padding:0 16px;gap:12px;
+      font-family:'Inter',-apple-system,system-ui,sans-serif;
+    }
+    .proto-left{display:flex;align-items:center;gap:8px;flex:1;min-width:0}
+    .proto-brand{display:flex;align-items:center;gap:7px}
+    .proto-brand-mark{
+      width:22px;height:22px;border-radius:5px;background:var(--brand);
+      display:flex;align-items:center;justify-content:center;color:#fff;
+      font-weight:700;font-size:11px;flex-shrink:0
+    }
+    .proto-brand-name{font-size:13px;font-weight:600;color:#1c1c1c;letter-spacing:-0.2px}
+    .proto-tag{
+      font-size:10px;color:#9b9b9b;background:#f3f3f3;border:1px solid rgba(0,0,0,0.07);
+      padding:2px 7px;border-radius:5px;letter-spacing:0.3px;text-transform:uppercase;font-weight:500
+    }
+    .proto-tabs{
+      display:flex;gap:1px;background:rgba(0,0,0,0.06);
+      border-radius:8px;padding:3px;flex-shrink:0
+    }
+    .proto-tab{
+      background:none;border:none;border-radius:6px;padding:6px 14px;
+      font-size:12.5px;font-weight:500;color:#6b6b6b;line-height:1;cursor:pointer;
+      transition:color .15s, background .15s, box-shadow .15s;font-family:inherit
+    }
+    .proto-tab:hover{background:rgba(0,0,0,0.04);color:#1c1c1c}
+    .proto-tab.active{
+      background:#fff;color:#1c1c1c;
+      box-shadow:0 1px 3px rgba(0,0,0,0.10),0 1px 1px rgba(0,0,0,0.06)
+    }
+    .proto-right{flex:1;display:flex;align-items:center;justify-content:flex-end;gap:8px}
+    .proto-auto{
+      display:inline-flex;align-items:center;gap:6px;background:none;
+      border:1px solid rgba(0,0,0,0.10);border-radius:999px;padding:5px 11px;
+      font-size:11.5px;color:#6b6b6b;font-weight:500;cursor:pointer;font-family:inherit;
+      transition:background .15s, border-color .15s, color .15s
+    }
+    .proto-auto:hover{background:rgba(0,0,0,0.04);border-color:rgba(0,0,0,0.18)}
+    .proto-auto .dot{width:6px;height:6px;border-radius:50%;background:#c4c4c4;transition:background .15s}
+    .proto-auto.on{color:var(--brand);border-color:rgba(18,121,32,0.28);background:rgba(18,121,32,0.06)}
+    .proto-auto.on .dot{background:var(--brand);box-shadow:0 0 6px rgba(18,121,32,0.55);animation:autodot 1.6s ease-in-out infinite}
+    @keyframes autodot{0%,100%{opacity:1}50%{opacity:0.4}}
     body::before{
       content:'';position:fixed;inset:0;pointer-events:none;
       background-image:radial-gradient(rgba(14,26,43,0.025) 1px,transparent 1px);
@@ -66,7 +113,7 @@
     /* ─── Desktop frame ─── */
     .frame{
       width:min(1240px, 100vw - 64px);
-      height:min(780px, 100vh - 64px);
+      height:min(780px, 100vh - 112px);
       background:var(--fill-bg);
       border-radius:14px;
       box-shadow:
@@ -454,6 +501,26 @@
   </style>
 </head>
 <body>
+
+<!-- ─── Top scene-tab bar (Fitch-style) ─────────────────────────── -->
+<div class="proto-bar">
+  <div class="proto-left">
+    <div class="proto-brand">
+      <span class="proto-brand-mark">A</span>
+      <span class="proto-brand-name">ArangoDB · Widelab prototype</span>
+    </div>
+    <span class="proto-tag">Promo</span>
+  </div>
+  <div class="proto-tabs" id="protoTabs">
+    <button class="proto-tab active" data-tab="dash">Dashboard</button>
+    <button class="proto-tab" data-tab="queries">Queries</button>
+    <button class="proto-tab" data-tab="collections">Collections</button>
+    <button class="proto-tab" data-tab="graph">Graph</button>
+  </div>
+  <div class="proto-right">
+    <button class="proto-auto on" id="autoBtn"><span class="dot"></span>Auto-play</button>
+  </div>
+</div>
 
 <div class="frame">
 
@@ -1048,29 +1115,70 @@
     }, 700);
   }
 
-  /* ─── Main loop ─── */
+  /* ─── Main loop + scene-tab control ─── */
   const SCENES = [
     { id:'dash',        hold:6500, play:playDash },
     { id:'queries',     hold:8500, play:playQueries, reset:resetCompose },
     { id:'collections', hold:5000, play:playCollections },
     { id:'graph',       hold:5500, play:playGraph },
   ];
-  function runLoop(){
-    let i = 0;
-    function step(){
-      const s = SCENES[i];
-      if (s.reset) s.reset();
-      setView(s.id);
-      setTimeout(s.play, 240);
-      i = (i + 1) % SCENES.length;
-      setTimeout(step, s.hold);
-    }
+
+  let LOOP_TIMER = null;
+  let LOOP_ON = true;
+  let LOOP_I = 0;
+
+  function playScene(id){
+    const s = SCENES.find(x => x.id === id);
+    if (!s) return;
+    if (s.reset) s.reset();
+    setView(s.id);
+    setSceneTab(s.id);
+    setTimeout(s.play, 240);
+  }
+
+  function setSceneTab(id){
+    all('.proto-tab').forEach(t => t.classList.toggle('active', t.dataset.tab === id));
+  }
+
+  function step(){
+    if (!LOOP_ON) return;
+    const s = SCENES[LOOP_I];
+    playScene(s.id);
+    LOOP_I = (LOOP_I + 1) % SCENES.length;
+    LOOP_TIMER = setTimeout(step, s.hold);
+  }
+
+  function startLoop(){
+    LOOP_ON = true;
+    sel('#autoBtn').classList.add('on');
     step();
+  }
+  function stopLoop(){
+    LOOP_ON = false;
+    sel('#autoBtn').classList.remove('on');
+    if (LOOP_TIMER) clearTimeout(LOOP_TIMER);
+  }
+
+  function wireTabs(){
+    all('.proto-tab').forEach(t => {
+      t.addEventListener('click', () => {
+        stopLoop();
+        // align the loop pointer so resuming Auto picks up from this scene
+        const idx = SCENES.findIndex(s => s.id === t.dataset.tab);
+        if (idx >= 0) LOOP_I = (idx + 1) % SCENES.length;
+        playScene(t.dataset.tab);
+      });
+    });
+    sel('#autoBtn').addEventListener('click', () => {
+      if (LOOP_ON) stopLoop();
+      else startLoop();
+    });
   }
 
   window.addEventListener('DOMContentLoaded', () => {
     buildGraph();
-    runLoop();
+    wireTabs();
+    startLoop();
   });
 </script>
 </body>
