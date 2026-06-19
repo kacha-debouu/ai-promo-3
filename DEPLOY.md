@@ -1,17 +1,25 @@
 # Deploy — Cloudflare Pages (Git-connected, password-protected)
 
-The gallery is served by **Cloudflare Pages built straight from this GitHub
-repo**. No files are uploaded by hand — every `git push` to `main` triggers a
-build (~1 min). The whole site sits behind a shared password enforced by
+**Live:** https://ai-promo-3-au1.pages.dev — login `widelab`, password set as the
+`SITE_PASSWORD` Cloudflare secret.
+
+The gallery is served by **Cloudflare Pages built straight from the
+`widelab-design/ai-promo-3` GitHub repo** (Widelab Cloudflare account). No files
+are uploaded by hand — every `git push` to `main` triggers a build (~1 min). The
+whole site sits behind a shared password enforced by
 [`functions/_middleware.js`](functions/_middleware.js) (HTTP Basic Auth,
 fail-closed until the secret is set).
 
 - **Login:** `widelab`
 - **Password:** set as the `SITE_PASSWORD` Cloudflare secret (never committed).
 
+> The clean `ai-promo-3.pages.dev` subdomain is still held by an older standalone
+> deployment on a different Cloudflare account. Delete that project to free the
+> name, then rename this project's subdomain to claim it.
+
 ## How it's wired
 
-- **Pages project:** source = GitHub `kacha-debouu/ai-promo-3`, production branch
+- **Pages project:** source = GitHub `widelab-design/ai-promo-3`, production branch
   `main`. Static site — no build command, output dir = repo root.
 - **Auth:** `functions/_middleware.js` runs on every request and checks Basic Auth
   against `SITE_PASSWORD` (secret) with username `SITE_USER` (defaults to `widelab`).
@@ -36,7 +44,7 @@ npx wrangler pages secret put SITE_PASSWORD --project-name <project>
 # 1. create the Git-connected project
 curl -s -X POST "https://api.cloudflare.com/client/v4/accounts/$CLOUDFLARE_ACCOUNT_ID/pages/projects" \
   -H "Authorization: Bearer $CLOUDFLARE_API_TOKEN" -H "Content-Type: application/json" \
-  -d '{"name":"ai-promo-3","production_branch":"main","source":{"type":"github","config":{"owner":"kacha-debouu","repo_name":"ai-promo-3","production_branch":"main","deployments_enabled":true}},"build_config":{"build_command":"","destination_dir":""}}'
+  -d '{"name":"ai-promo-3","production_branch":"main","source":{"type":"github","config":{"owner":"widelab-design","repo_name":"ai-promo-3","production_branch":"main","deployments_enabled":true}},"build_config":{"build_command":"","destination_dir":""}}'
 
 # 2. set the password secret (prod + preview)
 curl -s -X PATCH "https://api.cloudflare.com/client/v4/accounts/$CLOUDFLARE_ACCOUNT_ID/pages/projects/ai-promo-3" \
