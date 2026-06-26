@@ -20,9 +20,10 @@
     font-weight:400; font-style:normal; font-display:swap;
   }
   :root{
-    --ink:#151515; --bg:#f4f3ee; --card:#ffffff; --purple:#4734f7;
-    --sec:#6f6f6f; --faint:#9a978d;
-    --stroke:rgba(21,21,21,.12); --stroke-2:rgba(21,21,21,.22);
+    /* Widelab brand tokens — widelab.co */
+    --ink:#151515; --bg:#f6f6f6; --card:#ffffff; --purple:#4734f7; --purple-tint:#edebfe; --yellow:#e6ff27;
+    --sec:#7a7a7a; --faint:#a3a3a3;
+    --stroke:#ebebeb; --stroke-2:#d9d9d9;
     --font-disp:"Sequel Sans","Helvetica Neue","Arial",sans-serif;
     --font-head:"Sequel Sans Head","Sequel Sans","Helvetica Neue","Arial",sans-serif;
   }
@@ -31,7 +32,7 @@
   body{
     background:var(--bg); color:var(--ink); font-family:var(--font-disp);
     min-height:100vh; display:flex; flex-direction:column;
-    background-image:radial-gradient(120% 70% at 50% -10%, #ffffff 0%, #f1f0ea 60%);
+    background-image:radial-gradient(120% 70% at 50% -10%, #ffffff 0%, #f3f3f3 60%);
   }
   a{color:inherit;text-decoration:none}
 
@@ -49,7 +50,7 @@
     font-size:clamp(40px,7vw,76px); letter-spacing:-.018em;
     opacity:0; animation:rise .7s .12s cubic-bezier(.2,.7,.2,1) forwards;
   }
-  .hero h1 .dim{color:#bdbbb1}
+  .hero h1 .dim{color:#b3b3b3}
   .hero p{
     margin-top:18px; max-width:560px; font-size:clamp(15px,1.5vw,17px);
     line-height:1.5; color:var(--sec);
@@ -66,12 +67,12 @@
     animation:rise .7s cubic-bezier(.2,.7,.2,1) forwards; animation-delay:var(--d,.3s);
     transition:border-color .35s, transform .35s, box-shadow .35s;
   }
-  .tile:hover{transform:translateY(-4px); border-color:var(--stroke-2); box-shadow:0 24px 60px -28px rgba(21,21,21,.28)}
+  .tile:hover{transform:translateY(-4px); border-color:var(--stroke-2); box-shadow:0 24px 60px -28px rgba(21,21,21,.20)}
 
   /* thumbnail — live auto-looping promo */
   .thumb{
     position:relative; aspect-ratio:16/10; overflow:hidden;
-    background:#ece9e1; border-bottom:1px solid var(--stroke); display:block;
+    background:#ebebeb; border-bottom:1px solid var(--stroke); display:block;
   }
   .thumb iframe{position:absolute; inset:0; width:100%; height:100%; border:none; pointer-events:none; transform-origin:top left}
   .thumb .live{
@@ -87,7 +88,7 @@
   .meta h2{font-size:18px; font-weight:400; letter-spacing:-.01em}
   .meta h2 em{font-style:normal; color:var(--faint)}
   .meta .count{font-size:12.5px; color:var(--sec); white-space:nowrap}
-  .meta .desc{font-size:13.5px; line-height:1.5; color:#6f6f6f; margin-top:-4px}
+  .meta .desc{font-size:13.5px; line-height:1.5; color:#656565; margin-top:-4px}
 
   .versions{display:flex; flex-wrap:wrap; gap:10px; margin-top:auto; align-items:center}
   .ver{
