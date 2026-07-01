@@ -20,9 +20,9 @@
     font-weight:400; font-style:normal; font-display:swap;
   }
   :root{
-    /* light mode */
-    --bg:#f4f4f5; --ink:#151515; --sec:#767676; --line:#e6e6e6; --line2:#dcdcdc;
-    --card:#ffffff; --card-h:#ffffff; --chip:#ededed; --chip-h:#e4e4e4; --purple:#4734f7;
+    /* light mode — grey stage */
+    --bg:#e8e8e8; --ink:#151515; --sec:#767676; --line:#e6e6e6; --line2:#dcdcdc;
+    --card:#ffffff; --card-h:#ffffff; --chip:#dedede; --chip-h:#d5d5d5; --purple:#4734f7;
     --font-disp:"Sequel Sans","Helvetica Neue","Arial",sans-serif;
     --font-head:"Sequel Sans Head","Sequel Sans","Helvetica Neue","Arial",sans-serif;
   }
@@ -35,7 +35,7 @@
   /* ───── top nav ───── */
   .nav{position:sticky; top:0; z-index:50; display:grid; grid-template-columns:1fr auto 1fr;
     align-items:center; gap:24px; padding:22px clamp(24px,4vw,54px);
-    background:rgba(244,244,245,.82); backdrop-filter:blur(12px); -webkit-backdrop-filter:blur(12px);
+    background:rgba(232,232,232,.82); backdrop-filter:blur(12px); -webkit-backdrop-filter:blur(12px);
     border-bottom:1px solid transparent; transition:border-color .3s}
   .nav.is-stuck{border-color:var(--line)}
   .nav-links{display:flex; align-items:center; gap:32px; font-size:16px}
@@ -109,16 +109,16 @@
   .grid{display:grid; grid-template-columns:repeat(auto-fill,minmax(340px,1fr)); gap:26px}
   .empty{grid-column:1/-1; padding:80px 0; text-align:center; color:var(--sec); font-size:16px}
 
-  .tile{position:relative; border:1px solid var(--line); border-radius:20px; background:var(--card);
+  .tile{position:relative; border-radius:2px; background:var(--card);
     overflow:hidden; display:flex; flex-direction:column;
+    box-shadow:0 1px 2px rgba(0,0,0,.05);
     opacity:0; transform:translateY(14px);
     animation:rise .6s cubic-bezier(.2,.7,.2,1) forwards; animation-delay:var(--d,.2s);
-    transition:border-color .3s, transform .3s, box-shadow .3s, background .3s}
-  .tile:hover{transform:translateY(-4px); border-color:#d2d2d2;
-    box-shadow:0 32px 64px -34px rgba(0,0,0,.35)}
+    transition:transform .3s, box-shadow .3s, background .3s}
+  .tile:hover{transform:translateY(-4px);
+    box-shadow:0 30px 60px -30px rgba(0,0,0,.28)}
 
-  .thumb{position:relative; aspect-ratio:16/9; overflow:hidden; background:#eeeeee;
-    border-bottom:1px solid var(--line)}
+  .thumb{position:relative; aspect-ratio:16/9; overflow:hidden; background:#eeeeee}
   /* render the promo at full 16:9 then scale the whole iframe down to fit the
      thumb (via JS) — shows the entire page as a thumbnail, never a zoomed crop */
   .thumb .cover{position:absolute; top:0; left:0; width:1280px; height:720px; border:0;
