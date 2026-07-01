@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1" />
-<title>ai-promo · gallery</title>
+<title>Widelab — Motion</title>
 <link rel="preload" href="fonts/SequelSans-RomanDisp.ttf" as="font" type="font/ttf" crossorigin />
 <link rel="preload" href="fonts/SequelSans-RomanHead.ttf" as="font" type="font/ttf" crossorigin />
 <style>
@@ -20,265 +20,415 @@
     font-weight:400; font-style:normal; font-display:swap;
   }
   :root{
-    /* Widelab brand tokens — widelab.co */
-    --ink:#151515; --bg:#f6f6f6; --card:#ffffff; --purple:#4734f7; --purple-tint:#edebfe; --yellow:#e6ff27;
-    --sec:#7a7a7a; --faint:#a3a3a3;
-    --stroke:#ebebeb; --stroke-2:#d9d9d9;
+    /* light mode */
+    --bg:#f4f4f5; --ink:#151515; --sec:#767676; --line:#e6e6e6; --line2:#dcdcdc;
+    --card:#ffffff; --card-h:#ffffff; --chip:#ededed; --chip-h:#e4e4e4; --purple:#4734f7;
     --font-disp:"Sequel Sans","Helvetica Neue","Arial",sans-serif;
     --font-head:"Sequel Sans Head","Sequel Sans","Helvetica Neue","Arial",sans-serif;
   }
   *{box-sizing:border-box;margin:0;padding:0}
   html{-webkit-font-smoothing:antialiased;-moz-osx-font-smoothing:grayscale}
-  body{
-    background:var(--bg); color:var(--ink); font-family:var(--font-disp);
-    min-height:100vh; display:flex; flex-direction:column;
-    background-image:radial-gradient(120% 70% at 50% -10%, #ffffff 0%, #f3f3f3 60%);
-  }
+  body{background:var(--bg); color:var(--ink); font-family:var(--font-disp);
+    min-height:100vh; display:flex; flex-direction:column}
   a{color:inherit;text-decoration:none}
 
-  /* ---- shell ---- */
-  .wrap{width:100%; max-width:1180px; margin:0 auto; padding:clamp(40px,6vw,88px) clamp(24px,5vw,48px) 80px; flex:1 0 auto}
-  header.top{display:flex; align-items:center; justify-content:space-between; gap:24px}
-  .brand{position:relative; width:118px; height:26px; opacity:0; animation:fade .6s .05s forwards}
-  .brand .wm{position:absolute}
-  .brand .wm img{width:100%;height:100%;display:block}
-  .top .tag{font-size:13px; letter-spacing:.04em; color:var(--sec); opacity:0; animation:fade .6s .15s forwards}
+  /* ───── top nav ───── */
+  .nav{position:sticky; top:0; z-index:50; display:grid; grid-template-columns:1fr auto 1fr;
+    align-items:center; gap:24px; padding:22px clamp(24px,4vw,54px);
+    background:rgba(244,244,245,.82); backdrop-filter:blur(12px); -webkit-backdrop-filter:blur(12px);
+    border-bottom:1px solid transparent; transition:border-color .3s}
+  .nav.is-stuck{border-color:var(--line)}
+  .nav-links{display:flex; align-items:center; gap:32px; font-size:16px}
+  .nav-links a{color:var(--ink); opacity:.9; transition:opacity .2s}
+  .nav-links a:hover{opacity:.5}
+  .nav-links a.is-current{text-decoration:underline; text-underline-offset:4px; text-decoration-thickness:1px}
+  .nav-links a.soon{opacity:.4; cursor:default}
+  .nav-links a.soon:hover{opacity:.4}
+  .nav-brand{justify-self:center; position:relative; display:block; height:25px; aspect-ratio:5.42}
+  .nav-brand .wm{position:absolute}
+  .nav-brand .wm img{width:100%; height:100%; display:block}
 
-  .hero{margin:clamp(48px,9vw,104px) 0 clamp(36px,6vw,64px)}
-  .hero h1{
-    font-family:var(--font-head); font-weight:400; line-height:1.02;
-    font-size:clamp(40px,7vw,76px); letter-spacing:-.018em;
-    opacity:0; animation:rise .7s .12s cubic-bezier(.2,.7,.2,1) forwards;
-  }
+  /* ───── shell ───── */
+  .wrap{width:100%; max-width:1360px; margin:0 auto; padding:0 clamp(24px,4vw,54px) 96px; flex:1 0 auto}
+
+  /* ───── hero ───── */
+  .hero{padding:clamp(32px,5vw,64px) 0 clamp(26px,4vw,44px)}
+  .hero h1{font-family:var(--font-head); font-weight:400; line-height:1.0;
+    font-size:clamp(38px,5.2vw,72px); letter-spacing:-.025em}
   .hero h1 .dim{color:#b3b3b3}
-  .hero p{
-    margin-top:18px; max-width:560px; font-size:clamp(15px,1.5vw,17px);
-    line-height:1.5; color:var(--sec);
-    opacity:0; animation:rise .7s .22s cubic-bezier(.2,.7,.2,1) forwards;
-  }
+  .hero p{margin-top:26px; max-width:620px; font-size:clamp(16px,1.5vw,19px);
+    line-height:1.5; color:var(--sec)}
 
-  /* ---- grid ---- */
-  .grid{display:grid; grid-template-columns:repeat(auto-fill,minmax(330px,1fr)); gap:24px}
+  /* ───── toolbar / filters ───── */
+  .toolbar{display:flex; align-items:center; justify-content:space-between; gap:20px;
+    flex-wrap:wrap; margin:0 0 32px}
+  .toolbar-left{display:flex; align-items:center; gap:16px}
+  .toolbar .count-total{font-size:14px; color:var(--sec)}
+  .clear{display:none; font-family:var(--font-disp); font-size:13px; color:#555; cursor:pointer;
+    background:none; border:none; border-bottom:1px solid #bbb; padding:0 0 2px; transition:color .2s, border-color .2s}
+  .clear:hover{color:#151515; border-color:#151515}
+  .clear.show{display:inline-block}
+  .filterbar{display:flex; align-items:center; gap:10px; flex-wrap:wrap}
+  .fgroup{position:relative}
+  .pill{font-family:var(--font-disp); font-size:14.5px; color:var(--ink); cursor:pointer;
+    background:var(--chip); border:1px solid transparent; border-radius:999px;
+    padding:10px 18px; display:inline-flex; align-items:center; gap:8px;
+    transition:background .2s, color .2s}
+  .pill:hover{background:var(--chip-h)}
+  .pill .chev{width:0;height:0;border-left:4px solid transparent;border-right:4px solid transparent;
+    border-top:5px solid #9a9a9a; transition:transform .2s}
+  .fgroup.open .pill,.pill.is-active{background:#151515; color:#fff}
+  .fgroup.open .pill .chev,.pill.is-active .chev{border-top-color:#fff}
+  .fgroup.open .pill .chev{transform:rotate(180deg)}
+  .pill .badge{font-size:12px; background:rgba(255,255,255,.24); color:#fff; border-radius:999px;
+    min-width:18px; height:18px; padding:0 5px; display:inline-grid; place-items:center}
+  .pill:not(.is-active) .badge{display:none}
+  .funnel{width:44px; height:44px; border-radius:999px; background:var(--chip); border:none; cursor:pointer;
+    color:#555; display:grid; place-items:center; transition:background .2s}
+  .funnel:hover{background:var(--chip-h)}
+  .funnel svg{width:17px;height:17px}
 
-  .tile{
-    position:relative; border:1px solid var(--stroke); border-radius:16px;
-    background:var(--card); overflow:hidden; display:flex; flex-direction:column;
-    opacity:0; transform:translateY(16px);
-    animation:rise .7s cubic-bezier(.2,.7,.2,1) forwards; animation-delay:var(--d,.3s);
-    transition:border-color .35s, transform .35s, box-shadow .35s;
-  }
-  .tile:hover{transform:translateY(-4px); border-color:var(--stroke-2); box-shadow:0 24px 60px -28px rgba(21,21,21,.20)}
+  .dropdown{position:absolute; top:calc(100% + 10px); right:0; z-index:40; min-width:266px;
+    background:#ffffff; border:1px solid var(--line2); border-radius:18px; padding:8px;
+    box-shadow:0 30px 64px -22px rgba(0,0,0,.22); display:none}
+  .fgroup.open .dropdown{display:block; animation:pop .16s ease}
+  @keyframes pop{from{opacity:0; transform:translateY(-4px)} to{opacity:1; transform:none}}
+  .opt{display:flex; align-items:center; gap:12px; padding:11px 12px; border-radius:11px; cursor:pointer;
+    font-size:15.5px; transition:background .15s}
+  .opt:hover{background:#f2f2f2}
+  .opt input{appearance:none; -webkit-appearance:none; width:19px; height:19px; flex:none;
+    border:1.6px solid #c9c9c9; border-radius:5px; cursor:pointer; position:relative; transition:.15s}
+  .opt input:checked{background:var(--purple); border-color:var(--purple)}
+  .opt input:checked::after{content:""; position:absolute; left:6px; top:2.5px; width:5px; height:9px;
+    border:solid #fff; border-width:0 2px 2px 0; transform:rotate(42deg)}
+  .opt .txt{flex:1}
+  .opt .n{color:#a0a0a0; font-size:14px}
+  .opt.is-zero{opacity:.4}
 
-  /* thumbnail — live auto-looping promo */
-  .thumb{
-    position:relative; aspect-ratio:16/10; overflow:hidden;
-    background:#ebebeb; border-bottom:1px solid var(--stroke); display:block;
-  }
-  .thumb iframe{position:absolute; inset:0; width:100%; height:100%; border:none; pointer-events:none; transform-origin:top left}
-  .thumb .live{
-    position:absolute; top:14px; right:14px; display:inline-flex; align-items:center; gap:6px;
-    background:rgba(21,21,21,.85); backdrop-filter:blur(6px); padding:5px 12px; border-radius:999px;
-    font-size:11px; color:#fff; letter-spacing:.3px;
-  }
-  .thumb .live::before{content:''; width:6px; height:6px; border-radius:50%; background:#37ff7a; box-shadow:0 0 8px rgba(55,255,122,.5); animation:live 1.6s ease-in-out infinite}
+  /* ───── grid + tiles (light bento) ───── */
+  .grid{display:grid; grid-template-columns:repeat(auto-fill,minmax(340px,1fr)); gap:26px}
+  .empty{grid-column:1/-1; padding:80px 0; text-align:center; color:var(--sec); font-size:16px}
 
-  /* meta row */
-  .meta{padding:20px 22px 22px; display:flex; flex-direction:column; gap:16px; flex:1}
+  .tile{position:relative; border:1px solid var(--line); border-radius:20px; background:var(--card);
+    overflow:hidden; display:flex; flex-direction:column;
+    opacity:0; transform:translateY(14px);
+    animation:rise .6s cubic-bezier(.2,.7,.2,1) forwards; animation-delay:var(--d,.2s);
+    transition:border-color .3s, transform .3s, box-shadow .3s, background .3s}
+  .tile:hover{transform:translateY(-4px); border-color:#d2d2d2;
+    box-shadow:0 32px 64px -34px rgba(0,0,0,.35)}
+
+  .thumb{position:relative; aspect-ratio:16/9; overflow:hidden; background:#eeeeee;
+    border-bottom:1px solid var(--line)}
+  .thumb .cover{position:absolute; inset:0; width:100%; height:100%; border:0;
+    pointer-events:none; background:#eeeeee; z-index:1}
+  .thumb .ttl{position:absolute; left:24px; bottom:22px; right:24px;
+    font-family:var(--font-head); font-weight:400; font-size:26px; line-height:1.04; letter-spacing:-.01em; color:#151515}
+  .thumb .ttl em{font-style:normal; color:#9a9a9a}
+
+  .chips{position:absolute; top:14px; right:14px; z-index:3; display:flex; gap:8px; align-items:center}
+  .tagchip{font-family:var(--font-disp); font-size:10.5px; letter-spacing:.12em; text-transform:uppercase;
+    padding:6px 10px; border-radius:999px; line-height:1; display:inline-flex; align-items:center; gap:6px;
+    background:rgba(15,15,15,.72); color:#f4f4f4; border:1px solid rgba(255,255,255,.26);
+    backdrop-filter:blur(8px); -webkit-backdrop-filter:blur(8px)}
+  .tagchip--story{background:rgba(71,52,247,.68); color:#fff; border-color:rgba(163,150,255,.7)}
+  .tagchip--live{background:rgba(255,255,255,.82); color:#151515; border-color:rgba(0,0,0,.10)}
+  .tagchip--live .dot{width:7px;height:7px;border-radius:50%;background:#19c37d;
+    box-shadow:0 0 0 0 rgba(25,195,125,.6); animation:pulse 1.8s infinite}
+  @keyframes pulse{0%{box-shadow:0 0 0 0 rgba(25,195,125,.55)}70%{box-shadow:0 0 0 7px rgba(25,195,125,0)}100%{box-shadow:0 0 0 0 rgba(25,195,125,0)}}
+
+  .meta{padding:22px 24px 24px; display:flex; flex-direction:column; gap:14px; flex:1}
   .meta .row{display:flex; align-items:baseline; justify-content:space-between; gap:12px}
-  .meta h2{font-size:18px; font-weight:400; letter-spacing:-.01em}
-  .meta h2 em{font-style:normal; color:var(--faint)}
+  .meta h2{font-size:19px; font-weight:400; letter-spacing:-.01em}
   .meta .count{font-size:12.5px; color:var(--sec); white-space:nowrap}
-  .meta .desc{font-size:13.5px; line-height:1.5; color:#656565; margin-top:-4px}
-
+  .meta .desc{font-size:13.5px; line-height:1.55; color:#6f6f6f; margin-top:-2px}
   .versions{display:flex; flex-wrap:wrap; gap:10px; margin-top:auto; align-items:center}
-  .ver{
-    display:inline-flex; align-items:center; gap:8px;
-    padding:9px 15px; border:1px solid var(--stroke-2); border-radius:999px;
-    font-size:13.5px; color:var(--ink); background:#fff;
-    transition:background .25s, border-color .25s, color .25s, transform .25s;
-  }
+  .ver{display:inline-flex; align-items:center; gap:8px; padding:9px 15px;
+    border:1px solid var(--line2); border-radius:999px; font-size:13.5px; color:#2a2a2a; background:#fafafa;
+    transition:background .25s, border-color .25s, color .25s}
   .ver .glyph{font-size:11px; color:var(--sec); transition:transform .25s, color .25s}
   .ver:hover{background:var(--purple); border-color:var(--purple); color:#fff}
   .ver:hover .glyph{transform:translateX(3px); color:#fff}
-  .tag-pill{
-    display:inline-flex; align-items:center; padding:8px 13px; border-radius:999px;
-    border:1px solid var(--stroke); font-size:12.5px; color:var(--sec); background:transparent;
-  }
+  .stackchip{font-size:11px; letter-spacing:.04em; color:#8a8a8a; padding:7px 0}
 
-  footer{flex-shrink:0; padding:26px clamp(24px,5vw,48px); border-top:1px solid var(--stroke);
-    display:flex; justify-content:space-between; align-items:center; color:var(--faint); font-size:12.5px}
-  footer a{color:var(--sec)}
+  footer{flex-shrink:0; padding:26px clamp(24px,4vw,54px); border-top:1px solid var(--line);
+    display:flex; justify-content:space-between; align-items:center; color:var(--sec); font-size:12.5px}
   footer a:hover{color:var(--ink)}
 
-  @keyframes fade{to{opacity:1}}
   @keyframes rise{to{opacity:1;transform:none}}
-  @keyframes live{0%,100%{opacity:1}50%{opacity:.35}}
-  @media (prefers-reduced-motion:reduce){
-    *{animation:none!important; opacity:1!important; transform:none!important}
-  }
-  @media (max-width:560px){
+  @media (prefers-reduced-motion:reduce){*{animation:none!important; opacity:1!important; transform:none!important}}
+  @media (max-width:720px){ .nav-links{display:none} }
+  @media (max-width:620px){
     .grid{grid-template-columns:1fr}
+    .nav{grid-template-columns:auto auto; gap:14px}
+    .nav-brand{justify-self:start}
+    .toolbar{align-items:flex-start; flex-direction:column}
   }
 </style>
 </head>
 <body>
-  <div class="wrap">
-    <header class="top">
-      <div class="brand" aria-label="widelab">
-        <span class="wm" style="inset:24.45% 75.15% 2.3% 0"><img src="assets/w0.svg" alt=""></span>
-        <span class="wm" style="inset:0 53.59% 0 31.51%"><img src="assets/w1.svg" alt=""></span>
-        <span class="wm" style="inset:21.04% 37.27% 0.2% 48.51%"><img src="assets/w2.svg" alt=""></span>
-        <span class="wm" style="inset:0.03% 0 0.02% 85.07%"><img src="assets/w3.svg" alt=""></span>
-        <span class="wm" style="inset:21.7% 17.18% 0.65% 70.25%"><img src="assets/w4.svg" alt=""></span>
-        <span class="wm" style="inset:0 31.78% 2.22% 64.78%"><img src="assets/w5.svg" alt=""></span>
-        <span class="wm" style="inset:24.46% 70.67% 2.31% 25.89%"><img src="assets/w6.svg" alt=""></span>
-      </div>
-      <span class="tag">Promo gallery</span>
-    </header>
+  <header class="nav" id="nav">
+    <nav class="nav-links">
+      <a href="https://widelab-deck.pages.dev/" target="_blank" rel="noopener">Decks</a>
+      <a href="index.html" class="is-current">Motion</a>
+      <a class="soon" title="Link coming soon">AI-projects</a>
+      <a href="https://project-widelab-timelines.pages.dev/" target="_blank" rel="noopener">Timelines</a>
+    </nav>
+    <a class="nav-brand" href="index.html" aria-label="widelab — motion">
+      <span class="wm" style="inset:24.45% 75.15% 2.3% 0"><img src="assets/w0.svg" alt=""></span>
+      <span class="wm" style="inset:0 53.59% 0 31.51%"><img src="assets/w1.svg" alt=""></span>
+      <span class="wm" style="inset:21.04% 37.27% 0.2% 48.51%"><img src="assets/w2.svg" alt=""></span>
+      <span class="wm" style="inset:0.03% 0 0.02% 85.07%"><img src="assets/w3.svg" alt=""></span>
+      <span class="wm" style="inset:21.7% 17.18% 0.65% 70.25%"><img src="assets/w4.svg" alt=""></span>
+      <span class="wm" style="inset:0 31.78% 2.22% 64.78%"><img src="assets/w5.svg" alt=""></span>
+      <span class="wm" style="inset:24.46% 70.67% 2.31% 25.89%"><img src="assets/w6.svg" alt=""></span>
+    </a>
+    <span aria-hidden="true"></span>
+  </header>
 
+  <div class="wrap">
     <section class="hero">
-      <h1>Looping product promos,<br><span class="dim">built from Figma flows.</span></h1>
-      <p>A living library of self-contained, auto-looping micro-promos — each one recreates
-         a product flow as a Dribbble-style shot. Pick a card to view it full-screen.</p>
+      <h1><span class="dim">Watch it</span><br>come alive.</h1>
+      <p>A living reel of Widelab product motion — each card auto-loops a real, coded
+         animation. Filter by category, product or stack to find the right one.</p>
     </section>
+
+    <div class="toolbar">
+      <div class="toolbar-left">
+        <span class="count-total" id="resultCount"></span>
+        <button class="clear" id="clearBtn" type="button">Clear all ✕</button>
+      </div>
+      <div class="filterbar" id="filterbar">
+        <button class="funnel" id="reset" aria-label="Reset filters" title="Reset filters">
+          <svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M4 5h16l-6 7v6l-4 2v-8L4 5Z" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"/></svg>
+        </button>
+      </div>
+    </div>
 
     <main class="grid" id="grid"></main>
   </div>
 
   <footer>
-    <span>© Widelab · auto-looping promos</span>
-    <a href="https://github.com/widelab-design/ai-promo-3" target="_blank" rel="noopener">github ↗</a>
+    <span>© Widelab</span>
+    <a href="https://widelab.co" target="_blank" rel="noopener">widelab.co ↗</a>
   </footer>
 
   <script>
-    /* ── Promo gallery ─────────────────────────────────────────────
-       Add a promo = add an object. `live:true` shows the auto-looping
-       "Live" badge. `href` opens the full-screen promo.                */
+    /* ── Motion library ────────────────────────────────────────────
+       Add a promo = add an object. Filter dimensions per promo:
+         cat     : 'showcase' | 'story' | 'prototype'
+         product : 'wideset' | 'arangodb' | 'biopath' | 'boards' | 'other'
+         stack   : 'react' | 'html'                                    */
     const PROMOS = [
       {
-        name: ['Wideset', '— Showcase Reel'],
+        name: 'Wideset — Showcase Reel',
+        title: ['Wideset', '— Showcase Reel'],
+        cat:'story', product:'wideset', stack:'react',
         count: '18 beats · ~40s',
-        desc: 'The long storytelling cut. One dashboard lives its whole lifecycle: assembles from components → re-skins across four brands (Acme violet, Northwind coral, Lumen cobalt, Vertex dark-amber) → matures wireframe → draft → shipped → reflows mobile→tablet→desktop → flips to dark. Title cards narrate each chapter, then it loops.',
+        desc: 'The long storytelling cut. One dashboard lives its whole lifecycle: assembles from components → re-skins across four brands → matures wireframe→ship → reflows mobile→desktop → flips to dark, with narrated title cards. Then it loops.',
         href: './wideset-story/',
-        tags: ['React', 'framer-motion'],
       },
       {
-        name: ['Wideset', '— One System, Every Brand'],
+        name: 'One System, Every Brand',
+        title: ['Wideset', '— One System, Every Brand'],
+        cat:'showcase', product:'wideset', stack:'react',
         count: '4 brands',
-        desc: 'The same dashboard re-skinned live across four client brands — accent, corner radius, padding and surfaces all morph together via design tokens. One component set, infinite brands. White-label in motion.',
+        desc: 'The same dashboard re-skinned live across four client brands — accent, radius, padding and surfaces morph together via design tokens. One component set, infinite brands.',
         href: './one-system/',
-        tags: ['React', 'design tokens'],
       },
       {
-        name: ['Wideset', '— Built in Seconds'],
+        name: 'Built in Seconds',
+        title: ['Wideset', '— Built in Seconds'],
+        cat:'showcase', product:'wideset', stack:'react',
         count: '5 stages',
-        desc: 'A blank canvas assembling into a complete analytics dashboard — sidebar, stat cards, chart and table drop in and settle in sequence. Component breadth + prototyping speed, on a rose theme.',
+        desc: 'A blank canvas assembling into a complete analytics dashboard — sidebar, stat cards, chart and table drop in and settle in sequence. Component breadth + prototyping speed.',
         href: './built-in-seconds/',
-        tags: ['React', 'framer-motion'],
       },
       {
-        name: ['Wideset', '— Wireframe to Ship'],
+        name: 'Wireframe to Ship',
+        title: ['Wideset', '— Wireframe to Ship'],
+        cat:'showcase', product:'wideset', stack:'react',
         count: '3 fidelities',
-        desc: 'The fidelity jump: a grey lo-fi wireframe matures into a desaturated draft, then a fully-styled teal product — same layout throughout, tokens dressing the structure. Design maturity in one continuous morph.',
+        desc: 'The fidelity jump: a grey lo-fi wireframe matures into a desaturated draft, then a fully-styled product — same layout throughout, tokens dressing the structure.',
         href: './wireframe-to-ship/',
-        tags: ['React', 'design tokens'],
       },
       {
-        name: ['Wideset', '— Every State Covered'],
+        name: 'Every State Covered',
+        title: ['Wideset', '— Every State Covered'],
+        cat:'showcase', product:'wideset', stack:'react',
         count: '7 states',
         desc: 'Hero components cycling through the full interaction matrix — Default, Hover, Focus, Loading, Success, Error, Disabled. Proof the system ships every state, not just the happy path.',
         href: './component-states/',
-        tags: ['React', 'framer-motion'],
       },
       {
-        name: ['Wideset', '— Responsive & Dark'],
+        name: 'Responsive & Dark',
+        title: ['Wideset', '— Responsive & Dark'],
+        cat:'showcase', product:'wideset', stack:'react',
         count: '4 breakpoints',
-        desc: 'One product reflowing mobile → tablet → desktop, then flipping to dark mode — sidebar collapses to a tab bar, cards redistribute, surfaces retint. Adaptive layout + theming baked into the components.',
+        desc: 'One product reflowing mobile → tablet → desktop, then flipping to dark mode — sidebar collapses to a tab bar, cards redistribute, surfaces retint. Adaptive layout + theming built in.',
         href: './responsive-dark/',
-        tags: ['React', 'framer-motion'],
       },
       {
-        name: ['Wideset DS', '— Brandbook Restyle'],
+        name: 'Wideset DS — Brandbook Restyle',
+        title: ['Wideset DS', '— Brandbook Restyle'],
+        cat:'story', product:'wideset', stack:'react',
         count: '8 scenes',
-        desc: 'Claude restyles a design system from a brandbook: prompt in the Claude app → Figma tokens sweep violet → bottle-green → the omnisearch morphs styles, toggles light/dark and reflows mobile→desktop → a Wideset → Claude+Figma → Claude+Storybook workflow → a bubble-pop grid of components in light, dark-green and B&W → Widelab outro.',
+        desc: 'Claude restyles a design system from a brandbook: prompt in the Claude app → Figma tokens sweep to bottle-green → omnisearch morphs styles and reflows → a workflow node-graph → a bubble-pop grid of components → Widelab outro.',
         href: './design-system/',
-        tags: ['React', 'framer-motion'],
       },
       {
-        name: ['ai-promo', '— 9 Style Variants'],
+        name: 'ai-promo — 9 Style Variants',
+        title: ['ai-promo', '— 9 Style Variants'],
+        cat:'showcase', product:'other', stack:'react',
         count: '9 scenes',
-        desc: 'The original promo: one AI-assistant “upload your routine” flow recreated in nine visual treatments — Bento OS, Glass 2.0, Neo-brutalism, Y2K Chrome, Cyberpunk Terminal, Claymorphic and more. Auto-loops typewriter → long-press → upload success.',
+        desc: 'The original promo: one AI-assistant “upload your routine” flow in nine visual treatments — Bento OS, Glass 2.0, Neo-brutalism, Y2K Chrome, Cyberpunk Terminal, Claymorphic and more.',
         href: 'https://ai-promo.pages.dev/',
-        tags: ['React', 'framer-motion'],
       },
       {
-        name: ['ArangoDB', '— Widelab prototype'],
+        name: 'ArangoDB — Widelab prototype',
+        title: ['ArangoDB', '— Widelab prototype'],
+        cat:'prototype', product:'arangodb', stack:'html',
         count: '4 scenes',
-        desc: 'Recreated from the Widelab design prototype, pixel-true to its real tokens (#127920 brand, Inter + IBM Plex Mono). Cycles Dashboard → Query Editor with AQLizer chat → Collections → Graph preview.',
+        desc: 'Recreated from the Widelab prototype, pixel-true to its real tokens (#127920 brand, Inter + IBM Plex Mono). Cycles Dashboard → Query Editor with AQLizer chat → Collections → Graph preview.',
         href: './arangodb-2/',
-        tags: ['HTML', 'AQLizer'],
       },
       {
-        name: ['ArangoDB', '— Contextual Data Platform'],
+        name: 'ArangoDB — Contextual Data Platform',
+        title: ['ArangoDB', '— Contextual Data Platform'],
+        cat:'prototype', product:'arangodb', stack:'html',
         count: '5 scenes',
         desc: 'First take: Dashboard, Collections, AQL editor with live typewriter + result stream, an interactive Graph view, and AutoGraph entity extraction.',
         href: './arangodb/',
-        tags: ['HTML', 'SVG charts'],
       },
       {
-        name: ['BioPathAI', '— RNA Sequence Review'],
+        name: 'BioPathAI — RNA Sequence Review',
+        title: ['BioPathAI', '— RNA Sequence Review'],
+        cat:'prototype', product:'biopath', stack:'html',
         count: '13 frames',
         desc: 'Multi-agent research workflow: Core Agent → PaperQA gathering evidence, file uploads, and a review-action modal. Loops through all 13 progressive states.',
         href: './biopath/',
-        tags: ['HTML', 'SVG avatars'],
       },
       {
-        name: ['boards.so', '— Chat & Boards'],
+        name: 'boards.so — Chat & Boards',
+        title: ['boards.so', '— Chat & Boards'],
+        cat:'prototype', product:'boards', stack:'react',
         count: '4 scenes',
-        desc: 'iPhone mockup running chat → boards picker → long-press menu → voice listening, on a magenta/blue Dribbble-style stage. Built with Vite + React + framer-motion.',
+        desc: 'iPhone mockup running chat → boards picker → long-press menu → voice listening, on a magenta/blue Dribbble-style stage.',
         href: 'https://ai-promo-2.pages.dev/',
-        tags: ['React', 'framer-motion'],
       },
     ];
 
+    /* ── filter dimensions ── */
+    const FILTERS = [
+      { key:'cat',     label:'Category', opts:[['showcase','Showcase'],['story','Story'],['prototype','Prototype']] },
+      { key:'product', label:'Product',  opts:[['wideset','Wideset'],['arangodb','ArangoDB'],['biopath','BioPathAI'],['boards','boards.so'],['other','Other']] },
+      { key:'stack',   label:'Stack',    opts:[['react','React + framer-motion'],['html','HTML + SVG']] },
+    ];
+    const sel = { cat:new Set(), product:new Set(), stack:new Set() };
+    const countFor = (key,val) => PROMOS.filter(d => (d[key]||'') === val).length;
+
+    const CAT_LABEL = { showcase:'Showcase', story:'Story', prototype:'Prototype' };
+    const STACK_LABEL = { react:'React · framer-motion', html:'HTML · SVG' };
+
+    /* ── render tiles ── */
     const grid = document.getElementById('grid');
+    const cards = [];
     PROMOS.forEach((p, i) => {
       const tile = document.createElement('article');
       tile.className = 'tile';
-      tile.style.setProperty('--d', (0.30 + i * 0.08).toFixed(2) + 's');
+      tile.style.setProperty('--d', (0.10 + i * 0.06).toFixed(2) + 's');
 
-      const tags = (p.tags || []).map(t => `<span class="tag-pill">${t}</span>`).join('');
+      const catCls = p.cat === 'story' ? 'tagchip tagchip--story' : 'tagchip';
+      const chips = `<span class="${catCls}">${CAT_LABEL[p.cat]}</span>
+                     <span class="tagchip tagchip--live"><span class="dot"></span>Live</span>`;
 
       tile.innerHTML = `
-        <a class="thumb" href="${p.href}" target="_blank" rel="noopener" aria-label="${p.name[0]} ${p.name[1] || ''}">
-          <iframe src="${p.href}" loading="lazy" sandbox="allow-scripts allow-same-origin" scrolling="no"></iframe>
-          <span class="live">Live</span>
+        <div class="chips">${chips}</div>
+        <a class="thumb" href="${p.href}" target="_blank" rel="noopener" aria-label="${p.name}">
+          <iframe class="cover" src="${p.href}" loading="lazy" scrolling="no" tabindex="-1"
+                  sandbox="allow-scripts allow-same-origin" aria-hidden="true" title="${p.name} — preview"></iframe>
         </a>
         <div class="meta">
-          <div class="row"><h2>${p.name[0]} <em>${p.name[1] || ''}</em></h2><span class="count">${p.count}</span></div>
+          <div class="row"><h2>${p.title[0]} <em style="font-style:normal;color:#9a9a9a">${p.title[1] || ''}</em></h2><span class="count">${p.count}</span></div>
           <p class="desc">${p.desc}</p>
           <div class="versions">
             <a class="ver" href="${p.href}" target="_blank" rel="noopener"><span>Open</span><span class="glyph">→</span></a>
-            ${tags}
+            <span class="stackchip">${STACK_LABEL[p.stack]}</span>
           </div>
         </div>`;
       grid.appendChild(tile);
+      cards.push({ el: tile, d: p });
     });
 
-    /* Scale iframes down so the full UI is visible inside the thumb area. */
-    function fitThumbs(){
-      document.querySelectorAll('.thumb iframe').forEach(f => {
-        const target = 1440;        // pretend desktop width
-        const thumb = f.parentElement;
-        const w = thumb.clientWidth;
-        const scale = w / target;
-        f.style.width = target + 'px';
-        f.style.height = (target * (10/16)) + 'px';
-        f.style.transform = `scale(${scale})`;
+    const empty = document.createElement('div');
+    empty.className = 'empty'; empty.textContent = 'No motions match those filters.'; empty.style.display = 'none';
+    grid.appendChild(empty);
+
+    /* ── build filter pills + dropdowns ── */
+    const bar = document.getElementById('filterbar');
+    const reset = document.getElementById('reset');
+    FILTERS.forEach(f => {
+      const g = document.createElement('div');
+      g.className = 'fgroup';
+      const opts = f.opts.map(([val,txt]) => {
+        const n = countFor(f.key, val);
+        return `<label class="opt${n ? '' : ' is-zero'}">
+          <input type="checkbox" value="${val}"><span class="txt">${txt}</span><span class="n">${n}</span>
+        </label>`;
+      }).join('');
+      g.innerHTML = `
+        <button class="pill" type="button">${f.label}<span class="badge"></span><span class="chev"></span></button>
+        <div class="dropdown" data-key="${f.key}">${opts}</div>`;
+      bar.insertBefore(g, reset);
+
+      const pill = g.querySelector('.pill');
+      pill.addEventListener('click', e => {
+        e.stopPropagation();
+        const wasOpen = g.classList.contains('open');
+        document.querySelectorAll('.fgroup.open').forEach(x => x.classList.remove('open'));
+        if (!wasOpen) g.classList.add('open');
       });
+      g.querySelectorAll('input').forEach(inp => {
+        inp.addEventListener('change', () => {
+          inp.checked ? sel[f.key].add(inp.value) : sel[f.key].delete(inp.value);
+          const badge = pill.querySelector('.badge');
+          pill.classList.toggle('is-active', sel[f.key].size > 0);
+          badge.textContent = sel[f.key].size || '';
+          apply();
+        });
+      });
+    });
+
+    document.addEventListener('click', () => document.querySelectorAll('.fgroup.open').forEach(x => x.classList.remove('open')));
+    const clearBtn = document.getElementById('clearBtn');
+    function clearAll(){
+      FILTERS.forEach(f => sel[f.key].clear());
+      document.querySelectorAll('.filterbar input').forEach(i => i.checked = false);
+      document.querySelectorAll('.pill').forEach(p => { p.classList.remove('is-active'); p.querySelector('.badge').textContent = ''; });
+      apply();
     }
-    window.addEventListener('load', fitThumbs);
-    window.addEventListener('resize', fitThumbs);
+    reset.addEventListener('click', clearAll);
+    clearBtn.addEventListener('click', clearAll);
+
+    /* ── apply filters ── */
+    const resultCount = document.getElementById('resultCount');
+    function apply(){
+      let shown = 0;
+      const active = FILTERS.some(f => sel[f.key].size > 0);
+      cards.forEach(({el, d}) => {
+        const ok = FILTERS.every(f => sel[f.key].size === 0 || sel[f.key].has(d[f.key] || ''));
+        el.style.display = ok ? '' : 'none';
+        if (ok) shown++;
+      });
+      empty.style.display = shown ? 'none' : '';
+      resultCount.textContent = shown === PROMOS.length ? `${PROMOS.length} motions` : `${shown} of ${PROMOS.length} motions`;
+      clearBtn.classList.toggle('show', active);
+    }
+    apply();
+
+    /* nav hairline on scroll */
+    const nav = document.getElementById('nav');
+    const onScroll = () => nav.classList.toggle('is-stuck', window.scrollY > 8);
+    onScroll(); window.addEventListener('scroll', onScroll, { passive:true });
   </script>
 </body>
 </html>
