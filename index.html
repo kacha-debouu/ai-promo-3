@@ -110,15 +110,13 @@
   .empty{grid-column:1/-1; padding:80px 0; text-align:center; color:var(--sec); font-size:16px}
 
   .tile{position:relative; border-radius:2px; background:var(--card);
-    overflow:hidden; display:flex; flex-direction:column;
-    box-shadow:0 1px 2px rgba(0,0,0,.05);
+    overflow:hidden; display:flex; flex-direction:column; padding:12px;
     opacity:0; transform:translateY(14px);
     animation:rise .6s cubic-bezier(.2,.7,.2,1) forwards; animation-delay:var(--d,.2s);
-    transition:transform .3s, box-shadow .3s, background .3s}
-  .tile:hover{transform:translateY(-4px);
-    box-shadow:0 30px 60px -30px rgba(0,0,0,.28)}
+    transition:transform .3s, background .3s}
+  .tile:hover{transform:translateY(-4px); background:#fafafa}
 
-  .thumb{position:relative; aspect-ratio:16/9; overflow:hidden; background:#eeeeee}
+  .thumb{position:relative; aspect-ratio:16/9; overflow:hidden; background:#eeeeee; border-radius:2px}
   /* render the promo at full 16:9 then scale the whole iframe down to fit the
      thumb (via JS) — shows the entire page as a thumbnail, never a zoomed crop */
   .thumb .cover{position:absolute; top:0; left:0; width:1280px; height:720px; border:0;
@@ -127,7 +125,7 @@
     font-family:var(--font-head); font-weight:400; font-size:26px; line-height:1.04; letter-spacing:-.01em; color:#151515}
   .thumb .ttl em{font-style:normal; color:#9a9a9a}
 
-  .chips{position:absolute; top:14px; right:14px; z-index:3; display:flex; gap:8px; align-items:center}
+  .chips{position:absolute; top:22px; right:22px; z-index:3; display:flex; gap:8px; align-items:center}
   .tagchip{font-family:var(--font-disp); font-size:10.5px; letter-spacing:.12em; text-transform:uppercase;
     padding:6px 10px; border-radius:999px; line-height:1; display:inline-flex; align-items:center; gap:6px;
     background:rgba(15,15,15,.72); color:#f4f4f4; border:1px solid rgba(255,255,255,.26);
@@ -138,7 +136,7 @@
     box-shadow:0 0 0 0 rgba(25,195,125,.6); animation:pulse 1.8s infinite}
   @keyframes pulse{0%{box-shadow:0 0 0 0 rgba(25,195,125,.55)}70%{box-shadow:0 0 0 7px rgba(25,195,125,0)}100%{box-shadow:0 0 0 0 rgba(25,195,125,0)}}
 
-  .meta{padding:22px 24px 24px; display:flex; flex-direction:column; gap:14px; flex:1}
+  .meta{padding:16px 2px 4px; display:flex; flex-direction:column; gap:14px; flex:1}
   .meta .row{display:flex; align-items:baseline; justify-content:space-between; gap:12px}
   .meta h2{font-size:19px; font-weight:400; letter-spacing:-.01em}
   .meta .count{font-size:12.5px; color:var(--sec); white-space:nowrap}
