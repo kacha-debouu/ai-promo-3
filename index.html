@@ -230,7 +230,7 @@
       {
         name: 'One System, Every Brand',
         title: ['Wideset', '— One System, Every Brand'],
-        cat:'showcase', product:'wideset', stack:'react',
+        cat:'showcase', product:'wideset', stack:'react', low:true,
         count: '4 brands',
         desc: 'The same dashboard re-skinned live across four client brands — accent, radius, padding and surfaces morph together via design tokens. One component set, infinite brands.',
         href: './one-system/',
@@ -238,7 +238,7 @@
       {
         name: 'Built in Seconds',
         title: ['Wideset', '— Built in Seconds'],
-        cat:'showcase', product:'wideset', stack:'react',
+        cat:'showcase', product:'wideset', stack:'react', low:true,
         count: '5 stages',
         desc: 'A blank canvas assembling into a complete analytics dashboard — sidebar, stat cards, chart and table drop in and settle in sequence. Component breadth + prototyping speed.',
         href: './built-in-seconds/',
@@ -246,7 +246,7 @@
       {
         name: 'Wireframe to Ship',
         title: ['Wideset', '— Wireframe to Ship'],
-        cat:'showcase', product:'wideset', stack:'react',
+        cat:'showcase', product:'wideset', stack:'react', low:true,
         count: '3 fidelities',
         desc: 'The fidelity jump: a grey lo-fi wireframe matures into a desaturated draft, then a fully-styled product — same layout throughout, tokens dressing the structure.',
         href: './wireframe-to-ship/',
@@ -254,7 +254,7 @@
       {
         name: 'Every State Covered',
         title: ['Wideset', '— Every State Covered'],
-        cat:'showcase', product:'wideset', stack:'react',
+        cat:'showcase', product:'wideset', stack:'react', low:true,
         count: '7 states',
         desc: 'Hero components cycling through the full interaction matrix — Default, Hover, Focus, Loading, Success, Error, Disabled. Proof the system ships every state, not just the happy path.',
         href: './component-states/',
@@ -262,7 +262,7 @@
       {
         name: 'Responsive & Dark',
         title: ['Wideset', '— Responsive & Dark'],
-        cat:'showcase', product:'wideset', stack:'react',
+        cat:'showcase', product:'wideset', stack:'react', low:true,
         count: '4 breakpoints',
         desc: 'One product reflowing mobile → tablet → desktop, then flipping to dark mode — sidebar collapses to a tab bar, cards redistribute, surfaces retint. Adaptive layout + theming built in.',
         href: './responsive-dark/',
@@ -332,7 +332,9 @@
     /* ── render tiles ── */
     const grid = document.getElementById('grid');
     const cards = [];
-    PROMOS.forEach((p, i) => {
+    // medium single-concept showcases (low:true) sort to the bottom; order otherwise preserved
+    const ORDERED = PROMOS.slice().sort((a, b) => (a.low ? 1 : 0) - (b.low ? 1 : 0));
+    ORDERED.forEach((p, i) => {
       const tile = document.createElement('article');
       tile.className = 'tile';
       tile.style.setProperty('--d', (0.10 + i * 0.06).toFixed(2) + 's');
