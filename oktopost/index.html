@@ -1,0 +1,687 @@
+<!doctype html>
+<html><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet"><title>Oktopost — AI Assistant</title>
+<style>
+  :root{
+    --fg:#364358; --fg2:#637288; --fg3:#909fb5;
+    --bd:#dee4ed; --bg:#eef1f6; --bg2:#f6f8fb;
+    --accent:#2060e6; --accentSoft:#e8effc;
+    --green:#0e9649; --greenBg:#e8f9f3; --greenFg:#0c5d4c;
+    --star1:#5570f2; --star2:#7c5cff;
+  }
+  *{box-sizing:border-box}
+  html,body{margin:0;overflow:hidden;background:#e2e6ee;
+    font-family:'Inter',-apple-system,'Segoe UI',sans-serif;-webkit-font-smoothing:antialiased}
+  #stage{position:fixed;inset:0;overflow:hidden;display:flex;align-items:center;justify-content:center;
+    background:radial-gradient(1600px 1400px at 50% 42%, #f3f5f9 0%, #e2e6ee 74%)}
+  #fit{width:1920px;height:1080px;position:relative;flex:0 0 auto;transform-origin:50% 50%}
+  #camera{position:absolute;inset:0;transform-origin:50% 50%;will-change:transform}
+  .app{position:absolute;inset:0;background:var(--bg);display:flex;gap:8px;padding:8px;
+    border-radius:26px;overflow:hidden;
+    box-shadow:0 60px 140px -30px rgba(20,30,60,.30), 0 24px 60px -24px rgba(20,30,60,.16)}
+  .panel{background:#fff;border-radius:16px;position:relative}
+
+  /* ---------- generic text ---------- */
+  .t{color:var(--fg)} .t2{color:var(--fg2)} .t3{color:var(--fg3)}
+  .lbl{font-size:12px;font-weight:600;letter-spacing:.02em;color:var(--fg3);text-transform:none}
+  svg{display:block}
+
+  /* ================= SIDEBAR ================= */
+  .sidebar{width:260px;flex:0 0 260px;padding:20px 12px 12px;display:flex;flex-direction:column}
+  .side-logo{display:flex;align-items:center;justify-content:space-between;height:38px}
+  .logo{display:flex;align-items:center;gap:7px;font-weight:700;font-size:20px;color:#0b1b3b;letter-spacing:-.01em}
+  .logo .mark{width:22px;height:22px;border-radius:6px;background:linear-gradient(135deg,#2060e6,#4f6ef7);position:relative}
+  .logo .mark::after{content:"";position:absolute;inset:6px;border-radius:50%;border:2px solid #fff}
+  .iconbtn{width:32px;height:32px;border-radius:8px;display:grid;place-items:center;color:var(--fg3);cursor:default}
+  .iconbtn:hover{background:var(--bg)}
+  .side-search{display:flex;align-items:center;gap:8px;margin-top:18px}
+  .search{flex:1;height:32px;border:1px solid var(--bd);border-radius:8px;display:flex;align-items:center;gap:8px;padding:0 10px;color:var(--fg3);font-size:14px;box-shadow:0 1px 1px #1a1a1a08}
+  .bell{position:relative}
+  .bell .dot{position:absolute;top:6px;right:6px;width:8px;height:8px;border-radius:50%;background:#e7415b;border:2px solid #fff}
+
+  .side-scroll{margin-top:22px;display:flex;flex-direction:column;gap:2px;flex:1;overflow:hidden}
+  .side-sect{font-size:11px;font-weight:600;color:var(--fg3);letter-spacing:.02em;margin:8px 0 6px 8px}
+  .nav{display:flex;align-items:center;gap:10px;height:36px;padding:0 12px;border-radius:8px;color:var(--fg);font-size:14px;font-weight:500}
+  .nav .chev{margin-left:auto;color:var(--fg3)}
+  .nav .ico{color:var(--fg2);flex:0 0 18px}
+  .nav.sub{height:32px;font-size:14px;font-weight:480;color:var(--fg2);margin-left:22px;padding-left:12px;border-left:2px solid var(--bd)}
+  .nav.sub.active{background:var(--accentSoft);color:var(--accent);font-weight:600;border-left-color:var(--accent)}
+  .nav .badge{margin-left:auto;background:#e7415b;color:#fff;font-size:11px;font-weight:600;border-radius:9999px;padding:1px 7px}
+
+  .side-foot{margin-top:auto}
+  .help{position:relative;overflow:hidden;border-radius:14px;padding:16px;color:#fff;
+    background:linear-gradient(135deg,#2b57d6,#1f3fb0);margin-bottom:14px}
+  .help::before{content:"";position:absolute;width:150px;height:150px;border-radius:50%;
+    background:rgba(255,255,255,.08);right:-40px;top:-60px}
+  .help::after{content:"";position:absolute;width:120px;height:120px;border-radius:50%;
+    background:rgba(255,255,255,.06);left:-50px;bottom:-70px}
+  .help h4{margin:0;font-size:15px;font-weight:600;position:relative}
+  .help p{margin:6px 0 0;font-size:12px;line-height:1.45;color:#dbe4fb;position:relative}
+  .help .btn{margin-top:12px;position:relative;background:#fff;color:#1f3fb0;font-size:13px;font-weight:600;
+    height:32px;border-radius:8px;display:grid;place-items:center}
+  .user{display:flex;align-items:center;gap:10px}
+  .avatar{width:32px;height:32px;border-radius:50%;background:linear-gradient(135deg,#f2b872,#e08a4a);flex:0 0 32px;
+    display:grid;place-items:center;color:#fff;font-weight:600;font-size:13px;position:relative}
+  .avatar .on{position:absolute;right:0;bottom:0;width:9px;height:9px;border-radius:50%;background:#15d0a1;border:2px solid #fff}
+  .user .nm{font-size:13px;font-weight:600;color:var(--fg)}
+  .user .em{font-size:12px;color:var(--fg3)}
+
+  /* ================= CENTER ================= */
+  .center{flex:1;min-width:0;padding:24px 0 0;display:flex;flex-direction:column}
+  .c-head{padding:0 24px;display:flex;align-items:center;gap:0}
+  .c-title{display:flex;align-items:center;gap:12px}
+  .c-title h1{margin:0;font-size:20px;font-weight:600;color:var(--fg)}
+  .c-title .gdot{width:14px;height:14px;border-radius:50%;background:#15d0a1;box-shadow:0 0 0 4px #15d0a11f}
+  .split{margin-left:auto;display:flex;align-items:center;height:32px;border-radius:8px;overflow:hidden;
+    background:var(--accent);color:#fff;font-size:14px;font-weight:600;box-shadow:0 1px 2px #14151a1f}
+  .split .main{display:flex;align-items:center;gap:8px;padding:0 14px;height:100%}
+  .split .div{width:1px;height:100%;background:rgba(255,255,255,.25)}
+  .split .caret{display:grid;place-items:center;width:30px;height:100%}
+  .tabs{display:flex;gap:24px;padding:0 24px;margin-top:24px;border-bottom:1px solid var(--bd)}
+  .tab{padding:12px 0;font-size:14px;font-weight:500;color:var(--fg2);position:relative;display:flex;align-items:center;gap:6px}
+  .tab .cnt{background:var(--bg);color:var(--fg2);font-size:12px;font-weight:600;border-radius:9999px;padding:0 7px}
+  .tab.active{color:var(--accent);font-weight:600}
+  .tab.active .cnt{background:var(--accentSoft);color:var(--accent)}
+  .tab.active::after{content:"";position:absolute;left:0;right:0;bottom:-1px;height:2px;background:var(--accent);border-radius:2px}
+
+  .c-tools{padding:20px 24px 0;display:flex;align-items:center;gap:8px}
+  .c-tools .search{max-width:224px}
+  .c-tools .right{margin-left:auto;display:flex;gap:8px}
+
+  table.msgs{width:calc(100% - 48px);margin:16px 24px 0;border-collapse:collapse;table-layout:fixed}
+  table.msgs th{font-size:14px;font-weight:600;color:var(--fg2);text-align:left;padding:16px;border-bottom:1px solid var(--bd)}
+  table.msgs th .thi{display:inline-flex;align-items:center;gap:6px;color:var(--fg2)}
+  table.msgs td{padding:16px;border-bottom:1px solid var(--bd);font-size:14px;color:var(--fg);vertical-align:middle}
+  table.msgs .cbx{width:36px;padding-left:0}
+  .checkbox{width:18px;height:18px;border:1.5px solid var(--bd);border-radius:5px}
+  .checkbox.head{border-color:var(--fg3)}
+  .ent{display:flex;align-items:center;gap:12px}
+  .chan{width:24px;height:24px;border-radius:7px;display:grid;place-items:center;color:#fff;flex:0 0 24px}
+  .chan.li{background:#0076b2}.chan.fb{background:#0866ff}
+  .chan.ig{background:linear-gradient(135deg,#feda75,#d62976 55%,#962fbf)}
+  .typ{display:inline-flex;align-items:center;gap:6px;color:var(--fg2)}
+  .tag{display:inline-flex;align-items:center;gap:6px;background:var(--bg);border-radius:8px;padding:4px 10px;font-size:14px;color:var(--fg);font-weight:500;white-space:nowrap}
+  .tag.plus{color:var(--fg2)}
+  .tag.status{background:var(--greenBg);color:var(--greenFg);font-weight:600}
+  .none{color:var(--fg3)}
+  .c-foot{margin-top:auto;padding:18px 24px;display:flex;align-items:center}
+  .c-foot .pg{font-size:14px;color:var(--fg2)}
+  .c-foot .arrows{margin-left:auto;display:flex;gap:8px}
+
+  /* ================= AI PANEL ================= */
+  .ai{width:500px;flex:0 0 500px;padding:24px;display:flex;flex-direction:column}
+  .ai-head{display:flex;align-items:center;justify-content:space-between}
+  .ai-head .nc{display:flex;align-items:center;gap:8px;font-size:14px;font-weight:600;color:var(--fg)}
+  .ai-body{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;padding-bottom:60px}
+  .empty-gfx{width:210px;height:180px;position:relative;margin-bottom:24px}
+  .ai-body h2{margin:0 0 12px;font-size:24px;font-weight:600;color:var(--fg)}
+  .ai-body p{margin:0;max-width:420px;font-size:15px;line-height:1.5;color:var(--fg2)}
+
+  .ai-foot{margin-top:auto}
+  .chips{display:flex;gap:8px;justify-content:center;margin-bottom:16px;flex-wrap:nowrap}
+  .chip{display:inline-flex;align-items:center;gap:7px;height:32px;padding:0 12px;border:1px solid var(--bd);
+    border-radius:9999px;font-size:14px;font-weight:600;color:var(--fg);box-shadow:0 1px 1px #14151a08;white-space:nowrap}
+  .chip .ci{color:var(--fg2)}
+  .chip.wm-active,.chip.on{background:var(--accentSoft);border-color:#a9c4fb;color:var(--accent)}
+  .chip.wm-active .ci,.chip.on .ci{color:var(--accent)}
+  .ai-input{border:1px solid var(--bd);border-radius:14px;padding:14px 12px 10px;box-shadow:0 1px 2px #1a1a1a0a;background:#fff}
+  .ai-input.focus{border-color:#a9c4fb;box-shadow:0 0 0 3px #2060e61f}
+  .ai-q{min-height:22px;font-size:15px;color:var(--fg);text-align:left;line-height:1.4}
+  .ai-q .ph{color:var(--fg3)}
+  .caret{display:inline-block;width:2px;height:18px;background:var(--accent);vertical-align:-3px;margin-left:1px;opacity:0}
+  .ai-row{display:flex;align-items:center;margin-top:14px}
+  .attach{width:32px;height:32px;border:1px solid var(--bd);border-radius:9999px;display:grid;place-items:center;color:var(--fg2)}
+  .ai-row .rt{margin-left:auto;display:flex;align-items:center;gap:10px}
+  .model{display:flex;align-items:center;gap:8px;height:32px;padding:0 12px;border:1px solid var(--bd);border-radius:9999px;font-size:14px;color:var(--fg);font-weight:500}
+  .send{width:32px;height:32px;border-radius:50%;background:var(--accent);color:#fff;display:grid;place-items:center;box-shadow:0 2px 6px #2060e63d}
+  .send.wm-active{transform:scale(.9)}
+
+  /* cursor */
+  #wm-cursor{position:fixed;left:0;top:0;z-index:99;pointer-events:none;will-change:transform;transform:translate(1650px,1250px);filter:drop-shadow(0 3px 6px rgba(0,0,0,.28))}
+</style></head>
+<body>
+<div id="stage"><div id="fit"><div id="camera">
+  <div class="app">
+
+    <!-- ============ SIDEBAR ============ -->
+    <div class="panel sidebar">
+      <div class="side-logo">
+        <div class="logo"><span class="mark"></span>oktopost</div>
+        <div class="iconbtn">
+          <svg width="18" height="18" viewBox="0 0 18 18" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="2" y="3" width="14" height="12" rx="1.5"/><line x1="7" y1="3" x2="7" y2="15"/></svg>
+        </div>
+      </div>
+      <div class="side-search">
+        <div class="search">
+          <svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="7" cy="7" r="4.5"/><line x1="10.5" y1="10.5" x2="14" y2="14"/></svg>
+          Search
+        </div>
+        <div class="iconbtn bell">
+          <svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M4 6.5a4 4 0 0 1 8 0c0 3 1 4 1 4H3s1-1 1-4Z"/><path d="M6.5 13a1.5 1.5 0 0 0 3 0"/></svg>
+          <span class="dot"></span>
+        </div>
+      </div>
+
+      <div class="side-scroll">
+        <div class="side-sect">Content &amp; Engagement</div>
+        <div class="nav">
+          <span class="ico"><svg width="18" height="18" viewBox="0 0 18 18" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="9" cy="9" r="7"/><path d="M2 9h14M9 2c2 2.2 2 11.8 0 14M9 2c-2 2.2-2 11.8 0 14"/></svg></span>
+          Publish
+          <span class="chev"><svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M4 10l4-4 4 4"/></svg></span>
+        </div>
+        <div class="nav sub">Calendar</div>
+        <div class="nav sub active">Campaigns</div>
+        <div class="nav sub">Content</div>
+        <div class="nav sub">Feedly</div>
+
+        <div class="nav">
+          <span class="ico"><svg width="18" height="18" viewBox="0 0 18 18" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="9" cy="9" r="7"/><path d="M5.5 9l2.5 2.5L12.5 6.5"/></svg></span>
+          Approvals
+          <span class="chev"><svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M4 6l4 4 4-4"/></svg></span>
+        </div>
+        <div class="nav">
+          <span class="ico"><svg width="18" height="18" viewBox="0 0 18 18" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M9 2v5M9 16v-3M3 9h3M12 9h3"/><circle cx="9" cy="9" r="2"/></svg></span>
+          Streams
+          <span class="chev"><svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M4 6l4 4 4-4"/></svg></span>
+        </div>
+        <div class="nav">
+          <span class="ico"><svg width="18" height="18" viewBox="0 0 18 18" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="2.5" y="4" width="13" height="10" rx="1.5"/><path d="M3 5l6 4.5L15 5"/></svg></span>
+          Inbox
+          <span class="badge">124</span>
+        </div>
+
+        <div class="side-sect">Insights &amp; Resources</div>
+        <div class="nav">
+          <span class="ico"><svg width="18" height="18" viewBox="0 0 18 18" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M4 12V6l7-3v11M4 12a2 2 0 0 0 2 2M11 8l3 1v4"/></svg></span>
+          Advocacy
+          <span class="chev"><svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M4 6l4 4 4-4"/></svg></span>
+        </div>
+        <div class="nav">
+          <span class="ico"><svg width="18" height="18" viewBox="0 0 18 18" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M3 15V8M8 15V4M13 15V10"/></svg></span>
+          Analytics
+          <span class="chev"><svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M4 6l4 4 4-4"/></svg></span>
+        </div>
+        <div class="nav">
+          <span class="ico"><svg width="18" height="18" viewBox="0 0 18 18" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="6.5" cy="6" r="2.5"/><path d="M2.5 15c0-2.5 1.8-4 4-4s4 1.5 4 4"/><circle cx="12.5" cy="6.5" r="2"/><path d="M11.5 11c2 .3 4 1.8 4 4"/></svg></span>
+          Contacts &amp; Account
+        </div>
+        <div class="nav">
+          <span class="ico"><svg width="18" height="18" viewBox="0 0 18 18" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="2.5" y="3.5" width="13" height="11" rx="1.5"/><path d="M2.5 11l4-3 3 2 3-3 3 2.5"/><circle cx="6" cy="7" r="1"/></svg></span>
+          Media Library
+          <span class="chev"><svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M4 6l4 4 4-4"/></svg></span>
+        </div>
+      </div>
+
+      <div class="side-foot">
+        <div class="help">
+          <h4>Need Help</h4>
+          <p>Find quick answers, guides, and tips in our Help Center.</p>
+          <div class="btn">Go to Help Center</div>
+        </div>
+        <div class="user">
+          <div class="avatar">AS<span class="on"></span></div>
+          <div><div class="nm">Adam Smith</div><div class="em">hello@widelab.co</div></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ============ CENTER ============ -->
+    <div class="panel center">
+      <div class="c-head">
+        <div class="c-title">
+          <div class="iconbtn"><svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M10 3l-5 5 5 5"/></svg></div>
+          <h1>Advocate Posts 06-26</h1>
+          <span class="gdot"></span>
+          <div class="iconbtn"><svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M4 6l4 4 4-4"/></svg></div>
+        </div>
+        <div class="split">
+          <div class="main">
+            <svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M8 3v10M3 8h10"/></svg>
+            New Message
+          </div>
+          <div class="div"></div>
+          <div class="caret"><svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M4 6l4 4 4-4"/></svg></div>
+        </div>
+      </div>
+
+      <div class="tabs">
+        <div class="tab">Calendar</div>
+        <div class="tab active">Messages <span class="cnt">3</span></div>
+        <div class="tab">Autoposter</div>
+        <div class="tab">Analytics</div>
+        <div class="tab">Settings</div>
+      </div>
+
+      <div class="c-tools">
+        <div class="search"><svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="7" cy="7" r="4.5"/><line x1="10.5" y1="10.5" x2="14" y2="14"/></svg>Search</div>
+        <div class="right">
+          <div class="iconbtn" style="border:1px solid var(--bd)"><svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M2 3h12l-4.5 5.5V13L6.5 11V8.5L2 3Z"/></svg></div>
+          <div class="iconbtn" style="border:1px solid var(--bd)"><svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M8 2v8M5 7.5L8 10.5 11 7.5M3 13h10"/></svg></div>
+        </div>
+      </div>
+
+      <table class="msgs">
+        <colgroup><col style="width:36px"><col style="width:210px"><col style="width:120px"><col style="width:150px"><col style="width:150px"><col><col style="width:130px"></colgroup>
+        <thead><tr>
+          <th class="cbx"><span class="checkbox head"></span></th>
+          <th>Message</th>
+          <th>Types</th>
+          <th><span class="thi">Shares <svg width="14" height="14" viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="1.4"><path d="M4.5 6L7 3.5 9.5 6M4.5 8L7 10.5 9.5 8"/></svg> <svg width="14" height="14" viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="1.4"><circle cx="7" cy="7" r="5.5"/><path d="M7 6.2v3.5M7 4.4v.2"/></svg></span></th>
+          <th><span class="thi">Last Used <svg width="14" height="14" viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="1.4"><path d="M4.5 6L7 3.5 9.5 6M4.5 8L7 10.5 9.5 8"/></svg> <svg width="14" height="14" viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="1.4"><circle cx="7" cy="7" r="5.5"/><path d="M7 6.2v3.5M7 4.4v.2"/></svg></span></th>
+          <th>Tags</th>
+          <th><span class="thi">Status <svg width="14" height="14" viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="1.4"><path d="M4.5 6L7 3.5 9.5 6M4.5 8L7 10.5 9.5 8"/></svg></span></th>
+        </tr></thead>
+        <tbody>
+          <tr>
+            <td class="cbx"><span class="checkbox"></span></td>
+            <td><div class="ent"><span class="chan li"><svg width="13" height="13" viewBox="0 0 13 13" fill="currentColor"><rect x="1" y="4.5" width="2.2" height="7"/><circle cx="2.1" cy="1.9" r="1.3"/><path d="M5 4.5h2v1a2.4 2.4 0 0 1 4.5 1.3v4.7H9.3V7.4c0-.8-.5-1.2-1.1-1.2S7 6.6 7 7.4v4.1H5z"/></svg></span>Social Media Sch…</div></td>
+            <td><span class="typ"><svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M4 4h8M8 4v8M6 12h4"/></svg>Text</span></td>
+            <td>1</td>
+            <td>18h ago</td>
+            <td><span class="tag">Marketing Strategies</span> <span class="tag">Social Media</span></td>
+            <td><span class="tag status"><svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M4 3h6l3 3v7H4z"/><path d="M6 3v3h4"/></svg>Saved</span></td>
+          </tr>
+          <tr>
+            <td class="cbx"><span class="checkbox"></span></td>
+            <td><div class="ent"><span class="chan fb"><svg width="13" height="13" viewBox="0 0 13 13" fill="currentColor"><path d="M7.5 12V7h1.6l.3-2H7.5V3.8c0-.6.2-1 1-1h1V1.1C9.2 1 8.6 1 8 1 6.4 1 5.4 2 5.4 3.6V5H3.8v2h1.6v5z"/></svg></span>Content Distributor</div></td>
+            <td><span class="typ"><svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M4 4h8M8 4v8M6 12h4"/></svg>Text</span></td>
+            <td class="none">None</td>
+            <td class="none">None</td>
+            <td><span class="tag">Email Campaigns</span> <span class="tag plus">+2</span></td>
+            <td><span class="tag status"><svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M4 3h6l3 3v7H4z"/><path d="M6 3v3h4"/></svg>Saved</span></td>
+          </tr>
+          <tr>
+            <td class="cbx"><span class="checkbox"></span></td>
+            <td><div class="ent"><span class="chan ig"><svg width="13" height="13" viewBox="0 0 13 13" fill="none" stroke="currentColor" stroke-width="1.3"><rect x="1.5" y="1.5" width="10" height="10" rx="3"/><circle cx="6.5" cy="6.5" r="2.6"/><circle cx="9.3" cy="3.6" r=".7" fill="currentColor"/></svg></span>Auto-Share Tool</div></td>
+            <td><span class="typ"><svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M4 4h8M8 4v8M6 12h4"/></svg>Text</span></td>
+            <td class="none">None</td>
+            <td class="none">None</td>
+            <td><span class="tag">Content Creation</span></td>
+            <td><span class="tag status"><svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M4 3h6l3 3v7H4z"/><path d="M6 3v3h4"/></svg>Saved</span></td>
+          </tr>
+        </tbody>
+      </table>
+
+      <div class="c-foot">
+        <span class="pg">Page 1-3 of 3</span>
+        <div class="arrows">
+          <div class="iconbtn" style="border:1px solid var(--bd)"><svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M10 3l-5 5 5 5"/></svg></div>
+          <div class="iconbtn" style="border:1px solid var(--bd)"><svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M6 3l5 5-5 5"/></svg></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ============ AI PANEL ============ -->
+    <div class="panel ai">
+      <div class="ai-head">
+        <div class="nc">New Chat <svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M4 6l4 4 4-4"/></svg></div>
+        <div class="iconbtn"><svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M4 4l8 8M12 4l-8 8"/></svg></div>
+      </div>
+
+      <div class="ai-body">
+        <div class="empty-gfx">
+          <svg width="210" height="180" viewBox="0 0 210 180" fill="none">
+            <defs>
+              <linearGradient id="starg" x1="0" y1="0" x2="1" y2="1">
+                <stop offset="0" stop-color="#5570f2"/><stop offset="1" stop-color="#7c5cff"/>
+              </linearGradient>
+              <clipPath id="starclip"><path d="M105 66 l9.5 19.3 21.3 3.1 -15.4 15 3.6 21.2 -19-10 -19 10 3.6 -21.2 -15.4 -15 21.3 -3.1 Z"/></clipPath>
+              <linearGradient id="shineg" x1="0" y1="0" x2="1" y2="0">
+                <stop offset="0" stop-color="#fff" stop-opacity="0"/>
+                <stop offset=".5" stop-color="#fff" stop-opacity="1"/>
+                <stop offset="1" stop-color="#fff" stop-opacity="0"/>
+              </linearGradient>
+            </defs>
+            <!-- rotating broken ring ("turning around the star") -->
+            <g id="gfx-ring">
+              <path d="M105 40 a50 50 0 0 1 0 100" stroke="#e6eaf1" stroke-width="14" stroke-linecap="round"/>
+              <path d="M105 44 a46 46 0 0 0 0 92" stroke="#eef1f6" stroke-width="12" stroke-linecap="round"/>
+            </g>
+            <!-- decorative bubbles (static) -->
+            <circle cx="150" cy="58" r="11" fill="#f1f3f8"/>
+            <path d="M150 60c-1.6-1.8-3.5-2.8-3.5-4.4a1.6 1.6 0 0 1 3.1-.5 1.6 1.6 0 0 1 3.1.5c0 1.6-1.9 2.6-3.5 4.4z" fill="#c9d2e0"/>
+            <circle cx="62" cy="118" r="12" fill="#f1f3f8"/>
+            <path d="M62 113v10M57 118h10" stroke="#c9d2e0" stroke-width="1.6" stroke-linecap="round"/>
+            <!-- orbiting glint -->
+            <g id="gfx-orbit"><path d="M0,-5.5 C.7,-1.6 1.6,-.7 5.5,0 C1.6,.7 .7,1.6 0,5.5 C-.7,1.6 -1.6,.7 -5.5,0 C-1.6,-.7 -.7,-1.6 0,-5.5 Z" fill="#7c5cff"/></g>
+            <!-- star -->
+            <path d="M105 66 l9.5 19.3 21.3 3.1 -15.4 15 3.6 21.2 -19-10 -19 10 3.6 -21.2 -15.4 -15 21.3 -3.1 Z" fill="url(#starg)"/>
+            <!-- shine sweep clipped to the star -->
+            <g clip-path="url(#starclip)"><rect id="gfx-shine" x="56" y="58" width="30" height="78" fill="url(#shineg)" style="transform:translate(-18px,0)"/></g>
+          </svg>
+        </div>
+        <h2>How can I help you today?</h2>
+        <p>Ask about your campaigns, posts, and analytics — or let me draft your next update in seconds.</p>
+      </div>
+
+      <div class="ai-foot">
+        <div class="chips">
+          <span class="chip" id="chip-write"><span class="ci"><svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M11 3l2 2-7 7-3 1 1-3 7-7Z"/></svg></span>Write</span>
+          <span class="chip" id="chip-find"><span class="ci"><svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="7" cy="7" r="4.5"/><line x1="10.5" y1="10.5" x2="14" y2="14"/></svg></span>Find</span>
+          <span class="chip" id="chip-create"><span class="ci"><svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M8 3v10M3 8h10"/></svg></span>Create</span>
+          <span class="chip" id="chip-edit"><span class="ci"><svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M11 3l2 2-7 7-3 1 1-3 7-7Z"/></svg></span>Edit</span>
+          <span class="chip" id="chip-analyze"><span class="ci"><svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M3 11l3-3 2.5 2L13 5"/></svg></span>Analyze</span>
+        </div>
+        <div class="ai-input" id="ai-input">
+          <div class="ai-q" id="ai-q"><span class="ph" id="ai-ph">Enter you question...</span><span id="ai-q-text"></span><span class="caret" id="ai-caret"></span></div>
+          <div class="ai-row">
+            <div class="attach"><svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M11 5.5L6.2 10.3a1.8 1.8 0 0 0 2.5 2.5l4.6-4.6a3.2 3.2 0 0 0-4.5-4.5L4.2 8.3"/></svg></div>
+            <div class="rt">
+              <div class="model">Fable 5 <svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M4 6l4 4 4-4"/></svg></div>
+              <div class="send" id="ai-send"><svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M4 8h7M8 5l3 3-3 3"/></svg></div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</div></div></div>
+
+<div id="wm-cursor"><svg width="26" height="30" viewBox="0 0 26 30"><path d="M2 2 L2 24 L8 18 L12 28 L16 26 L12 17 L21 17 Z" fill="#111" stroke="#fff" stroke-width="1.6"/></svg></div>
+
+<script>/**
+ * WM — Wide Motion timeline runtime (dependency-free)
+ *
+ * Every animation in a wide-motion HTML file MUST be driven by this engine.
+ * Why: the engine is fully deterministic and seekable — the renderer steps it
+ * frame-by-frame (WM.seek(t)) so the exported MP4 is PERFECTLY smooth at any
+ * fps, regardless of machine speed. Never use free-running CSS animations,
+ * setInterval, or un-seekable rAF loops for anything that must appear in the video.
+ *
+ * Contract with the renderer (scripts/render.mjs):
+ *   window.WM.duration  -> total ms
+ *   window.WM.seek(t)   -> synchronously paint state at time t (ms)
+ *   window.WM.play()    -> live preview in the browser (rAF-driven)
+ */
+(function () {
+  // ---------- Easing (the "perfect smooth" palette) ----------
+  const c = (x1, y1, x2, y2) => {
+    // cubic-bezier solver
+    const A = (a, b) => 1 - 3 * b + 3 * a, B = (a, b) => 3 * b - 6 * a, C = (a) => 3 * a;
+    const calc = (t, a, b) => ((A(a, b) * t + B(a, b)) * t + C(a)) * t;
+    const slope = (t, a, b) => 3 * A(a, b) * t * t + 2 * B(a, b) * t + C(a);
+    return (x) => {
+      if (x <= 0) return 0; if (x >= 1) return 1;
+      let t = x;
+      for (let i = 0; i < 8; i++) {
+        const s = slope(t, x1, x2); if (s === 0) break;
+        t -= (calc(t, x1, x2) - x) / s;
+      }
+      return calc(t, y1, y2);
+    };
+  };
+  const Easings = {
+    linear: (t) => t,
+    // Signature cinematic ease — slow in, long silky out. Default for camera.
+    cinematic: c(0.65, 0, 0.05, 1),
+    // Apple-style UI ease for elements entering/moving.
+    smooth: c(0.4, 0, 0.2, 1),
+    out: c(0.16, 1, 0.3, 1),        // expo-ish out — cards, reveals
+    in: c(0.7, 0, 0.84, 0),
+    inOut: c(0.87, 0, 0.13, 1),     // dramatic zoom hits
+    // Critically-damped-ish spring approximation (no overshoot jitter).
+    spring: (t) => 1 - Math.exp(-6.5 * t) * Math.cos(7 * t * Math.PI * 0.32) * (1 - t),
+    softSpring: (t) => { const p = 1 - Math.pow(1 - t, 3); const o = Math.sin(t * Math.PI * 2.2) * Math.pow(1 - t, 3) * 0.12; return p + o; },
+  };
+
+  const lerp = (a, b, t) => a + (b - a) * t;
+  const clamp01 = (t) => Math.max(0, Math.min(1, t));
+
+  // ---------- Track model ----------
+  const tracks = [];   // {start, dur, ease, apply(p), hold}
+  let total = 0;
+
+  function tween(opts) {
+    const { at = 0, dur = 600, ease = 'smooth', apply } = opts;
+    const fn = typeof ease === 'function' ? ease : (Easings[ease] || Easings.smooth);
+    tracks.push({ start: at, dur, ease: fn, apply });
+    total = Math.max(total, at + dur);
+    return at + dur;
+  }
+
+  // Numeric/style helpers ------------------------------------------------
+  const $ = (sel) => (typeof sel === 'string' ? document.querySelector(sel) : sel);
+
+  function style(sel, at, dur, props, ease) {
+    // props: { transform: [from, to] as template fns or strings with {t}, opacity: [0,1], ... }
+    const el = $(sel);
+    return tween({
+      at, dur, ease,
+      apply(p) {
+        if (!el) return;
+        for (const k in props) {
+          const v = props[k];
+          if (Array.isArray(v) && typeof v[0] === 'number') {
+            el.style[k] = String(lerp(v[0], v[1], p));
+          } else if (typeof v === 'function') {
+            el.style[k] = v(p, lerp);
+          }
+        }
+      },
+    });
+  }
+
+  // Camera: animates a single wrapper (#camera) with scale/translate/rotate.
+  // Keyframes: [{t: ms, x, y, scale, rx, ry, rz}] — interpolated with given ease per segment.
+  function camera(keyframes, target = '#camera', ease = 'cinematic') {
+    const el = $(target);
+    const kfs = keyframes.slice().sort((a, b) => a.t - b.t);
+    const end = kfs[kfs.length - 1].t;
+    tracks.push({
+      start: 0, dur: end, ease: Easings.linear,
+      apply(pRaw, tAbs) {
+        if (!el) return;
+        const t = tAbs;
+        let i = 0;
+        while (i < kfs.length - 1 && t > kfs[i + 1].t) i++;
+        const a = kfs[i], b = kfs[Math.min(i + 1, kfs.length - 1)];
+        const seg = b.t === a.t ? 1 : clamp01((t - a.t) / (b.t - a.t));
+        const e = (typeof (b.ease || ease) === 'function') ? (b.ease || ease) : (Easings[b.ease || ease] || Easings.cinematic);
+        const p = e(seg);
+        const g = (k, d = 0) => lerp(a[k] ?? d, b[k] ?? a[k] ?? d, p);
+        const s = g('scale', 1), x = g('x'), y = g('y'), rx = g('rx'), ry = g('ry'), rz = g('rz');
+        el.style.transform =
+          `translate3d(${x}px, ${y}px, 0) scale(${s}) rotateX(${rx}deg) rotateY(${ry}deg) rotateZ(${rz}deg)`;
+      },
+    });
+    total = Math.max(total, end);
+    return end;
+  }
+
+  // Typewriter into an element (uses textContent; caret via CSS class .wm-caret)
+  function type(sel, at, text, cps = 28, ease = 'linear') {
+    const el = $(sel);
+    const dur = (text.length / cps) * 1000;
+    return tween({
+      at, dur, ease,
+      apply(p) { if (el) el.textContent = text.slice(0, Math.round(text.length * p)); },
+    });
+  }
+
+  // Fake cursor: move #wm-cursor to element/point, then click ripple.
+  function cursorTo(sel, at, dur = 700, ease = 'smooth', offset = { x: 0, y: 0 }) {
+    const cur = $('#wm-cursor');
+    let from = null;
+    return tween({
+      at, dur, ease,
+      apply(p) {
+        if (!cur) return;
+        const target = $(sel);
+        if (!target) return;
+        const r = target.getBoundingClientRect();
+        const cr = cur.getBoundingClientRect();
+        if (from === null || p === 0) from = { x: parseFloat(cur.dataset.x || cr.x), y: parseFloat(cur.dataset.y || cr.y) };
+        const tx = r.x + r.width / 2 + offset.x, ty = r.y + r.height / 2 + offset.y;
+        const x = lerp(from.x, tx, p), y = lerp(from.y, ty, p);
+        cur.style.transform = `translate(${x}px, ${y}px)`;
+        if (p === 1) { cur.dataset.x = tx; cur.dataset.y = ty; }
+      },
+    });
+  }
+
+  function click(sel, at) {
+    // press: cursor dips + ripple + target gets .wm-active for 240ms
+    const cur = $('#wm-cursor');
+    tween({
+      at, dur: 240, ease: 'out',
+      apply(p) {
+        if (cur) cur.style.scale = String(1 - 0.25 * Math.sin(p * Math.PI));
+        const target = $(sel);
+        if (target) target.classList.toggle('wm-active', p > 0 && p < 1);
+      },
+    });
+    return at + 240;
+  }
+
+  // Stagger helper: run fn(el, index, startTime) over a NodeList with gap ms.
+  function stagger(selector, at, gap, fn) {
+    const els = document.querySelectorAll(selector);
+    els.forEach((el, i) => fn(el, i, at + i * gap));
+    return at + Math.max(0, els.length - 1) * gap;
+  }
+
+  // Draw an SVG path (charts). Requires stroke-dasharray prepared by engine.
+  function drawPath(sel, at, dur = 1200, ease = 'cinematic') {
+    const el = $(sel);
+    let len = 0;
+    return tween({
+      at, dur, ease,
+      apply(p) {
+        if (!el) return;
+        if (!len) { len = el.getTotalLength(); el.style.strokeDasharray = len; }
+        el.style.strokeDashoffset = String(len * (1 - p));
+      },
+    });
+  }
+
+  // Count-up numbers
+  function count(sel, at, dur, from, to, fmt = (n) => Math.round(n).toLocaleString('en-US')) {
+    const el = $(sel);
+    return tween({ at, dur, ease: 'cinematic', apply(p) { if (el) el.textContent = fmt(lerp(from, to, p)); } });
+  }
+
+  // ---------- Seek / play ----------
+  function seek(t) {
+    for (const tr of tracks) {
+      const local = (t - tr.start) / tr.dur;
+      const p = tr.ease(clamp01(local));
+      // Always apply: before start -> p=0 state, after end -> p=1 (holds final state)
+      tr.apply(p, Math.max(0, Math.min(t, tr.start + tr.dur)) , t);
+    }
+    // camera tracks receive absolute time as 2nd arg (they ignore p)
+    document.documentElement.style.setProperty('--wm-t', String(t));
+  }
+
+  let raf = null;
+  function play(loop = false) {
+    cancelAnimationFrame(raf);
+    const t0 = performance.now();
+    const step = (now) => {
+      let t = now - t0;
+      if (t >= WM.duration) { seek(WM.duration); if (loop) return play(loop); return; }
+      seek(t);
+      raf = requestAnimationFrame(step);
+    };
+    raf = requestAnimationFrame(step);
+  }
+
+  window.WM = {
+    get duration() { return total; },
+    set duration(v) { total = v; },
+    Easings, tween, style, camera, type, cursorTo, click, stagger, drawPath, count,
+    seek, play,
+  };
+})();
+</script>
+<script>
+  // ===== Scenario A — "Ask the Assistant" (seamless loop) =====
+  // px center of AI panel = 1670 ; screen center = (960,540)
+  // Loop point: start & end both HOLD at scale .82 (near-zero velocity) → no visible seam.
+  WM.camera([
+    {t:0,     scale:.72, x:0,     y:0},                     // airy, centered establish — space all around
+    {t:900,   scale:.72, x:0,     y:0,    ease:'linear'},   // hold — loop landing zone
+    {t:2500,  scale:.745,x:0,     y:0},                     // gentle drift-in
+    {t:2900,  scale:.75, x:0,     y:0,    ease:'linear'},
+    {t:3900,  scale:1.55,x:-1100, y:78},                    // push into star + heading
+    {t:5000,  scale:1.57,x:-1114, y:79,   ease:'linear'},   // read the heading (drift)
+    {t:6200,  scale:1.85,x:-1313, y:-777},                  // tilt down to action zone
+    {t:7300,  scale:1.87,x:-1327, y:-786, ease:'linear'},   // drift during chip click
+    {t:9700,  scale:1.9, x:-1349, y:-798, ease:'linear'},   // drift during typing
+    {t:10900, scale:1.92,x:-1363, y:-806, ease:'linear'},   // drift during send
+    {t:11500, scale:1.9, x:-1349, y:-798},                  // settle beat
+    {t:13200, scale:.75, x:0,     y:0},                     // pull back out to floating card
+    {t:13800, scale:.72, x:0,     y:0},                     // settle to match start
+    {t:14400, scale:.72, x:0,     y:0,    ease:'linear'},   // hold — matches t0 (seamless loop)
+  ]);
+
+  // ----- animated star empty-state -----
+  const DUR = 14400;
+  WM.tween({at:0, dur:DUR, ease:'linear', apply(p){
+    const ring = document.getElementById('gfx-ring');
+    if (ring) ring.setAttribute('transform', `rotate(${p*1080} 105 90)`);     // 3 full turns → seamless
+    const orb = document.getElementById('gfx-orbit');
+    if (orb){ const a = -Math.PI/2 + p*Math.PI*4;                             // 2 orbits → seamless
+      const x = 105 + 52*Math.cos(a), y = 90 + 52*Math.sin(a);
+      orb.setAttribute('transform', `translate(${x} ${y})`); }
+  }});
+  // shine sweeps across the star while it's centered in frame
+  WM.style('#gfx-shine', 4000, 1000, { transform:(p)=>`translate(${-18 + p*112}px,0)` }, 'smooth');
+  WM.style('#gfx-shine', 4950, 1000, { transform:(p)=>`translate(${-18 + p*112}px,0)` }, 'smooth');
+
+  // ----- interaction: all state driven by absolute-time gates so the loop resets clean -----
+  const RESET = 13400;   // after pull-back begins, the "sent" input returns to empty
+  WM.cursorTo('#chip-write', 6300, 850);
+  WM.click('#chip-write', 7250);
+  const Q = "Write a LinkedIn post about our new advocacy program";
+  WM.type('#ai-q-text', 7550, Q, 24);
+
+  WM.tween({at:0, dur:DUR, ease:'linear', apply(p){
+    const t = p*DUR;
+    document.getElementById('chip-write').classList.toggle('on', t>=7330 && t<RESET);
+    document.getElementById('ai-input').classList.toggle('focus', t>=7400 && t<RESET);
+    document.getElementById('ai-ph').style.display = (t>=7550 && t<RESET) ? 'none' : '';
+    if (t>=RESET) document.getElementById('ai-q-text').textContent = '';   // message sent → clear
+  }});
+
+  // caret: full-duration gate → hidden at t0/end, blinks only while typing
+  WM.tween({at:0, dur:DUR, ease:'linear', apply(p){
+    const t = p*DUR; let op = 0;
+    if (t >= 7400 && t <= 10500) op = (Math.floor((t-7400)/430)%2) ? 0.2 : 1;
+    document.getElementById('ai-caret').style.opacity = op;
+  }});
+
+  // send
+  WM.cursorTo('#ai-send', 9950, 650);
+  WM.click('#ai-send', 10650);
+
+  // "sent" reset: fade the question out as the camera pulls back, then fade empty placeholder in
+  WM.tween({at:0, dur:DUR, ease:'linear', apply(p){
+    const t = p*DUR, q = document.getElementById('ai-q'); let op = 1;
+    if (t >= 12900 && t < RESET)         op = 1-(t-12900)/(RESET-12900);
+    else if (t >= RESET && t < RESET+500) op = (t-RESET)/500;
+    q.style.opacity = String(op);
+  }});
+
+  // cursor visibility gate: hidden except during the interaction → seamless loop
+  WM.tween({at:0, dur:DUR, ease:'linear', apply(p){
+    const t = p*DUR, cur = document.getElementById('wm-cursor'); let op;
+    if (t < 6100)       op = 0;
+    else if (t < 6350)  op = (t-6100)/250;   // fade in as it flies to the chip
+    else if (t < 11200) op = 1;
+    else if (t < 11700) op = 1-(t-11200)/500; // fade out after send
+    else                op = 0;
+    cur.style.opacity = String(op);
+  }});
+
+  function wmFit(){var s=Math.min(innerWidth/1920,innerHeight/1080);document.getElementById("fit").style.transform="scale("+s+")";}
+  wmFit(); addEventListener("resize", wmFit);
+
+  WM.duration = DUR;
+  WM.seek(0);
+  if (!navigator.webdriver) WM.play(true);   // loop the preview
+</script>
+</body></html>
