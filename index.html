@@ -308,6 +308,14 @@
         href: './biopath/',
       },
       {
+        name: 'Oktopost — AI Copilot',
+        title: ['Oktopost', '— AI Copilot'],
+        cat:'prototype', product:'oktopost', stack:'html',
+        count: '4 beats · 14s',
+        desc: 'The advocacy dashboard wakes up: a slow camera push over the campaign table, a cursor hover, then a dive into the AI panel — Analyze lights up, a question types itself, and the copilot starts thinking. Rebuilt pixel-true from the Figma exploration.',
+        href: './oktopost-ai/',
+      },
+      {
         name: 'boards.so — Chat & Boards',
         title: ['boards.so', '— Chat & Boards'],
         cat:'prototype', product:'boards', stack:'react',
@@ -320,7 +328,7 @@
     /* ── filter dimensions ── */
     const FILTERS = [
       { key:'cat',     label:'Category', opts:[['showcase','Showcase'],['story','Story'],['prototype','Prototype']] },
-      { key:'product', label:'Product',  opts:[['wideset','Wideset'],['arangodb','ArangoDB'],['biopath','BioPathAI'],['boards','boards.so'],['other','Other']] },
+      { key:'product', label:'Product',  opts:[['wideset','Wideset'],['arangodb','ArangoDB'],['biopath','BioPathAI'],['boards','boards.so'],['oktopost','Oktopost'],['other','Other']] },
       { key:'stack',   label:'Stack',    opts:[['react','React + framer-motion'],['html','HTML + SVG']] },
     ];
     const sel = { cat:new Set(), product:new Set(), stack:new Set() };

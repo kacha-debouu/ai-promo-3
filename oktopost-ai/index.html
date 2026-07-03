@@ -1,0 +1,563 @@
+<!doctype html>
+<!-- wide-motion · "Dashboard Wakes Up" · Oktopost advocacy dashboard + AI copilot · 16:9 master -->
+<html><head><meta charset="utf-8"><title>Oktopost — AI Copilot · Widelab Motion</title>
+<style>
+  html,body{margin:0;overflow:hidden;background:#e3e8f2;width:100%;height:100%}
+  *{box-sizing:border-box}
+  #stage{width:1920px;height:1080px;position:absolute;left:50%;top:50%;overflow:hidden;
+    background:radial-gradient(1500px 1000px at 38% 28%, #f7f9fd 0%, #e7ebf4 55%, #dde3ef 100%);
+    font-family:'Inter',ui-sans-serif,-apple-system,'Segoe UI',Roboto,sans-serif;
+    -webkit-font-smoothing:antialiased}
+  #camera{position:absolute;inset:0;transform-origin:50% 50%;will-change:transform}
+  .app{position:absolute;inset:0;background:#eef1f6;border-radius:20px;overflow:hidden;
+    box-shadow:0 60px 140px -30px rgb(13 27 62/.28), 0 0 0 1px rgb(13 27 62/.04)}
+  .card{position:absolute;background:#fff;border-radius:12px}
+
+  /* ============ SIDEBAR ============ */
+  #sidebar{left:8px;top:8px;width:260px;height:1064px;padding:20px 12px;display:flex;flex-direction:column;will-change:transform}
+  .logo-row{display:flex;align-items:center;justify-content:space-between;height:38px;padding-left:12px}
+  .logo{display:flex;align-items:center;gap:1px;font-weight:700;font-size:21px;color:#0c2a66;letter-spacing:-.3px}
+  .logo-o{width:21px;height:21px;border-radius:50%;margin-right:1px;
+    background:conic-gradient(#2060e6 0 25%, #15d0a1 25% 50%, #f7b32b 50% 75%, #e1306c 75% 100%);
+    -webkit-mask:radial-gradient(circle, transparent 0 5px, #000 5.5px);mask:radial-gradient(circle, transparent 0 5px, #000 5.5px)}
+  .srch-row{display:flex;align-items:center;gap:8px;margin-top:24px}
+  .srch{flex:1;height:32px;border:1px solid #dee4ed;border-radius:6px;display:flex;align-items:center;gap:8px;
+    padding:0 10px;color:#909fb5;font-size:14px;background:#fff}
+  .iconbtn{width:32px;height:32px;border-radius:6px;display:grid;place-items:center;color:#637288;position:relative;flex:none}
+  .dot-online{position:absolute;top:2px;right:2px;width:8px;height:8px;border-radius:50%;background:#0e9649;border:1.5px solid #fff}
+  .sect{font-size:12px;font-weight:520;color:#909fb5;padding:0 12px;margin:22px 0 8px}
+  .nav-item{height:36px;border-radius:6px;display:flex;align-items:center;gap:10px;padding:0 12px;
+    font-size:14px;color:#364358;font-weight:480}
+  .nav-item svg{flex:none}
+  .nav-item .grow{flex:1}
+  .nav-item.active{background:#eef1f6;font-weight:520}
+  .nav-sub{position:relative;padding-left:30px}
+  .nav-sub:before{content:'';position:absolute;left:20px;top:0;bottom:0;width:1px;background:#dee4ed}
+  .nav-sub .nav-item{height:32px;padding:0 12px}
+  .badge-red{background:#e7415b;color:#fff;font-size:11px;font-weight:520;border-radius:10px;padding:1px 7px}
+  .help{margin-top:auto;background:#101e5a;border-radius:12px;padding:16px;position:relative;overflow:hidden;color:#fff;will-change:transform}
+  .help:before{content:'';position:absolute;left:-120px;bottom:-190px;width:290px;height:290px;border-radius:50%;background:rgb(255 255 255/.06)}
+  .help:after{content:'';position:absolute;right:-55px;top:-40px;width:100px;height:100px;border-radius:50%;background:rgb(255 255 255/.08)}
+  .help h4{margin:0;font-size:17px;font-weight:600;text-align:center}
+  .help p{margin:8px 0 14px;font-size:12px;line-height:1.55;color:rgb(255 255 255/.72);text-align:center}
+  .help .btn{position:relative;display:block;height:32px;line-height:32px;text-align:center;background:#2060e6;
+    border-radius:6px;font-size:13px;font-weight:520}
+  .user{display:flex;align-items:center;gap:10px;padding:12px 4px 0;margin-top:14px}
+  .avatar{width:34px;height:34px;border-radius:50%;background:linear-gradient(135deg,#f7b32b,#e1306c);
+    color:#fff;font-size:13px;font-weight:600;display:grid;place-items:center}
+  .user .nm{font-size:14px;font-weight:520;color:#364358;line-height:1.25}
+  .user .em{font-size:12px;color:#909fb5}
+
+  /* ============ MAIN ============ */
+  #main{left:276px;top:8px;width:1144px;height:1064px;will-change:transform}
+  .hdr{display:flex;align-items:center;gap:14px;padding:26px 24px 0}
+  .hdr h1{margin:0;font-size:21px;font-weight:600;color:#26334d;letter-spacing:-.2px}
+  .status-pill{display:flex;align-items:center;gap:5px;color:#637288}
+  .status-pill .g{width:13px;height:13px;border-radius:50%;background:#17c07e}
+  .split{margin-left:auto;display:flex;height:32px;border-radius:6px;overflow:hidden;color:#fff;font-size:13px;font-weight:520}
+  .split .a{background:#2060e6;display:flex;align-items:center;gap:6px;padding:0 12px}
+  .split .b{background:#2060e6;border-left:1px solid rgb(255 255 255/.3);display:grid;place-items:center;width:28px}
+  .tabs{display:flex;gap:24px;padding:0 24px;margin-top:22px;border-bottom:1px solid #dee4ed;height:48px}
+  .tab{display:flex;align-items:center;gap:7px;font-size:14px;color:#637288;position:relative;font-weight:480}
+  .tab.active{color:#2060e6;font-weight:520}
+  .tab.active:after{content:'';position:absolute;left:0;right:0;bottom:-1px;height:2px;background:#2060e6;border-radius:2px 2px 0 0}
+  .tab .n{background:#e6edfc;color:#2060e6;font-size:11.5px;font-weight:520;border-radius:9px;padding:1px 7px}
+  .toolbar{display:flex;align-items:center;padding:0 24px;margin-top:24px}
+  .toolbar .srch{flex:none;width:224px}
+  .toolbar .right{margin-left:auto;display:flex;gap:8px}
+  table.tbl{border-collapse:collapse;margin:16px 24px 0;width:1096px;table-layout:fixed}
+  .tbl col.c0{width:36px}.tbl col.c1{width:191px}.tbl col.c2{width:125px}.tbl col.c3{width:156px}
+  .tbl col.c4{width:156px}.tbl col.c5{width:301px}.tbl col.c6{width:131px}
+  .tbl th{height:56px;text-align:left;font-size:13px;font-weight:520;color:#637288;border-bottom:1px solid #e7edf4;padding:0 16px}
+  .tbl th .thx{display:flex;align-items:center;gap:4px}
+  .tbl td{height:64px;border-bottom:1px solid #eef2f7;padding:0 16px;font-size:14px;color:#364358;position:relative}
+  .tbl tr{position:relative;will-change:transform}
+  .cb{display:inline-block;width:16px;height:16px;border-radius:4px;border:1.5px solid #c6d0df;background:#fff;vertical-align:middle}
+  .msg{display:flex;align-items:center;gap:10px;font-weight:480;white-space:nowrap;letter-spacing:-.15px}
+  .chan{width:24px;height:24px;border-radius:6px;color:#fff;display:grid;place-items:center;font-size:13px;font-weight:700;flex:none}
+  .chan.li{background:#0076b2;border-radius:5px;font-size:11px;letter-spacing:-.5px}
+  .chan.fb{background:#0866ff;border-radius:50%;font-family:Georgia,serif;font-size:15px}
+  .chan.ig{background:radial-gradient(circle at 30% 110%, #fdc468 0%, #e1306c 55%, #8a3ab9 100%)}
+  .muted{color:#637288}
+  .tagp{display:inline-flex;align-items:center;gap:6px;height:28px;padding:0 10px;border-radius:6px;
+    background:#f2f5f9;font-size:13px;color:#4a5568;margin-right:6px;will-change:transform}
+  .tagp .tt{font-size:12px;color:#637288;font-weight:520}
+  .badge-saved{display:inline-flex;align-items:center;gap:6px;height:28px;padding:0 10px;border-radius:6px;
+    background:#e8f9f3;color:#0c7a52;font-size:13px;font-weight:520;will-change:transform}
+  .hl{position:absolute;inset:0;background:#f4f8fe;opacity:0;pointer-events:none}
+  td>*{position:relative}
+  .pager{display:flex;align-items:center;padding:16px 24px;font-size:13px;color:#637288}
+  .pager .right{margin-left:auto;display:flex;gap:8px}
+  .pager .iconbtn{border:1px solid #e7edf4;border-radius:8px}
+
+  /* ============ CHAT ============ */
+  #chat{left:1428px;top:8px;width:484px;height:1064px;will-change:transform}
+  .chat-hd{display:flex;align-items:center;padding:24px 24px 0}
+  .chat-hd .t{display:flex;align-items:center;gap:8px;font-size:14px;font-weight:520;color:#364358}
+  .chat-hd .iconbtn{margin-left:auto}
+  #es-visual{position:absolute;left:50%;top:240px;transform:translateX(-50%);width:220px;height:190px;will-change:transform}
+  .es-blob{position:absolute;left:38px;top:0;width:144px;height:167px;border-radius:72px;
+    background:linear-gradient(160deg,#eef1f8 0%, #e3e9f6 100%)}
+  .es-blob:before{content:'';position:absolute;left:-28px;top:24px;width:88px;height:88px;border-radius:50%;background:#fff}
+  #es-star{position:absolute;left:74px;top:52px}
+  .bub{position:absolute;border-radius:50%;background:#e9edf7;display:grid;place-items:center;color:#a6b3cc;font-weight:600}
+  .bub.b1{left:22px;top:140px;width:24px;height:24px;font-size:14px}
+  .bub.b2{left:158px;top:6px;width:24px;height:24px;font-size:14px}
+  .bub.b3{left:182px;top:44px;width:12px;height:12px}
+  .bub.b4{left:10px;top:116px;width:14px;height:14px}
+  #es-head{position:absolute;left:24px;right:24px;top:557px;text-align:center;will-change:transform}
+  #es-head h2{margin:0;font-size:24px;font-weight:600;color:#26334d;letter-spacing:-.3px}
+  #es-head p{margin:10px auto 0;font-size:14px;line-height:1.45;color:#909fb5;max-width:416px}
+  .chips{position:absolute;left:24px;top:904px;display:flex;gap:8px}
+  .chip{display:flex;align-items:center;gap:8px;height:32px;padding:0 11px;border:1px solid #dee4ed;border-radius:6px;
+    font-size:14px;color:#364358;background:#fff;will-change:transform}
+  .chip.on{background:#e6edfc;border-color:#2060e6;color:#2060e6}
+  .chip.on svg{color:#2060e6}
+  .chip svg{color:#637288}
+  #inputbox{position:absolute;left:24px;top:952px;width:436px;height:88px;border:1px solid #dee4ed;border-radius:8px;
+    background:#fff;box-shadow:0 1px 2px rgb(20 21 26/.04);padding:12px;will-change:transform}
+  #ph{position:absolute;left:13px;top:12px;font-size:14px;color:#909fb5}
+  #typedwrap{position:absolute;left:13px;top:12px;right:13px;font-size:14px;color:#364358;white-space:nowrap;overflow:hidden}
+  #caret{display:inline-block;width:1.5px;height:15px;background:#2060e6;vertical-align:-2px;opacity:0}
+  .in-bar{position:absolute;left:12px;right:12px;bottom:10px;height:32px;display:flex;align-items:center}
+  .in-bar .model{margin-left:auto;display:flex;align-items:center;gap:5px;font-size:13px;color:#637288;margin-right:12px}
+  #send{width:32px;height:32px;border-radius:50%;background:#2060e6;color:#fff;display:grid;place-items:center}
+  #bubble{position:absolute;right:24px;top:740px;max-width:310px;background:#2060e6;color:#fff;font-size:14px;
+    line-height:1.45;padding:10px 14px;border-radius:12px 12px 4px 12px;opacity:0;will-change:transform}
+  #dots{position:absolute;left:24px;top:814px;background:#f0f3f8;border-radius:12px 12px 12px 4px;
+    padding:13px 14px;display:flex;gap:5px;opacity:0}
+  #dots i{width:6px;height:6px;border-radius:50%;background:#97a5bb;display:block}
+
+  #wm-cursor{position:fixed;left:0;top:0;z-index:99;pointer-events:none;will-change:transform;opacity:0;
+    filter:drop-shadow(0 2px 5px rgb(0 0 0/.3))}
+</style></head><body>
+<div id="stage">
+  <div id="camera">
+    <div class="app" id="app">
+
+      <!-- ===================== SIDEBAR ===================== -->
+      <div class="card" id="sidebar">
+        <div class="logo-row">
+          <div class="logo"><span class="logo-o"></span>ktopost</div>
+          <div class="iconbtn"><svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="#637288" stroke-width="1.4"><rect x="1.5" y="2.5" width="13" height="11" rx="2"/><path d="M6 2.5v11"/></svg></div>
+        </div>
+        <div class="srch-row">
+          <div class="srch"><svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="#909fb5" stroke-width="1.5"><circle cx="7" cy="7" r="4.5"/><path d="M10.5 10.5 14 14"/></svg>Search</div>
+          <div class="iconbtn"><svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="#637288" stroke-width="1.4"><path d="M8 2a4 4 0 0 0-4 4v3l-1.3 2.3h10.6L12 9V6a4 4 0 0 0-4-4Z"/><path d="M6.5 13.5a1.5 1.5 0 0 0 3 0"/></svg><span class="dot-online"></span></div>
+        </div>
+        <div class="sect sb-item">Content &amp; Engagement</div>
+        <div class="nav-item sb-item"><svg width="18" height="18" viewBox="0 0 18 18" fill="none" stroke="currentColor" stroke-width="1.4"><circle cx="9" cy="9" r="6.5"/><path d="M2.5 9h13M9 2.5c-3.5 3.6-3.5 9.4 0 13M9 2.5c3.5 3.6 3.5 9.4 0 13"/></svg>Publish<span class="grow"></span><svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><path d="m4 10 4-4 4 4"/></svg></div>
+        <div class="nav-sub">
+          <div class="nav-item sb-item">Calendar</div>
+          <div class="nav-item active sb-item">Campaigns</div>
+          <div class="nav-item sb-item">Content</div>
+          <div class="nav-item sb-item">Feedly</div>
+        </div>
+        <div class="nav-item sb-item"><svg width="18" height="18" viewBox="0 0 18 18" fill="none" stroke="currentColor" stroke-width="1.4"><circle cx="9" cy="9" r="6.5"/><path d="m6 9 2 2 4-4"/></svg>Approvals<span class="grow"></span><svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><path d="m4 6 4 4 4-4"/></svg></div>
+        <div class="nav-item sb-item"><svg width="18" height="18" viewBox="0 0 18 18" fill="none" stroke="currentColor" stroke-width="1.4"><path d="M3 13c2-2 2-6 0-8M7 15c3-3.5 3-9.5 0-12M11 13c2-2 2-6 0-8M15 11c1-1.2 1-2.8 0-4"/></svg>Streams<span class="grow"></span><svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><path d="m4 6 4 4 4-4"/></svg></div>
+        <div class="nav-item sb-item"><svg width="18" height="18" viewBox="0 0 18 18" fill="none" stroke="currentColor" stroke-width="1.4"><rect x="2" y="3.5" width="14" height="11" rx="1.5"/><path d="m2.5 5 6.5 5 6.5-5"/></svg>Inbox<span class="grow"></span><span class="badge-red">124</span><svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><path d="m4 6 4 4 4-4"/></svg></div>
+        <div class="sect sb-item">Insights &amp; Resources</div>
+        <div class="nav-item sb-item"><svg width="18" height="18" viewBox="0 0 18 18" fill="none" stroke="currentColor" stroke-width="1.4"><path d="M2.5 8.5 12 4v10L2.5 9.8zM12 6.5c2 0 3.5 1 3.5 2.5S14 11.5 12 11.5M5.5 10.5v3a1.5 1.5 0 0 0 3 0v-2"/></svg>Advocacy<span class="grow"></span><svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><path d="m4 6 4 4 4-4"/></svg></div>
+        <div class="nav-item sb-item"><svg width="18" height="18" viewBox="0 0 18 18" fill="none" stroke="currentColor" stroke-width="1.4"><path d="M3 15V9M8 15V3M13 15v-4"/></svg>Analytics<span class="grow"></span><svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><path d="m4 6 4 4 4-4"/></svg></div>
+        <div class="nav-item sb-item"><svg width="18" height="18" viewBox="0 0 18 18" fill="none" stroke="currentColor" stroke-width="1.4"><circle cx="6.5" cy="6" r="2.5"/><path d="M2.5 14c.5-2.5 2-4 4-4s3.5 1.5 4 4"/><circle cx="12.5" cy="6.5" r="2"/><path d="M12 10.5c1.8 0 3 1.3 3.5 3.5"/></svg>Contacts &amp; Account</div>
+        <div class="nav-item sb-item"><svg width="18" height="18" viewBox="0 0 18 18" fill="none" stroke="currentColor" stroke-width="1.4"><rect x="2" y="3" width="14" height="12" rx="1.5"/><path d="m2 11 4-3.5 4 3.5 3-2.5 3 2.5"/><circle cx="11.5" cy="6.5" r="1.2"/></svg>Media Library<span class="grow"></span><svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><path d="m4 6 4 4 4-4"/></svg></div>
+        <div class="help" id="help">
+          <h4>Need Help</h4>
+          <p>Lorem Ipsum is simply dummy text of the printing and.</p>
+          <div class="btn">Go to Help Center</div>
+        </div>
+        <div class="user" id="user">
+          <div class="avatar">AS</div>
+          <div><div class="nm">Adam Smith</div><div class="em">hello@wideset.co</div></div>
+          <span class="grow" style="flex:1"></span>
+          <svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="#637288" stroke-width="1.5"><path d="m4 6 4 4 4-4"/></svg>
+        </div>
+      </div>
+
+      <!-- ===================== MAIN ===================== -->
+      <div class="card" id="main">
+        <div class="hdr">
+          <div class="iconbtn"><svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="#637288" stroke-width="1.6"><path d="m10 3-5 5 5 5"/></svg></div>
+          <h1>Advocate Posts 06-26</h1>
+          <div class="status-pill"><span class="g"></span><svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><path d="m4 6 4 4 4-4"/></svg></div>
+          <div class="split"><div class="a"><svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="#fff" stroke-width="1.6"><path d="M8 3v10M3 8h10"/></svg>New Message</div><div class="b"><svg width="12" height="12" viewBox="0 0 16 16" fill="none" stroke="#fff" stroke-width="1.6"><path d="m4 6 4 4 4-4"/></svg></div></div>
+        </div>
+        <div class="tabs">
+          <div class="tab">Calendar</div>
+          <div class="tab active">Messages<span class="n">3</span></div>
+          <div class="tab">Autoposter</div>
+          <div class="tab">Analytics</div>
+          <div class="tab">Settings</div>
+        </div>
+        <div class="toolbar" id="toolbar">
+          <div class="srch"><svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="#909fb5" stroke-width="1.5"><circle cx="7" cy="7" r="4.5"/><path d="M10.5 10.5 14 14"/></svg>Search</div>
+          <div class="right">
+            <div class="iconbtn"><svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="#637288" stroke-width="1.4"><path d="M2 3.5h12L9.5 9v4.5l-3 1.5V9z"/></svg></div>
+            <div class="iconbtn"><svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="#637288" stroke-width="1.4"><path d="M8 2.5V10M5 7.5 8 10.5l3-3M3 13.5h10"/></svg></div>
+          </div>
+        </div>
+        <table class="tbl">
+          <colgroup><col class="c0"><col class="c1"><col class="c2"><col class="c3"><col class="c4"><col class="c5"><col class="c6"></colgroup>
+          <thead><tr id="thead">
+            <th style="padding-right:0"><span class="cb"></span></th>
+            <th>Message</th>
+            <th>Types</th>
+            <th><span class="thx">Shares<svg width="13" height="13" viewBox="0 0 16 16" fill="none" stroke="#909fb5" stroke-width="1.4"><path d="m5 6.5 3-3 3 3M5 9.5l3 3 3-3"/></svg><svg width="13" height="13" viewBox="0 0 16 16" fill="none" stroke="#909fb5" stroke-width="1.3"><circle cx="8" cy="8" r="6"/><path d="M8 7.4v3.2M8 5.2v.2"/></svg></span></th>
+            <th><span class="thx">Last Used<svg width="13" height="13" viewBox="0 0 16 16" fill="none" stroke="#909fb5" stroke-width="1.4"><path d="m5 6.5 3-3 3 3M5 9.5l3 3 3-3"/></svg><svg width="13" height="13" viewBox="0 0 16 16" fill="none" stroke="#909fb5" stroke-width="1.3"><circle cx="8" cy="8" r="6"/><path d="M8 7.4v3.2M8 5.2v.2"/></svg></span></th>
+            <th>Tags</th>
+            <th><span class="thx">Status<svg width="13" height="13" viewBox="0 0 16 16" fill="none" stroke="#909fb5" stroke-width="1.4"><path d="m5 6.5 3-3 3 3M5 9.5l3 3 3-3"/></svg></span></th>
+          </tr></thead>
+          <tbody>
+          <tr class="row" id="row1">
+            <td><div class="hl" id="hl1"></div><span class="cb"></span></td>
+            <td><div class="msg" id="row1-msg"><span class="chan li">in</span>Social Media Sch...</div></td>
+            <td><span class="tagp anim-tag"><span class="tt">ᴛT</span>Text</span></td>
+            <td class="muted">1</td>
+            <td class="muted">18h ago</td>
+            <td><span class="tagp anim-tag">Marketing Strategies</span><span class="tagp anim-tag">Social Media</span></td>
+            <td><span class="badge-saved anim-tag"><svg width="13" height="13" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.4"><path d="M4 2.5h6.5L13 5v8.5H4zM6 2.5V6h4V2.5M6 13.5V9.5h4v4"/></svg>Saved</span></td>
+          </tr>
+          <tr class="row" id="row2">
+            <td><span class="cb"></span></td>
+            <td><div class="msg" id="row2-msg"><span class="chan fb">f</span>Content Distributor</div></td>
+            <td><span class="tagp anim-tag"><span class="tt">ᴛT</span>Text</span></td>
+            <td class="muted">None</td>
+            <td class="muted">None</td>
+            <td><span class="tagp anim-tag">Email Campaigns</span><span class="tagp anim-tag">+2</span></td>
+            <td><span class="badge-saved anim-tag"><svg width="13" height="13" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.4"><path d="M4 2.5h6.5L13 5v8.5H4zM6 2.5V6h4V2.5M6 13.5V9.5h4v4"/></svg>Saved</span></td>
+          </tr>
+          <tr class="row" id="row3">
+            <td><span class="cb"></span></td>
+            <td><div class="msg" id="row3-msg"><span class="chan ig"><svg width="13" height="13" viewBox="0 0 16 16" fill="none" stroke="#fff" stroke-width="1.5"><rect x="1.5" y="1.5" width="13" height="13" rx="4"/><circle cx="8" cy="8" r="3"/><circle cx="12" cy="4" r=".8" fill="#fff" stroke="none"/></svg></span>Auto-Share Tool</div></td>
+            <td><span class="tagp anim-tag"><span class="tt">ᴛT</span>Text</span></td>
+            <td class="muted">None</td>
+            <td class="muted">None</td>
+            <td><span class="tagp anim-tag">Content Creation</span></td>
+            <td><span class="badge-saved anim-tag"><svg width="13" height="13" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.4"><path d="M4 2.5h6.5L13 5v8.5H4zM6 2.5V6h4V2.5M6 13.5V9.5h4v4"/></svg>Saved</span></td>
+          </tr>
+          </tbody>
+        </table>
+        <div class="pager" id="pager">
+          Page 1-3 of 3
+          <div class="right">
+            <div class="iconbtn"><svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="#637288" stroke-width="1.5"><path d="m10 4-4 4 4 4"/></svg></div>
+            <div class="iconbtn"><svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="#637288" stroke-width="1.5"><path d="m6 4 4 4-4 4"/></svg></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ===================== CHAT ===================== -->
+      <div class="card" id="chat">
+        <div class="chat-hd">
+          <div class="t">New Chat<svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="#637288" stroke-width="1.5"><path d="m4 6 4 4 4-4"/></svg></div>
+          <div class="iconbtn"><svg width="15" height="15" viewBox="0 0 16 16" fill="none" stroke="#637288" stroke-width="1.5"><path d="m3.5 3.5 9 9M12.5 3.5l-9 9"/></svg></div>
+        </div>
+        <div id="es-visual">
+          <div class="es-blob"></div>
+          <svg id="es-star" width="72" height="72" viewBox="0 0 72 72">
+            <defs><linearGradient id="stg" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#7c5cff"/><stop offset="1" stop-color="#3d5af1"/></linearGradient></defs>
+            <path d="M36 6c2.5 14 8 22.5 24 30-16 7.5-21.5 16-24 30-2.5-14-8-22.5-24-30 16-7.5 21.5-16 24-30Z" fill="url(#stg)"/>
+          </svg>
+          <div class="bub b1">+</div><div class="bub b2">+</div><div class="bub b3"></div><div class="bub b4"></div>
+        </div>
+        <div id="es-head">
+          <h2>How can I help you today?</h2>
+          <p>Lorem Ipsum is simply dummy text of the printing and typesetting industry. Lorem Ipsum is simply dummy text.</p>
+        </div>
+        <div id="bubble">Which advocate posts performed best this week?</div>
+        <div id="dots"><i></i><i></i><i></i></div>
+        <div class="chips">
+          <div class="chip"><svg width="15" height="15" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.4"><path d="M11 2.5 13.5 5 6 12.5l-3.5 1 1-3.5z"/></svg>Write</div>
+          <div class="chip"><svg width="15" height="15" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.4"><circle cx="7" cy="7" r="4.5"/><path d="M10.5 10.5 14 14"/></svg>Find</div>
+          <div class="chip"><svg width="15" height="15" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.4"><path d="M8 3v10M3 8h10"/></svg>Create</div>
+          <div class="chip"><svg width="15" height="15" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.4"><path d="m9.5 3.5 3 3L6 13H3v-3z"/></svg>Edit</div>
+          <div class="chip" id="chip-analyze"><svg width="15" height="15" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.4"><path d="M2 11c2-1 3-5 5-5s2.5 3 4 3 2-4.5 3-6"/></svg>Analyze</div>
+        </div>
+        <div id="inputbox">
+          <span id="ph">Enter you question...</span>
+          <span id="typedwrap"><span id="typed"></span><span id="caret"></span></span>
+          <div class="in-bar">
+            <div class="iconbtn"><svg width="15" height="15" viewBox="0 0 16 16" fill="none" stroke="#637288" stroke-width="1.4"><path d="M13 7.5 8.2 12.3a3.2 3.2 0 0 1-4.5-4.5L8.8 2.7a2.1 2.1 0 0 1 3 3L7 10.5a1 1 0 0 1-1.5-1.5L10 4.5"/></svg></div>
+            <div class="model">Sonnet 4.6<svg width="13" height="13" viewBox="0 0 16 16" fill="none" stroke="#637288" stroke-width="1.5"><path d="m4 6 4 4 4-4"/></svg></div>
+            <div id="send"><svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="#fff" stroke-width="1.8"><path d="M8 13V3M4 7l4-4 4 4"/></svg></div>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+</div>
+<div id="wm-cursor" data-x="1720" data-y="1160"><div id="wm-cursor-inner" style="transform-origin:0 0"><svg width="26" height="30" viewBox="0 0 26 30"><path d="M2 2 L2 24 L8 18 L12 28 L16 26 L12 17 L21 17 Z" fill="#111" stroke="#fff" stroke-width="1.6"/></svg></div></div>
+
+<script>
+/**
+ * WM — Wide Motion timeline runtime (dependency-free)
+ */
+(function () {
+  const c = (x1, y1, x2, y2) => {
+    const A = (a, b) => 1 - 3 * b + 3 * a, B = (a, b) => 3 * b - 6 * a, C = (a) => 3 * a;
+    const calc = (t, a, b) => ((A(a, b) * t + B(a, b)) * t + C(a)) * t;
+    const slope = (t, a, b) => 3 * A(a, b) * t * t + 2 * B(a, b) * t + C(a);
+    return (x) => {
+      if (x <= 0) return 0; if (x >= 1) return 1;
+      let t = x;
+      for (let i = 0; i < 8; i++) {
+        const s = slope(t, x1, x2); if (s === 0) break;
+        t -= (calc(t, x1, x2) - x) / s;
+      }
+      return calc(t, y1, y2);
+    };
+  };
+  const Easings = {
+    linear: (t) => t,
+    cinematic: c(0.65, 0, 0.05, 1),
+    smooth: c(0.4, 0, 0.2, 1),
+    out: c(0.16, 1, 0.3, 1),
+    in: c(0.7, 0, 0.84, 0),
+    inOut: c(0.87, 0, 0.13, 1),
+    spring: (t) => 1 - Math.exp(-6.5 * t) * Math.cos(7 * t * Math.PI * 0.32) * (1 - t),
+    softSpring: (t) => { const p = 1 - Math.pow(1 - t, 3); const o = Math.sin(t * Math.PI * 2.2) * Math.pow(1 - t, 3) * 0.12; return p + o; },
+  };
+  const lerp = (a, b, t) => a + (b - a) * t;
+  const clamp01 = (t) => Math.max(0, Math.min(1, t));
+  const tracks = [];
+  let total = 0;
+  function tween(opts) {
+    const { at = 0, dur = 600, ease = 'smooth', apply } = opts;
+    const fn = typeof ease === 'function' ? ease : (Easings[ease] || Easings.smooth);
+    tracks.push({ start: at, dur, ease: fn, apply });
+    total = Math.max(total, at + dur);
+    return at + dur;
+  }
+  const $ = (sel) => (typeof sel === 'string' ? document.querySelector(sel) : sel);
+  function style(sel, at, dur, props, ease) {
+    const el = $(sel);
+    return tween({
+      at, dur, ease,
+      apply(p) {
+        if (!el) return;
+        for (const k in props) {
+          const v = props[k];
+          if (Array.isArray(v) && typeof v[0] === 'number') {
+            el.style[k] = String(lerp(v[0], v[1], p));
+          } else if (typeof v === 'function') {
+            el.style[k] = v(p, lerp);
+          }
+        }
+      },
+    });
+  }
+  function camera(keyframes, target = '#camera', ease = 'cinematic') {
+    const el = $(target);
+    const kfs = keyframes.slice().sort((a, b) => a.t - b.t);
+    const end = kfs[kfs.length - 1].t;
+    tracks.push({
+      start: 0, dur: end, ease: Easings.linear,
+      apply(pRaw, tAbs) {
+        if (!el) return;
+        const t = tAbs;
+        let i = 0;
+        while (i < kfs.length - 1 && t > kfs[i + 1].t) i++;
+        const a = kfs[i], b = kfs[Math.min(i + 1, kfs.length - 1)];
+        const seg = b.t === a.t ? 1 : clamp01((t - a.t) / (b.t - a.t));
+        const e = (typeof (b.ease || ease) === 'function') ? (b.ease || ease) : (Easings[b.ease || ease] || Easings.cinematic);
+        const p = e(seg);
+        const g = (k, d = 0) => lerp(a[k] ?? d, b[k] ?? a[k] ?? d, p);
+        const s = g('scale', 1), x = g('x'), y = g('y'), rx = g('rx'), ry = g('ry'), rz = g('rz');
+        el.style.transform =
+          `translate3d(${x}px, ${y}px, 0) scale(${s}) rotateX(${rx}deg) rotateY(${ry}deg) rotateZ(${rz}deg)`;
+      },
+    });
+    total = Math.max(total, end);
+    return end;
+  }
+  function type(sel, at, text, cps = 28, ease = 'linear') {
+    const el = $(sel);
+    const dur = (text.length / cps) * 1000;
+    return tween({
+      at, dur, ease,
+      apply(p) { if (el) el.textContent = text.slice(0, Math.round(text.length * p)); },
+    });
+  }
+  function cursorTo(sel, at, dur = 700, ease = 'smooth', offset = { x: 0, y: 0 }) {
+    const cur = $('#wm-cursor');
+    let from = null;
+    return tween({
+      at, dur, ease,
+      apply(p) {
+        if (!cur) return;
+        const target = $(sel);
+        if (!target) return;
+        const r = target.getBoundingClientRect();
+        const cr = cur.getBoundingClientRect();
+        if (from === null || p === 0) from = { x: parseFloat(cur.dataset.x || cr.x), y: parseFloat(cur.dataset.y || cr.y) };
+        const tx = r.x + r.width / 2 + offset.x, ty = r.y + r.height / 2 + offset.y;
+        const x = lerp(from.x, tx, p), y = lerp(from.y, ty, p);
+        cur.style.transform = `translate(${x}px, ${y}px)`;
+        if (p === 1) { cur.dataset.x = tx; cur.dataset.y = ty; }
+      },
+    });
+  }
+  function click(sel, at) {
+    const cur = $('#wm-cursor');
+    tween({
+      at, dur: 240, ease: 'out',
+      apply(p) {
+        if (cur) cur.style.scale = String(1 - 0.25 * Math.sin(p * Math.PI));
+        const target = $(sel);
+        if (target) target.classList.toggle('wm-active', p > 0 && p < 1);
+      },
+    });
+    return at + 240;
+  }
+  function stagger(selector, at, gap, fn) {
+    const els = document.querySelectorAll(selector);
+    els.forEach((el, i) => fn(el, i, at + i * gap));
+    return at + Math.max(0, els.length - 1) * gap;
+  }
+  function drawPath(sel, at, dur = 1200, ease = 'cinematic') {
+    const el = $(sel);
+    let len = 0;
+    return tween({
+      at, dur, ease,
+      apply(p) {
+        if (!el) return;
+        if (!len) { len = el.getTotalLength(); el.style.strokeDasharray = len; }
+        el.style.strokeDashoffset = String(len * (1 - p));
+      },
+    });
+  }
+  function count(sel, at, dur, from, to, fmt = (n) => Math.round(n).toLocaleString('en-US')) {
+    const el = $(sel);
+    return tween({ at, dur, ease: 'cinematic', apply(p) { if (el) el.textContent = fmt(lerp(from, to, p)); } });
+  }
+  function seek(t) {
+    for (const tr of tracks) {
+      const local = (t - tr.start) / tr.dur;
+      const p = tr.ease(clamp01(local));
+      tr.apply(p, Math.max(0, Math.min(t, tr.start + tr.dur)), t);
+    }
+    document.documentElement.style.setProperty('--wm-t', String(t));
+  }
+  let raf = null;
+  function play(loop = false) {
+    cancelAnimationFrame(raf);
+    const t0 = performance.now();
+    const step = (now) => {
+      let t = now - t0;
+      if (t >= WM.duration) { seek(WM.duration); if (loop) return play(loop); return; }
+      seek(t);
+      raf = requestAnimationFrame(step);
+    };
+    raf = requestAnimationFrame(step);
+  }
+  window.WM = {
+    get duration() { return total; },
+    set duration(v) { total = v; },
+    Easings, tween, style, camera, type, cursorTo, click, stagger, drawPath, count,
+    seek, play,
+  };
+})();
+</script>
+<script>
+// ============================================================
+// Timeline — "Dashboard Wakes Up" · 14.2s
+// ============================================================
+const fadeUp = (sel, at, dur, dy, ease) => WM.style(sel, at, dur, {
+  opacity: [0, 1],
+  transform: (p, l) => `translate3d(0, ${l(dy, 0, p)}px, 0)`,
+}, ease || 'out');
+const fadeX = (sel, at, dur, dx, ease) => WM.style(sel, at, dur, {
+  opacity: [0, 1],
+  transform: (p, l) => `translate3d(${l(dx, 0, p)}px, 0, 0)`,
+}, ease || 'out');
+// guarded tween: does nothing until its window starts (avoids overriding earlier tracks)
+const after = (at, dur, ease, fn) => WM.tween({ at, dur, ease, apply(p) { if (p === 0) return; fn(p); } });
+
+// ---- Camera ------------------------------------------------
+// Frame 0: the full screen, centered, zoomed out — then a slow push-in.
+WM.camera([
+  { t: 0,     scale: 0.80,  x: 0,     y: 0 },
+  { t: 2200,  scale: 0.955, x: 0,     y: 0 },
+  { t: 3400,  scale: 0.968, x: 0,     y: -3,   ease: 'linear' },  // drift
+  { t: 4800,  scale: 1.5,   x: 258,   y: 210 },                   // push into table
+  { t: 6300,  scale: 1.52,  x: 262,   y: 213,  ease: 'linear' },  // hold-drift
+  { t: 8000,  scale: 2.7,   x: -1604, y: -905 },                  // pan+zoom to AI panel
+  { t: 12000, scale: 2.72,  x: -1613, y: -910, ease: 'linear' },  // hold-drift during actions
+  { t: 13400, scale: 0.962, x: 0,     y: 0 },                     // pull back
+  { t: 14200, scale: 0.966, x: 0,     y: -3,   ease: 'linear' },  // final drift
+]);
+
+// ---- Establish (0.0–3.4s) -----------------------------------
+// The UI is fully visible from frame 0; the wake-up is the camera's
+// slow push-in plus a gentle staggered "breath" on tags and chips.
+WM.stagger('.anim-tag', 900, 60, (el, i, t) =>
+  after(t, 500, 'out', (p) => { el.style.transform = `scale(${1 + 0.05 * Math.sin(p * Math.PI)})`; }));
+WM.stagger('.chip', 1400, 80, (el, i, t) =>
+  after(t, 450, 'out', (p) => { el.style.transform = `translate3d(0, ${-3 * Math.sin(p * Math.PI)}px, 0)`; }));
+
+// ---- Table beat (3.9–6.3s) ----------------------------------
+WM.style('#wm-cursor', 3900, 250, { opacity: [0, 1] }, 'out');
+WM.cursorTo('#row1-msg', 3900, 750, 'smooth', { x: 30, y: 6 });
+WM.style('#hl1', 4750, 300, { opacity: [0, 1] }, 'smooth');
+WM.stagger('.badge-saved', 5100, 150, (el, i, t) =>
+  after(t, 600, 'linear', (p) => { el.style.transform = `scale(${1 + 0.08 * Math.sin(p * Math.PI)})`; }));
+after(6100, 300, 'smooth', (p) => { document.getElementById('hl1').style.opacity = String(1 - p); });
+
+// ---- AI panel beat (6.5–11.6s) ------------------------------
+WM.cursorTo('#chip-analyze', 6500, 1250, 'smooth');
+WM.click('#chip-analyze', 7950);
+after(8000, 60, 'linear', () => document.getElementById('chip-analyze').classList.add('on'));
+after(8000, 260, 'linear', (p) => {
+  document.getElementById('chip-analyze').style.transform = `translate3d(0,0,0) scale(${1 + 0.06 * Math.sin(p * Math.PI)})`;
+});
+after(8250, 150, 'smooth', (p) => { document.getElementById('ph').style.opacity = String(1 - p); });
+WM.type('#typed', 8400, 'Which advocate posts performed best this week?', 26);
+// deterministic caret blink 8300 → 11050
+WM.tween({ at: 8300, dur: 2750, ease: 'linear', apply(p) {
+  const el = document.getElementById('caret'); if (!el) return;
+  if (p === 0 || p === 1) { el.style.opacity = '0'; return; }
+  el.style.opacity = (Math.floor((p * 2750) / 470) % 2 === 0) ? '1' : '0';
+}});
+WM.cursorTo('#send', 10450, 480, 'smooth');
+WM.click('#send', 10950);
+// send: input clears, message becomes a bubble, empty state retires
+after(11100, 60, 'linear', () => {
+  document.getElementById('typedwrap').style.opacity = '0';
+  document.getElementById('ph').style.opacity = '0';
+});
+after(11050, 320, 'smooth', (p) => {
+  const es1 = document.getElementById('es-visual'), es2 = document.getElementById('es-head');
+  es1.style.opacity = String(1 - p); es2.style.opacity = String(1 - p);
+});
+after(11100, 400, 'out', (p) => {
+  const b = document.getElementById('bubble');
+  b.style.opacity = String(p);
+  b.style.transform = `translate3d(0, ${12 * (1 - p)}px, 0)`;
+});
+after(11650, 320, 'out', (p) => { document.getElementById('dots').style.opacity = String(p); });
+// typing dots bob (deterministic) until the end
+WM.tween({ at: 11650, dur: 2550, ease: 'linear', apply(p) {
+  if (p === 0) return;
+  const ms = p * 2550;
+  document.querySelectorAll('#dots i').forEach((d, i) => {
+    d.style.transform = `translate3d(0, ${Math.sin(ms / 190 - i * 0.9) * 2.4}px, 0)`;
+  });
+}});
+after(11600, 300, 'smooth', (p) => { document.getElementById('wm-cursor').style.opacity = String(1 - p); });
+
+WM.duration = 15400; // 1.2s end-hold before the loop restarts
+
+// fit the 1920x1080 stage to any viewport (gallery tile or full tab)
+const fit = () => {
+  const k = Math.min(innerWidth / 1920, innerHeight / 1080);
+  document.getElementById('stage').style.transform = `translate(-50%, -50%) scale(${k})`;
+  document.getElementById('wm-cursor-inner').style.transform = `scale(${k})`;
+};
+addEventListener('resize', fit);
+fit();
+
+WM.seek(0);
+if (!navigator.webdriver) WM.play(true);
+</script>
+</body></html>
