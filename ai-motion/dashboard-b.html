@@ -1,0 +1,294 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Dashboard · prompt-driven</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@500&display=swap" rel="stylesheet" />
+<style>
+  :root{
+    --bg:#e8e1d0; --surface:#fffdf7; --surface2:#f5f1e6; --line:rgba(26,31,22,.09); --line2:rgba(26,31,22,.06);
+    --ink:#181c16; --ink2:#71776b; --ink3:#9aa093;
+    --green:#1c6b45; --green2:#2f9163; --green-soft:#e3ede3; --green-tint:rgba(28,107,69,.10);
+    --amber:#b8822b; --red:#bd4a3c;
+    --r:14px;
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  html,body{height:100%}
+  body{background:var(--bg);overflow:hidden;font-family:'Inter',system-ui,sans-serif;-webkit-font-smoothing:antialiased;
+    display:flex;flex-direction:column;align-items:center;justify-content:center;gap:18px;color:var(--ink)}
+
+  /* prompt — separated, above the window */
+  .prompt{width:560px;display:flex;align-items:center;gap:10px;background:var(--surface);border:1px solid var(--line);
+    border-radius:14px;padding:12px 14px;box-shadow:0 12px 30px rgba(40,50,30,.10)}
+  .prompt .sp{width:18px;height:18px;color:var(--green);flex:none}
+  .prompt .txt{flex:1;font-size:14px;color:var(--ink);min-height:18px}
+  .prompt .txt.empty{color:var(--ink3)}
+  .pcaret{display:inline-block;width:2px;height:15px;background:var(--green);margin-left:1px;transform:translateY(3px);animation:bl 1s steps(1) infinite}
+  @keyframes bl{0%,50%{opacity:1}51%,100%{opacity:0}}
+  .prompt .go{width:30px;height:30px;border-radius:9px;background:var(--green);display:flex;align-items:center;justify-content:center;flex:none}
+
+  /* window */
+  .win{width:872px;height:548px;background:var(--surface);border:1px solid var(--line);border-radius:16px;
+    box-shadow:0 40px 90px rgba(40,50,30,.22);overflow:hidden;display:flex;flex-direction:column}
+  .chrome{display:flex;align-items:center;gap:12px;padding:11px 15px;border-bottom:1px solid var(--line)}
+  .tl{display:flex;gap:7px}.tl i{width:11px;height:11px;border-radius:50%}
+  .tl i:nth-child(1){background:#e6695a}.tl i:nth-child(2){background:#e3b04b}.tl i:nth-child(3){background:#5bb96c}
+  .url{flex:1;max-width:300px;margin:0 auto;background:var(--surface2);border:1px solid var(--line);border-radius:8px;
+    text-align:center;font-size:12px;color:var(--ink2);padding:5px 0;font-family:'JetBrains Mono',monospace}
+  .ava{width:24px;height:24px;border-radius:6px;overflow:hidden;flex:none}
+
+  .app{flex:1;display:flex;min-height:0}
+  /* sidebar */
+  .side{width:188px;border-right:1px solid var(--line);padding:16px 12px;display:flex;flex-direction:column;gap:3px;background:var(--surface2)}
+  .logo{display:flex;align-items:center;gap:9px;padding:2px 8px 14px}
+  .logo .mk{width:24px;height:24px;border-radius:7px;background:var(--green);display:flex;align-items:center;justify-content:center;color:#fff;font-weight:800;font-size:13px}
+  .logo b{font-size:15px;font-weight:700;letter-spacing:-.3px}
+  .nav{display:flex;align-items:center;gap:10px;padding:8px 10px;border-radius:9px;font-size:13px;font-weight:500;color:var(--ink2)}
+  .nav svg{width:16px;height:16px}
+  .nav.on{background:var(--green-tint);color:var(--green);font-weight:600}
+  .side .sp{margin-top:auto}
+  .me{display:flex;align-items:center;gap:9px;padding:8px;border-top:1px solid var(--line)}
+  .me .a{width:26px;height:26px;border-radius:6px;overflow:hidden}
+  .me .nm{font-size:12.5px;font-weight:600}.me .em{font-size:10.5px;color:var(--ink3)}
+
+  /* main */
+  .main{flex:1;padding:18px 20px;overflow:hidden;display:flex;flex-direction:column;gap:14px;min-width:0}
+  .htop{display:flex;align-items:center;gap:10px}
+  .htop h1{font-size:18px;font-weight:700;letter-spacing:-.4px}
+  .htop .sub{font-size:12px;color:var(--ink2);margin-left:2px}
+  .htop .right{margin-left:auto;display:flex;align-items:center;gap:8px}
+  .pill{display:inline-flex;align-items:center;gap:6px;font-size:12px;font-weight:500;color:var(--ink2);background:var(--surface2);border:1px solid var(--line);border-radius:8px;padding:6px 11px}
+  .btn{display:inline-flex;align-items:center;gap:6px;font-size:12.5px;font-weight:600;color:#fff;background:var(--green);border:none;border-radius:9px;padding:7px 13px;cursor:pointer}
+  .live{width:7px;height:7px;border-radius:50%;background:var(--green2);box-shadow:0 0 0 0 rgba(47,145,99,.5);animation:lv 1.6s infinite}
+  @keyframes lv{0%{box-shadow:0 0 0 0 rgba(47,145,99,.5)}70%{box-shadow:0 0 0 6px rgba(47,145,99,0)}100%{box-shadow:0 0 0 0 rgba(47,145,99,0)}}
+
+  .grid{flex:1;display:grid;gap:13px;grid-template-columns:repeat(4,1fr);grid-template-rows:96px 1fr 1fr;min-height:0}
+  .slot{position:relative;background:var(--surface);border:1px solid var(--line);border-radius:var(--r);overflow:hidden}
+  .area-k1{grid-column:1}.area-k2{grid-column:2}.area-k3{grid-column:3}.area-k4{grid-column:4}
+  .area-chart{grid-column:1/4;grid-row:2}.area-orders{grid-column:4;grid-row:2}
+  .area-bars{grid-column:1/3;grid-row:3}.area-donut{grid-column:3/5;grid-row:3}
+
+  .skel{position:absolute;inset:0;padding:14px;opacity:1;transition:opacity .45s}
+  .content{position:absolute;inset:0;padding:14px;opacity:0;transition:opacity .55s .12s}
+  .slot.ready .skel{opacity:0}.slot.ready .content{opacity:1}
+  .sk{background:linear-gradient(100deg,var(--surface2) 30%,#eee8da 50%,var(--surface2) 70%);background-size:200% 100%;animation:sh 1.3s linear infinite;border-radius:7px}
+  @keyframes sh{to{background-position:-200% 0}}
+
+  /* kpi */
+  .kpi .lbl{font-size:11.5px;color:var(--ink2);font-weight:500}
+  .kpi .val{font-size:23px;font-weight:800;letter-spacing:-.8px;margin-top:5px;font-variant-numeric:tabular-nums}
+  .kpi .row{display:flex;align-items:center;gap:7px;margin-top:7px}
+  .chip{font-size:10.5px;font-weight:700;padding:2px 6px;border-radius:5px;background:var(--green-tint);color:var(--green)}
+  .chip.dn{background:rgba(189,74,60,.12);color:var(--red)}
+  .kpi .spk{position:absolute;right:12px;top:13px;width:44px;height:17px}
+
+  /* chart */
+  .ch-h{display:flex;align-items:center;justify-content:space-between}
+  .ch-h .t{font-size:13.5px;font-weight:700}
+  .ch-h .lg{display:flex;align-items:center;gap:12px;font-size:11px;color:var(--ink2)}
+  .ch-h .lg b{display:inline-flex;align-items:center;gap:5px;font-weight:500}
+  .ch-h .lg b::before{content:"";width:8px;height:8px;border-radius:3px;background:var(--green)}
+  .ch-h .lg b.b2::before{background:#c7b48a}
+  .chart-wrap{position:absolute;left:0;right:0;bottom:8px;top:44px}
+  .chart-wrap svg{width:100%;height:100%}
+
+  /* orders */
+  .or-row{display:flex;align-items:center;gap:8px;padding:6px 0;border-bottom:1px solid var(--line2)}
+  .or-row:last-child{border-bottom:none}
+  .or-row .a{width:20px;height:20px;border-radius:5px;overflow:hidden;flex:none}
+  .pixav svg{display:block;width:100%;height:100%}
+  .or-row .nm{font-size:11.5px;font-weight:600;white-space:nowrap}.or-row .id{font-size:9.5px;color:var(--ink3)}
+  .or-row .oi{flex:1;min-width:0}
+  .or-row .amt{margin-left:auto;font-size:11.5px;font-weight:700;font-variant-numeric:tabular-nums;flex:none}
+  .sdot{width:7px;height:7px;border-radius:50%;flex:none}
+  .sdot.paid{background:var(--green)} .sdot.pend{background:var(--amber)}
+
+  /* bars */
+  .bars{position:absolute;left:14px;right:14px;bottom:30px;top:44px;display:flex;align-items:flex-end;gap:12px}
+  .bar{flex:1;display:flex;flex-direction:column;justify-content:flex-end;height:100%}
+  .bar .fill{background:linear-gradient(180deg,var(--green2),var(--green));border-radius:5px 5px 2px 2px;height:8%;transition:height 1s cubic-bezier(.5,0,.2,1)}
+  .bar .bl{font-size:9.5px;color:var(--ink3);text-align:center;margin-top:6px;position:absolute;bottom:10px}
+  .bxlabels{position:absolute;left:14px;right:14px;bottom:10px;display:flex;gap:12px}
+  .bxlabels span{flex:1;text-align:center;font-size:9.5px;color:var(--ink3)}
+
+  /* donut */
+  .donut{position:absolute;left:0;right:0;top:42px;bottom:0;padding:0 14px 12px;display:flex;align-items:center;gap:14px}
+  .dwrap{position:relative;width:104px;height:104px;flex:none}
+  .donut svg{width:104px;height:104px;transform:rotate(-90deg)}
+  .donut .ring{fill:none;stroke-width:15;stroke-linecap:round;transition:stroke-dasharray 1s ease}
+  .donut .lg{display:flex;flex-direction:column;gap:9px}
+  .donut .lg div{display:flex;align-items:center;gap:8px;font-size:11.5px;color:var(--ink2)}
+  .donut .lg i{width:9px;height:9px;border-radius:3px}
+  .donut .lg b{color:var(--ink);font-weight:700;margin-left:auto;font-variant-numeric:tabular-nums}
+  .dc{position:absolute;left:0;top:50%;transform:translateY(-50%);width:104px;text-align:center}
+  .dc b{font-size:20px;font-weight:800;letter-spacing:-.5px}.dc span{display:block;font-size:9.5px;color:var(--ink2)}
+
+  .cap{text-align:center;color:#4a4a3a;transition:opacity .35s}
+  .cap.swap{opacity:0}.cap .n{font-size:14px;font-weight:600}.cap .s{font-size:10.5px;font-weight:600;letter-spacing:2px;text-transform:uppercase;opacity:.55;margin-top:4px}
+  @media(prefers-reduced-motion:reduce){*{transition:none!important;animation:none!important}}
+</style>
+</head>
+<body>
+  <div class="win">
+    <div class="chrome"><div class="tl"><i></i><i></i><i></i></div><div class="url">acme.app/overview</div><div class="ava pixav"><svg viewBox="0 0 12 12" shape-rendering="crispEdges"><rect x="3" y="1" width="6" height="2" fill="#5a3a22"/><rect x="2" y="2" width="1" height="3" fill="#5a3a22"/><rect x="9" y="2" width="1" height="3" fill="#5a3a22"/><rect x="3" y="3" width="6" height="5" fill="#e8b894"/><rect x="4" y="5" width="1" height="1" fill="#3a2f28"/><rect x="7" y="5" width="1" height="1" fill="#3a2f28"/><rect x="5" y="8" width="2" height="1" fill="#e8b894"/><rect x="1" y="9" width="10" height="3" fill="#1c6b45"/></svg></div></div>
+    <div class="app">
+      <div class="side">
+        <div class="logo"><span class="mk">A</span><b>Acme</b></div>
+        <div class="nav"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M3 11l9-8 9 8M5 10v10h14V10" stroke-linecap="round" stroke-linejoin="round"/></svg>Home</div>
+        <div class="nav on"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M4 20V10M10 20V4M16 20v-7M22 20H2" stroke-linecap="round" stroke-linejoin="round"/></svg>Analytics</div>
+        <div class="nav"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M6 2l1.5 3h9L18 2M4 7h16l-1.5 13H5.5z" stroke-linecap="round" stroke-linejoin="round"/></svg>Orders</div>
+        <div class="nav"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="8" r="4"/><path d="M4 21c0-4 4-6 8-6s8 2 8 6" stroke-linecap="round"/></svg>Customers</div>
+        <div class="nav"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="12" r="3"/><path d="M12 2v3M12 19v3M2 12h3M19 12h3M5 5l2 2M17 17l2 2M19 5l-2 2M7 17l-2 2"/></svg>Settings</div>
+        <div class="sp"></div>
+        <div class="me"><span class="a pixav"><svg viewBox="0 0 12 12" shape-rendering="crispEdges"><rect x="3" y="1" width="6" height="2" fill="#5a3a22"/><rect x="2" y="2" width="1" height="3" fill="#5a3a22"/><rect x="9" y="2" width="1" height="3" fill="#5a3a22"/><rect x="3" y="3" width="6" height="5" fill="#e8b894"/><rect x="4" y="5" width="1" height="1" fill="#3a2f28"/><rect x="7" y="5" width="1" height="1" fill="#3a2f28"/><rect x="5" y="8" width="2" height="1" fill="#e8b894"/><rect x="1" y="9" width="10" height="3" fill="#1c6b45"/></svg></span><div><div class="nm">Kasia D.</div><div class="em">kasia@acme.app</div></div></div>
+      </div>
+      <div class="main">
+        <div class="htop"><h1>Overview</h1><span class="sub">Last 30 days</span><div class="right"><span class="pill"><span class="live"></span>Live</span><span class="pill">Last 30 days ⌄</span><button class="btn">Export</button></div></div>
+        <div class="grid" id="grid">
+          <div class="slot area-k1" data-k="kpi"></div>
+          <div class="slot area-k2" data-k="kpi"></div>
+          <div class="slot area-k3" data-k="kpi"></div>
+          <div class="slot area-k4" data-k="kpi"></div>
+          <div class="slot area-chart" data-k="chart"></div>
+          <div class="slot area-orders" data-k="orders"></div>
+          <div class="slot area-bars" data-k="bars"></div>
+          <div class="slot area-donut" data-k="donut"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div class="cap"><div class="n">Live dashboard</div><div class="s">no prompt · components iterate</div></div>
+
+<script>
+const $=id=>document.getElementById(id);
+const wait=ms=>new Promise(r=>setTimeout(r,ms));
+const gate=async()=>{while(window.__paused)await new Promise(r=>setTimeout(r,150))};
+
+// ---------- content builders ----------
+function spark(pts,color){const w=54,h=22,mx=Math.max(...pts),mn=Math.min(...pts);
+  const d=pts.map((p,i)=>`${i?'L':'M'}${(i/(pts.length-1)*w).toFixed(1)} ${(h-2-((p-mn)/(mx-mn||1))*(h-4)).toFixed(1)}`).join(' ');
+  return `<svg class="spk" viewBox="0 0 ${w} ${h}"><path d="${d}" fill="none" stroke="${color}" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>`;}
+const KPIS=[
+ {lbl:'Revenue',val:128400,pre:'$',spk:[4,6,5,8,7,10,9,12,14],chip:'+12.4%'},
+ {lbl:'Orders',val:3248,spk:[8,7,9,8,11,10,12,11,13],chip:'+6.1%'},
+ {lbl:'Avg. order',val:39.5,pre:'$',dec:1,spk:[6,7,6,8,7,9,8,9,10],chip:'+2.0%'},
+ {lbl:'Conversion',val:3.8,suf:'%',dec:1,spk:[3,2,3,4,3,4,5,4,5],chip:'-0.3%',dn:1},
+];
+function kpiHTML(i){const k=KPIS[i]; const v=(k.val*(0.95+Math.random()*0.1));
+  return `<div class="kpi"><div class="lbl">${k.lbl}</div><div class="val" data-c="${v.toFixed(2)}" data-pre="${k.pre||''}" data-suf="${k.suf||''}" data-dec="${k.dec||0}">${k.pre||''}0${k.suf||''}</div><div class="row"><span class="chip ${k.dn?'dn':''}">${k.chip}</span><span style="font-size:10.5px;color:var(--ink3)">vs last mo</span></div>${spark(k.spk.map(x=>x+(Math.random()*2-1)),'var(--green)')}</div>`;}
+
+function areaChart(){
+  const pts=[28,34,30,42,38,52,48,60,57,68,64,78].map(v=>Math.max(20,Math.round(v+(Math.random()*16-8)))), w=560,h=150,pad=8;
+  const mx=Math.max(...pts),mn=20;
+  const X=i=>pad+i/(pts.length-1)*(w-pad*2);
+  const Y=v=>h-18-((v-mn)/(mx-mn))*(h-30);
+  const line=pts.map((p,i)=>`${i?'L':'M'}${X(i).toFixed(1)} ${Y(p).toFixed(1)}`).join(' ');
+  const area=line+` L${X(pts.length-1).toFixed(1)} ${h-18} L${X(0).toFixed(1)} ${h-18} Z`;
+  let grid='';for(let g=0;g<4;g++){const y=12+g*((h-30)/3);grid+=`<line x1="0" y1="${y}" x2="${w}" y2="${y}" stroke="var(--line2)" stroke-width="1"/>`;}
+  const months=['','Wk1','','Wk2','','Wk3','','Wk4','','Wk5','','Now'];
+  let xl='';months.forEach((m,i)=>{if(m)xl+=`<text x="${X(i)}" y="${h-4}" font-size="9" fill="var(--ink3)" text-anchor="middle" font-family="Inter">${m}</text>`;});
+  return `<div class="content"><div class="ch-h"><span class="t">Revenue trend</span><span class="lg"><b>This period</b><b class="b2">Last period</b></span></div>
+    <div class="chart-wrap"><svg viewBox="0 0 ${w} ${h}" preserveAspectRatio="none">
+      <defs><linearGradient id="ag" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="var(--green)" stop-opacity=".22"/><stop offset="1" stop-color="var(--green)" stop-opacity="0"/></linearGradient></defs>
+      ${grid}
+      <path d="${area}" fill="url(#ag)" class="carea"/>
+      <path d="M${pad} ${Y(24)} L${(w-pad)} ${Y(58)}" stroke="#c7b48a" stroke-width="2" stroke-dasharray="4 4" fill="none" opacity=".7"/>
+      <path d="${line}" class="cline" fill="none" stroke="var(--green)" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
+      <circle cx="${X(pts.length-1)}" cy="${Y(pts[pts.length-1])}" r="4" fill="var(--green)" stroke="#fff" stroke-width="2"/>
+      ${xl}
+    </svg></div></div>`;
+}
+const ORD=[['Mara Liu','#3329','Paid','$248','paid','#cdgreat'],['Tom Reyes','#3328','Paid','$92','paid'],['A. Novak','#3327','Pending','$410','pend'],['Sofia P.','#3326','Paid','$36','paid']];
+const AVA=['#7fae8a','#c7a878','#8aa6c7','#caa0b0'];
+const PXP=[["#e8b894","#5a3a22","#1c6b45"],["#d99a6c","#2a2a2a","#b8822b"],["#f0c8a0","#6b4a2a","#2f9163"],["#cf9a72","#3a2a1a","#7bbf97"]];
+function PIXAV(i){const p=PXP[i%4];return `<svg viewBox="0 0 12 12" shape-rendering="crispEdges"><rect x="3" y="1" width="6" height="2" fill="${p[1]}"/><rect x="2" y="2" width="1" height="3" fill="${p[1]}"/><rect x="9" y="2" width="1" height="3" fill="${p[1]}"/><rect x="3" y="3" width="6" height="5" fill="${p[0]}"/><rect x="4" y="5" width="1" height="1" fill="#3a2f28"/><rect x="7" y="5" width="1" height="1" fill="#3a2f28"/><rect x="5" y="8" width="2" height="1" fill="${p[0]}"/><rect x="1" y="9" width="10" height="3" fill="${p[2]}"/></svg>`;}
+function ordersHTML(){return `<div class="content"><div class="ch-h"><span class="t">Recent orders</span></div><div style="margin-top:8px">${
+  ORD.map((o,i)=>`<div class="or-row"><span class="a pixav">${PIXAV(i)}</span><div class="oi"><div class="nm">${o[0]}</div><div class="id">${o[1]} · ${o[2]}</div></div><span class="sdot ${o[4]}"></span><span class="amt">${o[3]}</span></div>`).join('')
+}</div></div>`;}
+
+function barsHTML(){const data=[0,0,0,0,0].map(()=>34+Math.round(Math.random()*64)),lab=['Apparel','Home','Tech','Beauty','Food'];
+  return `<div class="content"><div class="ch-h"><span class="t">Sales by category</span></div>
+   <div class="bars">${data.map(d=>`<div class="bar"><div class="fill" data-h="${d}"></div></div>`).join('')}</div>
+   <div class="bxlabels">${lab.map(l=>`<span>${l}</span>`).join('')}</div></div>`;}
+
+function donutHTML(){return `<div class="content"><div class="ch-h"><span class="t">Traffic source</span></div>
+  <div class="donut"><div class="dwrap"><svg viewBox="0 0 120 120"><circle cx="60" cy="60" r="46" fill="none" stroke="var(--line)" stroke-width="15"/>
+    <circle class="ring r1" cx="60" cy="60" r="46" stroke="var(--green)"/><circle class="ring r2" cx="60" cy="60" r="46" stroke="#7bbf97"/><circle class="ring r3" cx="60" cy="60" r="46" stroke="#c7b48a"/></svg>
+    <div class="dc"><b>58%</b><span>Organic</span></div></div>
+    <div class="lg"><div><i style="background:var(--green)"></i>Organic<b>58%</b></div><div><i style="background:#7bbf97"></i>Direct<b>27%</b></div><div><i style="background:#c7b48a"></i>Referral<b>15%</b></div></div>
+  </div></div>`;}
+
+function skel(kind){
+  if(kind==='kpi')return `<div class="skel"><div class="sk" style="width:50%;height:11px"></div><div class="sk" style="width:70%;height:22px;margin-top:9px"></div><div class="sk" style="width:40%;height:10px;margin-top:11px"></div></div>`;
+  if(kind==='chart')return `<div class="skel"><div class="sk" style="width:35%;height:12px"></div><div class="sk" style="width:100%;height:106px;margin-top:14px"></div></div>`;
+  if(kind==='orders')return `<div class="skel"><div class="sk" style="width:55%;height:12px"></div>${'<div class="sk" style="width:100%;height:24px;margin-top:11px"></div>'.repeat(4)}</div>`;
+  if(kind==='bars')return `<div class="skel"><div class="sk" style="width:45%;height:12px"></div><div class="sk" style="width:100%;height:90px;margin-top:14px"></div></div>`;
+  return `<div class="skel"><div class="sk" style="width:45%;height:12px"></div><div class="sk" style="width:100%;height:90px;margin-top:14px"></div></div>`;
+}
+
+// init slots with skeletons
+const slots=[...document.querySelectorAll('.slot')];
+slots.forEach(s=>{ s.insertAdjacentHTML('beforeend', skel(s.dataset.k)); });
+
+function fill(slot,i){
+  const k=slot.dataset.k;
+  let html='';
+  if(k==='kpi')html=`<div class="content">${kpiHTML(i).replace('<div class="kpi"','<div class="kpi" style="height:100%;display:flex;flex-direction:column"')}</div>`;
+  else if(k==='chart')html=areaChart();
+  else if(k==='orders')html=ordersHTML();
+  else if(k==='bars')html=barsHTML();
+  else if(k==='donut')html=donutHTML();
+  slot.insertAdjacentHTML('beforeend',html);
+  setTimeout(()=>{ slot.classList.add('ready');
+    slot.querySelectorAll('.val').forEach(countUp);
+    slot.querySelectorAll('.fill').forEach(f=>f.style.height=f.dataset.h+'%');
+    const C=2*Math.PI*46; const r1=slot.querySelector('.r1'),r2=slot.querySelector('.r2'),r3=slot.querySelector('.r3');
+    if(r1){r1.style.strokeDasharray=`${C*.58} ${C}`;r2.style.strokeDasharray=`${C*.27} ${C}`;r2.style.strokeDashoffset=-C*.58;r3.style.strokeDasharray=`${C*.15} ${C}`;r3.style.strokeDashoffset=-C*.85;}
+  },30);
+}
+function countUp(el){const t=+el.dataset.c,pre=el.dataset.pre||'',suf=el.dataset.suf||'',dec=+(el.dataset.dec||0);
+  el.textContent=pre+(dec?t.toFixed(dec):Math.round(t).toLocaleString())+suf; // final value (safe)
+  let i=0,steps=26; const iv=setInterval(()=>{i++;const k=i/steps,e=1-Math.pow(1-k,3);
+    el.textContent=pre+(dec?(t*e).toFixed(dec):Math.round(t*e).toLocaleString())+suf; if(i>=steps)clearInterval(iv);},34);}
+
+function resetAll(){ slots.forEach(s=>{ s.classList.remove('ready'); const c=s.querySelector('.content'); if(c)c.remove(); }); }
+
+async function typePrompt(text){const t=$('ptxt');t.classList.remove('empty');t.innerHTML='';
+  for(let i=0;i<text.length;i++){if(window.__paused)await gate();t.innerHTML=text.slice(0,i+1)+'<span class="pcaret"></span>';await wait(26);}await wait(420);t.innerHTML=text;}
+function setCap(n,s){const cap=document.querySelector('.cap');cap.classList.add('swap');setTimeout(()=>{cap.querySelector('.n').textContent=n;cap.querySelector('.s').textContent=s;cap.classList.remove('swap');},350);}
+
+function bySel(sel){return slots.find(s=>s.classList.contains(sel));}
+const ALL=['area-k1','area-k2','area-k3','area-k4','area-chart','area-orders','area-bars','area-donut'];
+const idxOf=sel=>sel.startsWith('area-k')?(+sel.slice(-1)-1):0;
+function refill(sel){ const s=bySel(sel); const c=s.querySelector('.content'); if(c)c.remove(); fill(s, idxOf(sel)); }
+function buildAll(){ ALL.forEach(sel=>fill(bySel(sel), idxOf(sel))); }
+
+async function loop(){
+  // initial staggered build
+  for(const sel of ALL){ await gate(); fill(bySel(sel), idxOf(sel)); await wait(150); }
+  setCap('Live dashboard','components updating');
+  await wait(2000);
+  // no prompt — components keep refreshing on their own
+  const CYCLES=[
+    {sel:['area-chart','area-bars','area-k1','area-k2'], cap:['Refresh','new data in']},
+    {sel:['area-donut','area-orders','area-k3','area-k4'], cap:['Refresh','orders & traffic']},
+    {sel:['area-chart','area-bars','area-donut'], cap:['Live','charts re-drawing']},
+  ];
+  let n=0;
+  while(true){
+    await gate();
+    const c=CYCLES[n%CYCLES.length];
+    c.sel.forEach(refill);
+    setCap(c.cap[0],c.cap[1]);
+    n++; await wait(2700);
+  }
+}
+window.__pause=()=>window.__paused=true;window.__resume=()=>window.__paused=false;
+window.__buildAll=buildAll;
+if(document.fonts&&document.fonts.ready){document.fonts.ready.then(()=>setTimeout(loop,400));}else{setTimeout(loop,600);}
+</script>
+</body>
+</html>

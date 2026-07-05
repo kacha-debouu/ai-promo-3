@@ -1,0 +1,532 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Dance App · style cycle</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Space+Grotesk:wght@400;500;600;700&family=Playfair+Display:wght@500;600;700&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet" />
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html, body { height: 100%; }
+  body {
+    background: #0b0c0e;
+    overflow: hidden;
+    font-family: 'Inter', -apple-system, system-ui, sans-serif;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  /* ---- Stage: full-bleed backdrop that morphs per style ---- */
+  #stage {
+    position: fixed; inset: 0;
+    display: flex; flex-direction: column; align-items: center; justify-content: center;
+    background: var(--stage);
+    transition: background .8s ease;
+  }
+
+  /* ---- Card: ONE centered card. Tokens swap → it restyles in place ---- */
+  #card {
+    position: relative; width: 332px;
+    background: var(--card); color: var(--fg);
+    border: var(--border); border-radius: var(--radius); box-shadow: var(--shadow);
+    font-family: var(--font); overflow: hidden;
+    transition:
+      background .6s ease, color .6s ease, border-radius .6s ease,
+      box-shadow .6s ease, border-color .6s ease, transform .45s ease, opacity .45s ease;
+  }
+  #card.morphing { opacity: 0; transform: scale(.93) translateY(8px); }
+  #card[data-style="glass"], #card[data-style="chrome"], #card[data-style="mesh"] {
+    backdrop-filter: blur(18px) saturate(1.3); -webkit-backdrop-filter: blur(18px) saturate(1.3);
+  }
+
+  .pad { padding: 17px; display: flex; flex-direction: column; gap: 13px; }
+
+  .topbar { display: flex; align-items: center; gap: 8px; background: var(--accentbg); border-radius: 13px; padding: 6px 8px; transition: background .6s ease; }
+  .iconbtn { width: 28px; height: 28px; border-radius: 9px; flex: none; background: var(--chip); color: var(--fg); display: flex; align-items: center; justify-content: center; transition: background .6s ease, color .6s ease; }
+  .placeholder { flex: 1; font-size: 13.5px; color: var(--ph); letter-spacing: -.1px; }
+
+  .pills { display: flex; align-items: center; gap: 8px; padding: 2px; font-size: 13px; color: var(--sub); flex-wrap: wrap; }
+  .pills b { color: var(--fg); font-weight: 500; }
+  .seed { width: 11px; height: 11px; border-radius: 50%; flex: none; background: linear-gradient(135deg,#ff9966 0%,#ff5e62 60%,#c33764 100%); box-shadow: 0 0 0 1px var(--chip); }
+  .middot { width: 3px; height: 3px; border-radius: 50%; background: var(--sub); display: inline-block; }
+
+  .activity { display: flex; align-items: center; gap: 10px; font-size: 13px; color: var(--sub); }
+  .activity b { color: var(--fg); font-weight: 500; }
+  .dur { margin-left: auto; font-variant-numeric: tabular-nums; }
+  .dotgrid { display: grid; grid-template-columns: repeat(3,3px); grid-template-rows: repeat(3,3px); gap: 2px; }
+  .dotgrid i { width: 3px; height: 3px; border-radius: 50%; background: var(--fg); opacity: .85; }
+
+  /* ---- Dancer thumbnail (a mini art-scene per style) ---- */
+  .thumb { position: relative; height: 150px; border-radius: 14px; overflow: hidden; background: var(--thumb-bg); box-shadow: inset 0 0 0 1px var(--thumb-stroke); transition: background .6s ease, box-shadow .6s ease; }
+  .scene { position: absolute; inset: 0; }
+  .scene svg { position: absolute; inset: 0; width: 100%; height: 100%; display: block; }
+  .thumb .badge { position: absolute; left: 10px; bottom: 10px; display: flex; align-items: center; gap: 6px; font-size: 11px; font-weight: 600; letter-spacing: .2px; color: var(--fg); background: var(--glassbadge); padding: 4px 9px; border-radius: 999px; backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px); transition: background .6s ease, color .6s ease; z-index: 2; }
+  .thumb .rec { width: 7px; height: 7px; border-radius: 50%; background: #ff3b5c; animation: blink 1.4s steps(1) infinite; }
+  @keyframes blink { 0%,60%{opacity:1} 61%,100%{opacity:.25} }
+
+  .msg { min-height: 44px; font-size: 15px; line-height: 1.45; color: var(--fg); letter-spacing: -.1px; }
+  .caret { display: inline-block; width: 2px; height: 1em; background: var(--fg); margin-left: 1px; transform: translateY(3px); animation: blink2 1s steps(1) infinite; }
+  @keyframes blink2 { 0%,50%{opacity:1} 51%,100%{opacity:0} }
+
+  .bottom { display: flex; align-items: center; justify-content: space-between; padding-top: 2px; }
+  .upload { display: inline-flex; align-items: center; gap: 6px; background: var(--btn-bg); color: var(--btn-fg); border: var(--btn-border, none); padding: 9px 15px; border-radius: var(--btn-radius); font-size: 13px; font-weight: 600; cursor: pointer; letter-spacing: -.1px; position: relative; overflow: hidden; box-shadow: var(--btn-shadow, none); font-family: inherit; transition: background .6s ease, color .6s ease, border-radius .6s ease, box-shadow .6s ease; }
+  .upload .ok { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; gap: 6px; background: var(--btn-bg); color: var(--btn-fg); opacity: 0; transform: translateY(100%); }
+  .upload.done .ok { opacity: 1; transform: translateY(0); transition: opacity .25s, transform .35s cubic-bezier(.2,.8,.2,1); }
+  .model { display: inline-flex; align-items: center; gap: 6px; background: var(--model-bg); color: var(--model-fg); padding: 7px 11px; border-radius: var(--model-radius, 999px); font-size: 12.5px; font-weight: 600; transition: background .6s ease, color .6s ease; }
+
+  #card[data-style="brutal"] .upload, #card[data-style="chrome"] .upload { text-transform: uppercase; letter-spacing: .6px; font-weight: 800; }
+  #card[data-style="brutal"] .pills b, #card[data-style="chrome"] .pills b { text-transform: uppercase; letter-spacing: .4px; font-weight: 700; }
+  #card[data-style="editorial"] .msg { font-family: 'Inter', sans-serif; border-top: 1px solid var(--rule); padding-top: 11px; }
+  #card[data-style="editorial"] .upload { letter-spacing: 2px; text-transform: uppercase; font-size: 11.5px; font-family: 'JetBrains Mono', monospace; }
+  #card[data-style="editorial"] .dur, #card[data-style="cyber"] .dur { font-family: 'JetBrains Mono', monospace; }
+  #card[data-style="chrome"]::before { content: ""; position: absolute; top: 0; left: 16px; right: 16px; height: 2px; border-radius: 2px; background: linear-gradient(135deg,#e7e9f3,#b6bbd1 25%,#fff 50%,#9aa0ba 75%,#e7e9f3); }
+
+  #cap { margin-top: 26px; text-align: center; color: #fff; mix-blend-mode: difference; font-family: 'Inter', system-ui, sans-serif; transition: opacity .35s ease; opacity: 1; }
+  #cap.swap { opacity: 0; }
+  #cap .name { font-size: 15px; font-weight: 600; letter-spacing: -.2px; }
+  #cap .mode { font-size: 11px; font-weight: 600; letter-spacing: 2px; text-transform: uppercase; opacity: .65; margin-top: 4px; }
+
+  #dots { position: fixed; bottom: 26px; left: 0; right: 0; display: flex; gap: 7px; justify-content: center; }
+  #dots i { width: 6px; height: 6px; border-radius: 50%; background: #fff; opacity: .25; transition: opacity .3s, transform .3s; mix-blend-mode: difference; }
+  #dots i.on { opacity: .95; transform: scale(1.5); }
+
+  /* =========================================================================
+     Per-dancer animations. Each scene SVG is injected per style.
+     transform-box:fill-box keeps origins local to each element's bbox.
+  ========================================================================= */
+  @keyframes bob   { 50% { transform: translateY(-6px); } }
+  @keyframes sway  { 0%,100% { transform: rotate(-3deg);} 50% { transform: rotate(3deg);} }
+  @keyframes twinkle { 0%,100% { opacity:.3; transform: scale(.7);} 50% { opacity:1; transform: scale(1.15);} }
+  @keyframes spin  { to { transform: rotate(360deg);} }
+
+  /* 1 · fine-line tattoo */
+  .fl-fig { transform-box: fill-box; transform-origin: 50% 95%; animation: sway 2.6s ease-in-out infinite; }
+  .fl-star { transform-box: fill-box; transform-origin: 50% 50%; animation: twinkle 2.2s ease-in-out infinite; }
+  .fl-fig path { stroke-dasharray: 220; stroke-dashoffset: 0; animation: fldraw 6s ease-in-out infinite; }
+  @keyframes fldraw { 0%,100%{ stroke-dashoffset: 6;} 50%{ stroke-dashoffset: -6;} }
+
+  /* 2 · anime b/w */
+  .an-fig  { transform-box: fill-box; transform-origin: 50% 100%; animation: anbob 1s ease-in-out infinite; }
+  @keyframes anbob { 0%,100%{ transform: translateY(0) rotate(-2deg);} 50%{ transform: translateY(-5px) rotate(2deg);} }
+  .an-speed { animation: anspeed 0.5s linear infinite; }
+  @keyframes anspeed { from{ transform: translateX(0);} to{ transform: translateX(-26px);} }
+  .an-burst { transform-box: fill-box; transform-origin: 50% 100%; animation: twinkle 0.9s ease-in-out infinite; }
+
+  /* 3 · Haring */
+  .ha-fig  { transform-box: fill-box; transform-origin: 50% 100%; animation: habounce 0.7s ease-in-out infinite; }
+  @keyframes habounce { 0%,100%{ transform: translateY(0) scaleY(1);} 50%{ transform: translateY(-7px) scaleY(1.04);} }
+  .ha-rays { transform-box: fill-box; transform-origin: 50% 50%; animation: twinkle 0.7s ease-in-out infinite; }
+
+  /* 4 · Basquiat */
+  .bq-fig  { transform-box: fill-box; transform-origin: 50% 60%; animation: jitter .28s steps(2) infinite; }
+  @keyframes jitter { 0%{transform:translate(0,0) rotate(0)} 25%{transform:translate(1px,-1px) rotate(.6deg)} 50%{transform:translate(-1px,1px) rotate(-.6deg)} 75%{transform:translate(1px,1px) rotate(.3deg)} 100%{transform:translate(0,0)} }
+  .bq-crown { transform-box: fill-box; transform-origin: 50% 100%; animation: twinkle 1.1s ease-in-out infinite; }
+
+  /* 5 · Warhol */
+  .wh-p1 { animation: whflash 2.4s steps(1) infinite; }
+  .wh-p2 { animation: whflash 2.4s steps(1) infinite .6s; }
+  .wh-p3 { animation: whflash 2.4s steps(1) infinite 1.2s; }
+  .wh-p4 { animation: whflash 2.4s steps(1) infinite 1.8s; }
+  @keyframes whflash { 0%,100%{ opacity:1;} 50%{ opacity:.55;} }
+  .wh-fig { transform-box: fill-box; transform-origin: 50% 100%; animation: sway 1.4s ease-in-out infinite; }
+
+  /* 6 · Chrome Y2K */
+  .ch-fig  { transform-box: fill-box; transform-origin: 50% 100%; animation: sway 2s ease-in-out infinite; }
+  .ch-spark { transform-box: fill-box; transform-origin: 50% 50%; animation: twinkle 1.6s ease-in-out infinite; }
+  .ch-spark.s2 { animation-delay: .5s; } .ch-spark.s3 { animation-delay: 1s; }
+  .ch-sheen { animation: chsheen 2.4s linear infinite; }
+  @keyframes chsheen { from{ transform: translateX(-140px);} to{ transform: translateX(160px);} }
+
+  /* 7 · engraving ballet */
+  .ed-fig { transform-box: fill-box; transform-origin: 50% 100%; animation: edsway 4s ease-in-out infinite; }
+  @keyframes edsway { 0%,100%{ transform: rotate(-1.5deg);} 50%{ transform: rotate(1.5deg);} }
+
+  /* 8 · Matrix */
+  .mx-col { animation: mxrain linear infinite; }
+  @keyframes mxrain { from{ transform: translateY(-160px);} to{ transform: translateY(160px);} }
+  .mx-fig { animation: mxglitch 2.5s steps(1) infinite; filter: drop-shadow(0 0 4px #00ff95); }
+  @keyframes mxglitch { 0%,90%,100%{ transform: translateX(0);} 92%{ transform: translateX(-2px);} 94%{ transform: translateX(2px);} 96%{ transform: translateX(-1px);} }
+
+  /* 9 · Matisse cut-out */
+  .ma-fig { transform-box: fill-box; transform-origin: 50% 90%; animation: mawob 2.2s ease-in-out infinite; }
+  @keyframes mawob { 0%,100%{ transform: rotate(-3deg);} 50%{ transform: rotate(4deg);} }
+  .ma-leaf { transform-box: fill-box; transform-origin: 50% 100%; animation: mawob 3s ease-in-out infinite reverse; }
+  .ma-star { transform-box: fill-box; transform-origin: 50% 50%; animation: spin 9s linear infinite; }
+
+  @media (prefers-reduced-motion: reduce) {
+    .scene *, .scene { animation: none !important; }
+  }
+</style>
+</head>
+<body>
+  <div id="stage">
+    <div id="card" data-style="original" data-mode="light">
+      <div class="pad">
+        <div class="thumb">
+          <div class="scene" id="scene"></div>
+          <div class="badge"><span class="rec"></span><span id="badgetxt">Rehearsal clips · 12 takes</span></div>
+        </div>
+        <div class="topbar">
+          <div class="iconbtn"><svg width="14" height="14" viewBox="0 0 14 14" fill="none"><path d="M8.5 3.5L5 7l3.5 3.5" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg></div>
+          <div class="placeholder">Add some moves…</div>
+          <div class="iconbtn"><svg width="14" height="14" viewBox="0 0 14 14" fill="none"><path d="M7 10.5V3.5M3.5 7L7 3.5l3.5 3.5" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg></div>
+        </div>
+
+        <div class="pills">
+          <b>Dance</b><span class="middot"></span>
+          <span class="seed"></span>
+          <b>Butoh</b><span class="middot"></span>
+          <b>boldly ⌄</b>
+        </div>
+
+        <div class="activity">
+          <span class="dotgrid"><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i></span>
+          <b>Intro</b>
+          <span class="dur">32s</span>
+        </div>
+
+        <div class="msg"><span id="typed"></span><span class="caret" id="caret"></span></div>
+
+        <div class="bottom">
+          <button class="upload" id="upload">
+            <span class="lbl">Go dance
+              <svg width="12" height="12" viewBox="0 0 12 12" fill="none" style="margin-top:1px"><path d="M2.5 6h7M6.5 3l3 3-3 3" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>
+            </span>
+            <span class="ok">
+              <svg width="13" height="13" viewBox="0 0 14 14" fill="none"><path d="M2.5 7.5L6 11l5.5-7" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+              On stage
+            </span>
+          </button>
+          <div class="model">Opus 4.8 ⌄</div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+  <div id="dots"></div>
+
+<script>
+const MESSAGE = 'Slow Butoh rise — hollow the chest, fingers unfurl, weight sinking into the floor.';
+
+/* ============================== THEMES (no purple) ============================== */
+const THEMES = {
+  original: { label: 'Original', font: "'Inter', system-ui, sans-serif", dance: 'Fine-line · contemporary',
+    light: { stage:"url('assets/bg.jpg') center/cover no-repeat, #c8b98a", card:"#f0ede6", fg:"#1a1a1a", sub:"rgba(26,26,26,.55)", ph:"rgba(26,26,26,.4)", accentbg:"rgba(26,26,26,.05)", chip:"rgba(26,26,26,.06)", border:"1px solid transparent", radius:"28px", shadow:"0 24px 60px rgba(0,0,0,.28)", btnBg:"#1a1a1a", btnFg:"#fff", btnRadius:"999px", modelBg:"rgba(26,26,26,.06)", modelFg:"#1a1a1a", thumb:"#e7e1d3", thumbStroke:"rgba(0,0,0,.06)", ink:"#1a1a1a", badge:"rgba(255,255,255,.6)" },
+    dark:  { stage:"url('assets/bg.jpg') center/cover no-repeat, #c8b98a", card:"#1a1a1a", fg:"#fff", sub:"rgba(255,255,255,.55)", ph:"rgba(255,255,255,.4)", accentbg:"rgba(255,255,255,.08)", chip:"rgba(255,255,255,.08)", border:"1px solid transparent", radius:"28px", shadow:"0 24px 60px rgba(0,0,0,.45)", btnBg:"#fff", btnFg:"#1a1a1a", btnRadius:"999px", modelBg:"rgba(255,255,255,.08)", modelFg:"#fff", thumb:"#26241f", thumbStroke:"rgba(255,255,255,.06)", ink:"#fff", badge:"rgba(0,0,0,.4)" } },
+
+  bento: { label: 'Bento OS', font: "'Inter', system-ui, sans-serif", dance: 'B/W anime · street',
+    light: { stage:"radial-gradient(120% 80% at 50% 0%, #f4f5f7 0%, #e8eaee 60%, #d8dbe2 100%)", card:"#fff", fg:"#0e0f11", sub:"rgba(14,15,17,.5)", ph:"rgba(14,15,17,.4)", accentbg:"#f3f4f7", chip:"#eef0f4", border:"1px solid #e7e9ee", radius:"30px", shadow:"0 26px 60px rgba(20,22,30,.14)", btnBg:"#0e0f11", btnFg:"#fff", btnRadius:"16px", modelBg:"#f3f4f7", modelFg:"#0e0f11", thumb:"#f3f4f7", thumbStroke:"rgba(0,0,0,.05)", ink:"#0e0f11", badge:"rgba(255,255,255,.7)" },
+    dark:  { stage:"radial-gradient(120% 80% at 50% 0%, #16181c 0%, #0d0e10 70%)", card:"#0e0f11", fg:"#f5f5f7", sub:"rgba(245,245,247,.5)", ph:"rgba(245,245,247,.4)", accentbg:"#1a1b1f", chip:"#1f2126", border:"1px solid #24262c", radius:"30px", shadow:"0 26px 60px rgba(0,0,0,.5)", btnBg:"#fff", btnFg:"#0e0f11", btnRadius:"16px", modelBg:"#1a1b1f", modelFg:"#f5f5f7", thumb:"#1a1b1f", thumbStroke:"rgba(255,255,255,.05)", ink:"#f5f5f7", badge:"rgba(0,0,0,.45)" } },
+
+  glass: { label: 'Glass 2.0', font: "'Inter', system-ui, sans-serif", dance: 'Keith Haring · jump',
+    light: { stage:"radial-gradient(60% 60% at 20% 20%,#ff7eb6 0%,transparent 60%),radial-gradient(60% 60% at 80% 30%,#5ec8ff 0%,transparent 65%),radial-gradient(70% 70% at 50% 90%,#6cf2c8 0%,transparent 65%),linear-gradient(135deg,#e9f3ff,#ffe9f5)", card:"linear-gradient(160deg,rgba(255,255,255,.55),rgba(255,255,255,.28))", fg:"#10243a", sub:"rgba(16,36,58,.55)", ph:"rgba(16,36,58,.45)", accentbg:"rgba(255,255,255,.45)", chip:"rgba(255,255,255,.55)", border:"1px solid rgba(255,255,255,.7)", radius:"28px", shadow:"0 30px 70px rgba(30,70,110,.3)", btnBg:"linear-gradient(135deg,#ff7eb6,#5ec8ff)", btnFg:"#fff", btnRadius:"999px", modelBg:"rgba(255,255,255,.5)", modelFg:"#10243a", thumb:"rgba(255,255,255,.32)", thumbStroke:"rgba(255,255,255,.6)", ink:"#10243a", badge:"rgba(255,255,255,.5)" },
+    dark:  { stage:"radial-gradient(60% 60% at 20% 20%,#ff7eb6 0%,transparent 60%),radial-gradient(60% 60% at 80% 30%,#5ec8ff 0%,transparent 65%),radial-gradient(70% 70% at 50% 90%,#6cf2c8 0%,transparent 65%),linear-gradient(135deg,#0c2540,#0a3a52)", card:"linear-gradient(160deg,rgba(18,42,70,.55),rgba(8,24,40,.7))", fg:"#eafaff", sub:"rgba(234,250,255,.55)", ph:"rgba(234,250,255,.45)", accentbg:"rgba(255,255,255,.07)", chip:"rgba(255,255,255,.1)", border:"1px solid rgba(255,255,255,.14)", radius:"28px", shadow:"0 30px 70px rgba(5,18,30,.6)", btnBg:"linear-gradient(135deg,#ff7eb6,#5ec8ff)", btnFg:"#fff", btnRadius:"999px", modelBg:"rgba(255,255,255,.08)", modelFg:"#eafaff", thumb:"rgba(255,255,255,.06)", thumbStroke:"rgba(255,255,255,.12)", ink:"#eafaff", badge:"rgba(0,0,0,.35)" } },
+
+  brutal: { label: 'Neo-brutalism', font: "'Space Grotesk', system-ui, sans-serif", dance: 'Basquiat · raw',
+    light: { stage:"#fce96a", card:"#fff", fg:"#111", sub:"#3a3a3a", ph:"#555", accentbg:"#fff8e7", chip:"#fff8e7", border:"4px solid #111", radius:"0px", shadow:"10px 10px 0 #111", btnBg:"#2b6cff", btnFg:"#fff", btnRadius:"0px", btnBorder:"3px solid #111", btnShadow:"4px 4px 0 #111", modelBg:"#fff", modelFg:"#111", modelRadius:"0px", thumb:"#fff8e7", thumbStroke:"#111", ink:"#111", badge:"#fff" },
+    dark:  { stage:"#1a1a1a", card:"#111", fg:"#fff8e7", sub:"#cfc7b3", ph:"#9a937f", accentbg:"#1c1c1c", chip:"#1c1c1c", border:"4px solid #fff8e7", radius:"0px", shadow:"10px 10px 0 #fff8e7", btnBg:"#ff5c39", btnFg:"#111", btnRadius:"0px", btnBorder:"3px solid #fff8e7", btnShadow:"4px 4px 0 #fff8e7", modelBg:"#1c1c1c", modelFg:"#fff8e7", modelRadius:"0px", thumb:"#1c1c1c", thumbStroke:"#fff8e7", ink:"#fff8e7", badge:"rgba(0,0,0,.5)" } },
+
+  mesh: { label: 'Mesh Maximalism', font: "'Inter', system-ui, sans-serif", dance: 'Andy Warhol · twist',
+    light: { stage:"radial-gradient(40% 60% at 15% 25%,#ff5b6e 0%,transparent 60%),radial-gradient(45% 55% at 85% 20%,#ffb84a 0%,transparent 60%),radial-gradient(50% 60% at 25% 85%,#2d6cf0 0%,transparent 60%),radial-gradient(50% 55% at 80% 75%,#00d6c2 0%,transparent 60%),linear-gradient(135deg,#ff7a3d,#e0228a 35%,#1c52d7 70%,#00a3a1)", card:"rgba(255,255,255,.82)", fg:"#1a0a25", sub:"rgba(26,10,37,.55)", ph:"rgba(26,10,37,.45)", accentbg:"rgba(0,0,0,.04)", chip:"rgba(0,0,0,.05)", border:"1px solid rgba(255,255,255,.6)", radius:"26px", shadow:"0 30px 80px rgba(40,20,70,.4)", btnBg:"linear-gradient(120deg,#ff5b6e,#ffb84a 50%,#2d6cf0)", btnFg:"#fff", btnRadius:"999px", modelBg:"rgba(0,0,0,.05)", modelFg:"#1a0a25", thumb:"rgba(0,0,0,.05)", thumbStroke:"rgba(0,0,0,.06)", ink:"#1a0a25", badge:"rgba(255,255,255,.55)" },
+    dark:  { stage:"radial-gradient(40% 60% at 15% 25%,#ff5b6e 0%,transparent 60%),radial-gradient(45% 55% at 85% 20%,#ffb84a 0%,transparent 60%),radial-gradient(50% 60% at 25% 85%,#2d6cf0 0%,transparent 60%),radial-gradient(50% 55% at 80% 75%,#00d6c2 0%,transparent 60%),linear-gradient(135deg,#ff7a3d,#e0228a 35%,#1c52d7 70%,#00a3a1)", card:"rgba(20,12,30,.5)", fg:"#fff7f0", sub:"rgba(255,247,240,.6)", ph:"rgba(255,247,240,.45)", accentbg:"rgba(255,255,255,.06)", chip:"rgba(255,255,255,.08)", border:"1px solid rgba(255,255,255,.1)", radius:"26px", shadow:"0 30px 80px rgba(20,10,30,.6)", btnBg:"linear-gradient(120deg,#ff5b6e,#ffb84a 50%,#2d6cf0)", btnFg:"#fff", btnRadius:"999px", modelBg:"rgba(255,255,255,.08)", modelFg:"#fff7f0", thumb:"rgba(255,255,255,.06)", thumbStroke:"rgba(255,255,255,.1)", ink:"#fff7f0", badge:"rgba(0,0,0,.35)" } },
+
+  chrome: { label: 'Y2K Chrome', font: "'Space Grotesk', system-ui, sans-serif", dance: 'Liquid chrome · disco',
+    light: { stage:"linear-gradient(135deg,#c8d6ff,#ffd4f3 25%,#c4ffe6 50%,#fff4c4 75%,#cfe6ff)", card:"linear-gradient(160deg,#f5f7ff,#d8dcee)", fg:"#0c0e1a", sub:"rgba(12,14,26,.55)", ph:"rgba(12,14,26,.45)", accentbg:"rgba(255,255,255,.65)", chip:"rgba(255,255,255,.7)", border:"1px solid rgba(0,0,0,.05)", radius:"24px", shadow:"0 30px 80px rgba(20,25,60,.3)", btnBg:"linear-gradient(135deg,#e7e9f3,#b6bbd1 25%,#fff 50%,#9aa0ba 75%,#e7e9f3)", btnFg:"#0c0e1a", btnRadius:"999px", btnShadow:"inset 0 1px 0 rgba(255,255,255,.9), 0 6px 18px rgba(20,25,60,.25)", modelBg:"linear-gradient(120deg,#ff9ad5,#9affe6 33%,#9ad5ff 66%,#ffe79a)", modelFg:"#0c0e1a", thumb:"linear-gradient(120deg,#cfe6ff,#e9f6ff 50%,#ffe9f6)", thumbStroke:"rgba(255,255,255,.5)", ink:"#0c0e1a", badge:"rgba(255,255,255,.55)" },
+    dark:  { stage:"linear-gradient(135deg,#2a3a55,#2a4a55 25%,#244a55 50%,#55502a 75%,#2a3a55)", card:"linear-gradient(160deg,#1f2230,#0a0c14)", fg:"#f0f4ff", sub:"rgba(240,244,255,.55)", ph:"rgba(240,244,255,.45)", accentbg:"rgba(255,255,255,.05)", chip:"rgba(255,255,255,.08)", border:"1px solid rgba(255,255,255,.1)", radius:"24px", shadow:"0 30px 80px rgba(0,0,0,.55)", btnBg:"linear-gradient(135deg,#e7e9f3,#b6bbd1 25%,#fff 50%,#9aa0ba 75%,#e7e9f3)", btnFg:"#0c0e1a", btnRadius:"999px", btnShadow:"inset 0 1px 0 rgba(255,255,255,.9), 0 6px 18px rgba(0,0,0,.4)", modelBg:"linear-gradient(120deg,#ff9ad5,#9affe6 33%,#9ad5ff 66%,#ffe79a)", modelFg:"#0c0e1a", thumb:"linear-gradient(120deg,#1d3340,#244a55 50%,#2a3a4a)", thumbStroke:"rgba(255,255,255,.12)", ink:"#f0f4ff", badge:"rgba(0,0,0,.35)" } },
+
+  editorial: { label: 'Editorial Serif', font: "'Playfair Display', Georgia, serif", dance: 'Engraving · ballet',
+    light: { stage:"#ede6d6", card:"#f7f1e2", fg:"#1a1816", sub:"rgba(26,24,22,.55)", ph:"rgba(26,24,22,.45)", accentbg:"rgba(26,24,22,.04)", chip:"rgba(26,24,22,.06)", border:"1px solid #d8cdb5", radius:"6px", shadow:"0 30px 60px rgba(60,40,20,.18)", btnBg:"transparent", btnFg:"#1a1816", btnRadius:"0px", btnBorder:"1px solid #1a1816", modelBg:"transparent", modelFg:"rgba(26,24,22,.55)", thumb:"#ece4d2", thumbStroke:"#d8cdb5", ink:"#1a1816", badge:"rgba(247,241,226,.7)", rule:"#d8cdb5" },
+    dark:  { stage:"#211f1b", card:"#1a1816", fg:"#f4ecd8", sub:"rgba(244,236,216,.55)", ph:"rgba(244,236,216,.45)", accentbg:"rgba(244,236,216,.05)", chip:"rgba(244,236,216,.08)", border:"1px solid #3a352c", radius:"6px", shadow:"0 30px 60px rgba(0,0,0,.5)", btnBg:"transparent", btnFg:"#f4ecd8", btnRadius:"0px", btnBorder:"1px solid #f4ecd8", modelBg:"transparent", modelFg:"rgba(244,236,216,.55)", thumb:"#26231d", thumbStroke:"#3a352c", ink:"#f4ecd8", badge:"rgba(0,0,0,.4)", rule:"#3a352c" } },
+
+  cyber: { label: 'Cyberpunk Terminal', font: "'JetBrains Mono', ui-monospace, monospace", dance: 'Matrix · popping',
+    light: { stage:"repeating-linear-gradient(0deg,transparent 0 3px,rgba(0,80,60,.04) 3px 4px),linear-gradient(180deg,#d6f5ea,#c2efe0)", card:"rgba(242,255,249,.85)", fg:"#04130d", sub:"rgba(4,19,13,.55)", ph:"rgba(4,19,13,.45)", accentbg:"rgba(0,168,107,.08)", chip:"rgba(0,168,107,.12)", border:"1px solid #00a86b", radius:"4px", shadow:"0 0 0 1px rgba(0,168,107,.3), 0 20px 50px rgba(0,80,50,.2)", btnBg:"#00a86b", btnFg:"#f2fff9", btnRadius:"3px", btnShadow:"0 0 14px rgba(0,168,107,.5)", modelBg:"rgba(0,168,107,.12)", modelFg:"#04130d", modelRadius:"3px", thumb:"#05130d", thumbStroke:"rgba(0,168,107,.4)", ink:"#00a86b", badge:"rgba(255,255,255,.5)" },
+    dark:  { stage:"repeating-linear-gradient(0deg,transparent 0 3px,rgba(255,255,255,.02) 3px 4px),#03040a", card:"rgba(8,10,18,.82)", fg:"#e6fff4", sub:"rgba(230,255,244,.55)", ph:"rgba(230,255,244,.45)", accentbg:"rgba(0,255,163,.06)", chip:"rgba(0,255,163,.1)", border:"1px solid rgba(0,255,163,.4)", radius:"4px", shadow:"0 0 0 1px rgba(0,255,163,.2), 0 0 40px rgba(0,255,163,.3)", btnBg:"#00ffa3", btnFg:"#03040a", btnRadius:"3px", btnShadow:"0 0 16px rgba(0,255,163,.6)", modelBg:"rgba(0,255,163,.1)", modelFg:"#e6fff4", modelRadius:"3px", thumb:"#03040a", thumbStroke:"rgba(0,255,163,.3)", ink:"#00ffa3", badge:"rgba(0,0,0,.5)" } },
+
+  clay: { label: 'Claymorphic', font: "'Inter', system-ui, sans-serif", dance: 'Matisse cut-out · jazz',
+    light: { stage:"radial-gradient(60% 80% at 30% 30%,#ffd9c2 0%,transparent 70%),radial-gradient(60% 80% at 70% 70%,#c2f0e6 0%,transparent 70%),linear-gradient(135deg,#fff4ec,#eafaf4)", card:"#ffeade", fg:"#4a2f28", sub:"rgba(74,47,40,.55)", ph:"rgba(74,47,40,.45)", accentbg:"#ffded0", chip:"#ffded0", border:"1px solid transparent", radius:"32px", shadow:"0 18px 40px rgba(180,110,80,.25), inset 0 -4px 10px rgba(0,0,0,.05), inset 0 4px 10px rgba(255,255,255,.8)", btnBg:"#ff7a5c", btnFg:"#fff", btnRadius:"999px", btnShadow:"0 10px 20px rgba(200,90,60,.3), inset 0 -3px 6px rgba(0,0,0,.12), inset 0 3px 6px rgba(255,255,255,.4)", modelBg:"#ffded0", modelFg:"#4a2f28", thumb:"#fff1ea", thumbStroke:"rgba(255,255,255,.7)", ink:"#ff7a5c", badge:"rgba(255,255,255,.6)" },
+    dark:  { stage:"radial-gradient(60% 80% at 30% 30%,#5a3328 0%,transparent 70%),radial-gradient(60% 80% at 70% 70%,#1f4a42 0%,transparent 70%),linear-gradient(135deg,#1c1714,#16201d)", card:"#2a221e", fg:"#f3e7df", sub:"rgba(243,231,223,.55)", ph:"rgba(243,231,223,.45)", accentbg:"#38302a", chip:"#38302a", border:"1px solid transparent", radius:"32px", shadow:"0 18px 40px rgba(0,0,0,.45), inset 0 -4px 10px rgba(0,0,0,.3), inset 0 4px 10px rgba(255,255,255,.07)", btnBg:"#ff8a6a", btnFg:"#231a16", btnRadius:"999px", btnShadow:"0 10px 20px rgba(0,0,0,.4), inset 0 -3px 6px rgba(0,0,0,.25), inset 0 3px 6px rgba(255,255,255,.12)", modelBg:"#38302a", modelFg:"#f3e7df", thumb:"#352b25", thumbStroke:"rgba(255,255,255,.08)", ink:"#ff8a6a", badge:"rgba(0,0,0,.4)" } },
+};
+
+const ORDER = ['original','bento','glass','brutal','mesh','chrome','editorial','cyber','clay'];
+
+/* ============================== DANCERS (2D, per-style art) ==============================
+   viewBox 0 0 300 152. Adaptive linework uses var(--ink) so it survives light/dark.
+   Art-specific accent palettes are fixed for fidelity. */
+const DANCERS = {
+  // 1 · fine-line tattoo — single elegant continuous-line contemporary dancer
+  original: `<svg viewBox="0 0 300 152" preserveAspectRatio="xMidYMid meet">
+    <g class="fl-fig" fill="none" stroke="var(--ink)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+      <circle cx="150" cy="34" r="9"/>
+      <path d="M150 43 C150 64 137 72 132 88 C127 104 142 120 162 116 C178 113 184 100 180 90"/>
+      <path d="M119 66 C137 58 150 60 150 50 C150 60 165 58 184 70"/>
+      <path d="M162 116 C180 124 200 122 214 110"/>
+      <path d="M132 88 C120 100 113 118 111 134"/>
+    </g>
+    <g class="fl-star" fill="var(--ink)"><path d="M214 46 l2.2 6.4 6.4 2.2 -6.4 2.2 -2.2 6.4 -2.2 -6.4 -6.4 -2.2 6.4 -2.2z"/></g>
+    <circle cx="92" cy="54" r="1.7" fill="var(--ink)"/><circle cx="226" cy="92" r="1.7" fill="var(--ink)"/><circle cx="84" cy="104" r="1.4" fill="var(--ink)"/>
+  </svg>`,
+
+  // 2 · b/w comics / anime — halftone + speed lines + spiky-hair street dancer
+  bento: `<svg viewBox="0 0 300 152" preserveAspectRatio="xMidYMid slice">
+    <defs><pattern id="ht" width="9" height="9" patternUnits="userSpaceOnUse"><circle cx="2" cy="2" r="1.7" fill="var(--ink)" opacity=".22"/></pattern></defs>
+    <rect x="0" y="0" width="118" height="152" fill="url(#ht)"/>
+    <g class="an-speed" stroke="var(--ink)" stroke-width="2" opacity=".45">
+      <line x1="320" y1="28" x2="232" y2="38"/><line x1="320" y1="58" x2="226" y2="64"/><line x1="320" y1="90" x2="234" y2="92"/><line x1="320" y1="120" x2="244" y2="116"/>
+    </g>
+    <g class="an-fig">
+      <path d="M150 96 L130 140 M150 96 L174 134" stroke="var(--ink)" stroke-width="9" stroke-linecap="round" fill="none"/>
+      <path d="M150 54 L150 100" stroke="var(--ink)" stroke-width="17" stroke-linecap="round"/>
+      <path d="M150 64 L118 42 M150 70 L190 86" stroke="var(--ink)" stroke-width="8" stroke-linecap="round" fill="none"/>
+      <circle cx="150" cy="38" r="13" fill="var(--thumb-bg)" stroke="var(--ink)" stroke-width="4"/>
+      <path d="M137 33 L131 19 L143 28 L147 15 L153 28 L162 17 L162 31 L171 26 L165 37 Z" fill="var(--ink)"/>
+      <path d="M145 40 l7 0" stroke="var(--ink)" stroke-width="2.6" stroke-linecap="round"/>
+    </g>
+    <text class="an-burst" x="208" y="42" font-family="'Space Grotesk',sans-serif" font-size="22" font-weight="800" fill="var(--ink)">!</text>
+  </svg>`,
+
+  // 3 · Keith Haring — bold figure mid-jump + radiating motion ticks
+  glass: `<svg viewBox="0 0 300 152" preserveAspectRatio="xMidYMid meet">
+    <g class="ha-fig">
+      <circle cx="150" cy="40" r="12" fill="var(--ink)"/>
+      <path d="M150 52 L150 96" stroke="var(--ink)" stroke-width="13" stroke-linecap="round"/>
+      <path d="M150 64 L114 44 M150 64 L186 44" stroke="var(--ink)" stroke-width="12" stroke-linecap="round"/>
+      <path d="M150 94 L120 130 M150 94 L180 130" stroke="var(--ink)" stroke-width="13" stroke-linecap="round"/>
+    </g>
+    <g class="ha-rays" stroke="#ff3b6b" stroke-width="4" stroke-linecap="round">
+      <line x1="100" y1="30" x2="86" y2="18"/><line x1="200" y1="30" x2="214" y2="18"/>
+      <line x1="90" y1="74" x2="74" y2="74"/><line x1="210" y1="74" x2="226" y2="74"/>
+      <line x1="150" y1="16" x2="150" y2="3"/><line x1="124" y1="20" x2="118" y2="9"/><line x1="176" y1="20" x2="182" y2="9"/>
+    </g>
+  </svg>`,
+
+  // 4 · Basquiat — raw scrawl, crown, primaries, "DANCE", marks
+  brutal: `<svg viewBox="0 0 300 152" preserveAspectRatio="xMidYMid meet">
+    <rect x="108" y="62" width="34" height="46" fill="#2b6cff" transform="rotate(-5 125 85)"/>
+    <rect x="150" y="68" width="26" height="40" fill="#ffcf2e" transform="rotate(5 163 88)"/>
+    <g class="bq-fig" fill="none" stroke="var(--ink)" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round">
+      <rect x="133" y="30" width="32" height="30" rx="2" stroke-width="4"/>
+      <path d="M140 42 l5 0 M154 42 l5 0 M139 52 q10 7 20 0"/>
+      <path d="M149 60 L149 106 M149 72 L118 88 M149 72 L184 86 M149 106 L128 140 M149 106 L172 138"/>
+    </g>
+    <path class="bq-crown" d="M131 26 L138 10 L149 21 L160 8 L168 26 Z" fill="#ffcf2e" stroke="var(--ink)" stroke-width="2.6" stroke-linejoin="round"/>
+    <text x="196" y="120" font-family="'Space Grotesk',sans-serif" font-size="14" font-weight="800" fill="#ff4d3d" transform="rotate(-7 196 120)">DANCE</text>
+    <path d="M92 104 l11 11 M103 104 l-11 11" stroke="#ff4d3d" stroke-width="3" stroke-linecap="round"/>
+    <text x="86" y="52" font-family="sans-serif" font-size="18" font-weight="900" fill="#2b6cff">+</text>
+    <path d="M214 44 l0 14 M207 51 l14 0" stroke="#2b6cff" stroke-width="3" stroke-linecap="round"/>
+  </svg>`,
+
+  // 5 · Andy Warhol — 4 bright panels, repeated silhouette, flashing
+  mesh: `<svg viewBox="0 0 300 152" preserveAspectRatio="xMidYMid slice">
+    <defs><g id="whd">
+      <circle cx="75" cy="16" r="6.5"/>
+      <path d="M72 23 h6 v20 h-6 z"/>
+      <path d="M75 25 L58 13 L62 19 L75 31 Z"/><path d="M75 25 L92 13 L88 19 L75 31 Z"/>
+      <path d="M75 42 L61 68 Q75 73 89 68 Z"/>
+      <path d="M69 66 L64 76 h4 l6 -10 z"/><path d="M81 66 L88 74 l-3 2 -7 -9 z"/>
+    </g></defs>
+    <g class="wh-p1"><rect x="0" y="0" width="150" height="76" fill="#ff7a3d"/><use href="#whd" fill="#ffe24d"/></g>
+    <g class="wh-p2"><rect x="150" y="0" width="150" height="76" fill="#ff4d8d"/><g transform="translate(150,0)"><use href="#whd" fill="#0a1b2e"/></g></g>
+    <g class="wh-p3"><rect x="0" y="76" width="150" height="76" fill="#00c2a8"/><g transform="translate(0,76)"><use href="#whd" fill="#ff4d8d"/></g></g>
+    <g class="wh-p4"><rect x="150" y="76" width="150" height="76" fill="#ffe24d"/><g transform="translate(150,76)"><use href="#whd" fill="#ff7a3d"/></g></g>
+  </svg>`,
+
+  // 6 · Y2K liquid chrome — disco point, metallic gradient, sparkles + sheen
+  chrome: `<svg viewBox="0 0 300 152" preserveAspectRatio="xMidYMid meet">
+    <defs>
+      <linearGradient id="chg" x1="0" y1="0" x2="1" y2="1">
+        <stop offset="0" stop-color="#eef0fb"/><stop offset=".28" stop-color="#9aa0ba"/><stop offset=".5" stop-color="#ffffff"/><stop offset=".72" stop-color="#aab0cc"/><stop offset="1" stop-color="#d7dcf0"/>
+      </linearGradient>
+      <clipPath id="chclip"><rect x="0" y="0" width="300" height="152"/></clipPath>
+    </defs>
+    <g class="ch-fig" fill="url(#chg)" stroke="#7c84a6" stroke-width="1.4" stroke-linejoin="round">
+      <circle cx="150" cy="36" r="11"/>
+      <path d="M144 47 h12 l5 36 q-11 6 -22 0 z"/>
+      <path d="M156 54 L196 26 l5 7 -38 30 z"/>
+      <path d="M144 56 L116 78 l-5 -6 27 -24 z"/>
+      <path d="M140 82 L128 128 l8 2 12 -42 z"/>
+      <path d="M160 82 L176 124 l-8 3 -16 -40 z"/>
+    </g>
+    <g clip-path="url(#chclip)"><rect class="ch-sheen" x="-40" y="0" width="26" height="152" fill="#ffffff" opacity=".5" transform="skewX(-18)"/></g>
+    <g fill="#ffffff">
+      <path class="ch-spark" d="M212 40 l2 7 7 2 -7 2 -2 7 -2 -7 -7 -2 7 -2z"/>
+      <path class="ch-spark s2" d="M86 56 l1.6 5 5 1.6 -5 1.6 -1.6 5 -1.6 -5 -5 -1.6 5 -1.6z"/>
+      <path class="ch-spark s3" d="M104 112 l1.3 4 4 1.3 -4 1.3 -1.3 4 -1.3 -4 -4 -1.3 4 -1.3z"/>
+    </g>
+  </svg>`,
+
+  // 7 · vintage engraving — cross-hatched ballet (arabesque)
+  editorial: `<svg viewBox="0 0 300 152" preserveAspectRatio="xMidYMid meet">
+    <g class="ed-fig" fill="none" stroke="var(--ink)" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+      <circle cx="150" cy="34" r="8.5"/>
+      <path d="M150 42 C150 60 146 72 140 84"/>
+      <path d="M150 50 C170 46 192 40 210 30"/>
+      <path d="M150 52 C132 52 112 50 96 44"/>
+      <path d="M140 84 C150 96 168 102 196 96"/>
+      <path d="M140 84 C128 96 118 112 112 132"/>
+      <g stroke-width="1" opacity=".7">
+        <path d="M147 58 l8 3 M145 64 l9 3 M143 70 l9 3"/>
+        <path d="M150 88 l10 4 M147 94 l11 4 M145 100 l11 4"/>
+        <path d="M160 50 l4 7 M170 48 l4 7 M180 44 l4 7"/>
+      </g>
+    </g>
+    <line x1="40" y1="140" x2="260" y2="140" stroke="var(--ink)" stroke-width="1" opacity=".5"/>
+  </svg>`,
+
+  // 8 · Matrix — green code rain (full-width, behind) + glowing popping silhouette
+  cyber: (function () {
+    const cols = [
+      {x:12,d:2.6,dl:0,g:'7A1KﾈZ3'}, {x:38,d:1.8,dl:-.7,g:'2ﾗ9X4ﾐ'}, {x:64,d:3.1,dl:-1.4,g:'ﾊ5C0ﾖ8'},
+      {x:90,d:2.2,dl:-.3,g:'Kﾂ3ﾜ16'}, {x:116,d:2.8,dl:-1.1,g:'9ﾈ0Aﾗ4'}, {x:186,d:2.0,dl:-.5,g:'5ﾋ2KﾐZ'},
+      {x:212,d:3.0,dl:-1.6,g:'X8ﾖ1ﾊ7'}, {x:238,d:1.9,dl:-.9,g:'3ﾜ6C0ﾈ'}, {x:264,d:2.5,dl:-.2,g:'ﾗ4A9ﾂ2'}, {x:288,d:2.3,dl:-1.3,g:'1KﾐZ5ﾖ'},
+    ];
+    const colSvg = cols.map(c => {
+      const chars = c.g.split('').map((ch,i) =>
+        `<text x="0" y="${i*17}" opacity="${i===c.g.length-1?1:0.28+i*0.12}" fill="${i===c.g.length-1?'#d8ffe9':'#00ff95'}">${ch}</text>`).join('');
+      return `<g class="mx-col" style="animation-duration:${c.d}s;animation-delay:${c.dl}s" transform="translate(${c.x},0)">${chars}</g>`;
+    }).join('');
+    return `<svg viewBox="0 0 300 152" preserveAspectRatio="xMidYMid slice">
+      <rect x="0" y="0" width="300" height="152" fill="#03040a"/>
+      <g font-family="'JetBrains Mono',ui-monospace,monospace" font-size="13" font-weight="700">${colSvg}</g>
+      <g class="mx-fig" fill="none" stroke="#00ff95" stroke-width="3.6" stroke-linecap="round" stroke-linejoin="round">
+        <circle cx="150" cy="40" r="10" fill="#03040a"/>
+        <circle cx="150" cy="40" r="10" fill="#00ff95" fill-opacity=".2"/>
+        <path d="M150 50 L150 92"/>
+        <path d="M150 60 L122 60 L122 44 M150 66 L180 66 L180 84"/>
+        <path d="M150 92 L128 116 L128 134 M150 92 L172 116 L172 134"/>
+      </g>
+    </svg>`;
+  })(),
+
+  // 9 · Matisse cut-out — organic paper shapes, jazz leap (no purple)
+  clay: `<svg viewBox="0 0 300 152" preserveAspectRatio="xMidYMid meet">
+    <path class="ma-leaf" d="M44 150 C30 120 40 92 70 86 C58 116 66 138 78 150 Z" fill="#1fae9c"/>
+    <path d="M256 152 C270 124 264 96 236 92 C250 120 244 140 232 152 Z" fill="#f4b942"/>
+    <path class="ma-star" d="M232 44 l3 9 9 3 -9 3 -3 9 -3 -9 -9 -3 9 -3z" fill="#1fae9c"/>
+    <g class="ma-fig">
+      <circle cx="150" cy="34" r="13" fill="#ff7a5c"/>
+      <path d="M150 46 C138 58 132 76 140 94 C148 110 168 110 172 92 C176 74 168 58 150 46 Z" fill="#ff7a5c"/>
+      <path d="M150 58 C124 50 102 56 86 42 C100 64 124 70 148 70 Z" fill="#f4b942"/>
+      <path d="M150 56 C176 44 200 48 220 34 C202 60 176 66 150 70 Z" fill="#ff7a5c"/>
+      <path d="M152 92 C140 110 120 124 108 146 C128 132 150 120 158 100 Z" fill="#1fae9c"/>
+      <path d="M160 94 C176 110 184 130 188 150 C176 132 162 120 156 104 Z" fill="#ff7a5c"/>
+    </g>
+  </svg>`,
+};
+
+/* ============================== runtime ============================== */
+const stage = document.getElementById('stage');
+const card  = document.getElementById('card');
+const scene = document.getElementById('scene');
+const typed = document.getElementById('typed');
+const caret = document.getElementById('caret');
+const uploadBtn = document.getElementById('upload');
+const capName = document.querySelector('#cap .name');
+const capMode = document.querySelector('#cap .mode');
+const capEl = document.getElementById('cap');
+const dotsEl = document.getElementById('dots');
+
+ORDER.forEach(() => { const i = document.createElement('i'); dotsEl.appendChild(i); });
+const dots = [...dotsEl.children];
+
+function applyTokens(styleKey, mode) {
+  const t = THEMES[styleKey][mode];
+  const map = {
+    '--stage': t.stage, '--card': t.card, '--fg': t.fg, '--sub': t.sub, '--ph': t.ph,
+    '--accentbg': t.accentbg, '--chip': t.chip, '--border': t.border, '--radius': t.radius,
+    '--shadow': t.shadow, '--btn-bg': t.btnBg, '--btn-fg': t.btnFg, '--btn-radius': t.btnRadius,
+    '--btn-border': t.btnBorder || 'none', '--btn-shadow': t.btnShadow || 'none',
+    '--model-bg': t.modelBg, '--model-fg': t.modelFg, '--model-radius': t.modelRadius || '999px',
+    '--thumb-bg': t.thumb, '--thumb-stroke': t.thumbStroke, '--ink': t.ink,
+    '--glassbadge': t.badge, '--rule': t.rule || 'transparent', '--font': THEMES[styleKey].font,
+  };
+  for (const k in map) { stage.style.setProperty(k, map[k]); card.style.setProperty(k, map[k]); }
+  card.dataset.style = styleKey;
+  card.dataset.mode = mode;
+  if (scene.dataset.style !== styleKey) {   // only re-inject when the style actually changes
+    scene.innerHTML = DANCERS[styleKey];
+    scene.dataset.style = styleKey;
+  }
+}
+
+const wait = ms => new Promise(r => setTimeout(r, ms));
+const gate = async () => { while (window.__paused) await new Promise(r => setTimeout(r, 150)); };
+
+function setCaption() { /* captions removed */ }
+
+async function typewriter() {
+  await gate();
+  caret.style.display = 'inline-block';
+  typed.textContent = '';
+  const start = performance.now();
+  const SPEED = 26;
+  return new Promise(resolve => {
+    function tick(now) {
+      const n = Math.min(MESSAGE.length, Math.floor((now - start) / SPEED));
+      typed.textContent = MESSAGE.slice(0, n);
+      if (n < MESSAGE.length) requestAnimationFrame(tick);
+      else { caret.style.display = 'none'; resolve(); }
+    }
+    requestAnimationFrame(tick);
+  });
+}
+
+async function doUpload() {
+  await gate();
+  uploadBtn.animate(
+    [{ transform:'translateX(0)' },{ transform:'translateX(-5px)' },{ transform:'translateX(5px)' },
+     { transform:'translateX(-3px)' },{ transform:'translateX(3px)' },{ transform:'translateX(0)' }],
+    { duration: 360, easing: 'ease-in-out' });
+  await wait(420);
+  uploadBtn.animate([{ transform:'scale(1)' },{ transform:'scale(.93)' },{ transform:'scale(1)' }], { duration: 180, easing: 'ease-out' });
+  await wait(120);
+  uploadBtn.classList.add('done');
+  await wait(1500);
+  uploadBtn.classList.remove('done');
+}
+
+async function morphStyle(styleKey, mode) {
+  await gate();
+  card.classList.add('morphing');
+  await wait(420);
+  applyTokens(styleKey, mode);
+  setCaption(styleKey, mode);
+  await wait(40);
+  card.classList.remove('morphing');
+  await wait(480);
+}
+
+// initial paint
+applyTokens('original','light');
+window.__setTheme = (s, m) => applyTokens(s, m || 'light');   // inert debug hook
+
+async function loop() {
+  while (true) {
+    for (let s = 0; s < ORDER.length; s++) {
+      await gate();
+      const styleKey = ORDER[s];
+      dots.forEach((d,i) => d.classList.toggle('on', i === s));
+
+      await typewriter();
+      await wait(500);
+      await doUpload();
+      await wait(500);
+
+      await gate();
+      applyTokens(styleKey, 'dark');
+      setCaption(styleKey, 'dark');
+      await wait(2600);
+      await gate();
+
+      const next = ORDER[(s + 1) % ORDER.length];
+      await morphStyle(next, 'light');
+    }
+  }
+}
+
+if (document.fonts && document.fonts.ready) {
+  document.fonts.ready.then(() => setTimeout(loop, 400));
+} else { setTimeout(loop, 600); }
+</script>
+</body>
+</html>

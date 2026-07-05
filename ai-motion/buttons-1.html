@@ -1,0 +1,243 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>move the buttons</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" />
+<style>
+  :root{
+    --coral:#D97757; --bg:#FAF9F5; --panel:#F0EEE6; --stroke:rgba(40,34,24,.10);
+    --ink:#1f1d1a; --ink2:#6f6a5f; --bubble:#EFECE3; --serif:Georgia,'Times New Roman',serif;
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  html,body{height:100%}
+  body{background:#e7e3d8;overflow:hidden;font-family:'Inter',system-ui,sans-serif;-webkit-font-smoothing:antialiased;
+    display:flex;flex-direction:column;align-items:center;justify-content:center;gap:22px}
+
+  .win{width:960px;height:566px;background:var(--bg);border:1px solid var(--stroke);border-radius:16px;
+    box-shadow:0 40px 90px rgba(40,30,20,.30);overflow:hidden;display:flex;color:var(--ink)}
+
+  /* sidebar */
+  .side{width:184px;background:var(--panel);border-right:1px solid var(--stroke);display:flex;flex-direction:column;padding:14px 12px;flex:none}
+  .brand{display:flex;align-items:center;gap:8px;padding:4px 6px 16px}
+  .brand b{font-family:var(--serif);font-size:16px;font-weight:600;letter-spacing:-.2px}
+  .newchat{display:flex;align-items:center;gap:9px;padding:9px 11px;border-radius:10px;color:var(--coral);font-weight:600;font-size:13px;background:rgba(217,119,87,.10)}
+  .rec{font-size:11px;font-weight:600;color:var(--ink2);padding:18px 8px 6px;letter-spacing:.2px;text-transform:uppercase}
+  .ri{font-size:12.5px;color:var(--ink2);padding:7px 8px;border-radius:8px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .ri.on{background:rgba(40,34,24,.06);color:var(--ink);font-weight:500}
+  .prof{margin-top:auto;display:flex;align-items:center;gap:9px;padding:8px 6px;border-top:1px solid var(--stroke)}
+  .prof .av{width:26px;height:26px;border-radius:50%;background:linear-gradient(135deg,#D97757,#e0a07a)}
+  .prof span{font-size:12.5px;font-weight:500}
+
+  /* chat column */
+  .chat{width:336px;display:flex;flex-direction:column;border-right:1px solid var(--stroke);min-width:0}
+  .ctop{display:flex;align-items:center;padding:13px 18px;border-bottom:1px solid var(--stroke);font-size:12.5px;color:var(--ink2)}
+  .ctop .model{margin-left:auto;display:flex;align-items:center;gap:5px;font-weight:500}
+  .feed{flex:1;padding:16px 18px;display:flex;flex-direction:column;gap:14px;overflow:hidden;scroll-behavior:smooth}
+  .umsg{display:flex;justify-content:flex-end}
+  .ubub{max-width:80%;background:var(--bubble);border:1px solid var(--stroke);border-radius:16px 16px 4px 16px;padding:9px 13px;font-size:13.5px;line-height:1.45}
+  .amsg{display:flex;gap:9px}
+  .amsg .sp{width:24px;height:24px;border-radius:50%;background:rgba(217,119,87,.14);display:flex;align-items:center;justify-content:center;flex:none;color:var(--coral)}
+  .amsg .body{font-size:13.5px;line-height:1.5;padding-top:2px}
+  .dots3{display:inline-flex;gap:3px;align-items:center;height:18px}
+  .dots3 i{width:5px;height:5px;border-radius:50%;background:var(--ink2);animation:pip 1s ease-in-out infinite}
+  .dots3 i:nth-child(2){animation-delay:.15s}.dots3 i:nth-child(3){animation-delay:.3s}
+  @keyframes pip{0%,100%{opacity:.3;transform:translateY(0)}50%{opacity:1;transform:translateY(-3px)}}
+  .msg-in{animation:msgin .35s ease both}
+  @keyframes msgin{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}}
+
+  .composer{padding:12px 18px 16px}
+  .field{border:1px solid var(--stroke);background:#fff;border-radius:14px;box-shadow:0 2px 10px rgba(0,0,0,.04);padding:11px 13px 9px}
+  .field .txt{font-size:13.5px;min-height:18px;color:var(--ink)}
+  .field .txt.empty{color:#a8a299}
+  .icaret{display:inline-block;width:1.5px;height:15px;background:var(--coral);margin-left:1px;transform:translateY(3px);animation:bl 1s steps(1) infinite}
+  @keyframes bl{0%,50%{opacity:1}51%,100%{opacity:0}}
+  .frow{display:flex;align-items:center;margin-top:8px}
+  .frow .plus{width:26px;height:26px;border-radius:8px;border:1px solid var(--stroke);display:flex;align-items:center;justify-content:center;color:var(--ink2);font-size:16px}
+  .frow .send{margin-left:auto;width:28px;height:28px;border-radius:50%;background:var(--coral);display:flex;align-items:center;justify-content:center}
+
+  /* artifact preview panel */
+  .art{flex:1;display:flex;flex-direction:column;background:#f4f2ec;min-width:0}
+  .atop{display:flex;align-items:center;gap:8px;padding:12px 16px;border-bottom:1px solid var(--stroke);font-size:12.5px;color:var(--ink2)}
+  .atop .fdots{display:flex;gap:6px}.atop .fdots i{width:10px;height:10px;border-radius:50%}
+  .atop .fdots i:nth-child(1){background:#ff5f57}.atop .fdots i:nth-child(2){background:#febc2e}.atop .fdots i:nth-child(3){background:#28c840}
+  .atop .file{font-weight:600;color:var(--ink)}
+  .atop .badge{margin-left:auto;font-size:10.5px;font-weight:600;color:var(--coral);background:rgba(217,119,87,.12);padding:3px 8px;border-radius:6px}
+  .stage{flex:1;position:relative;margin:18px;border-radius:12px;background:#fff;border:1px solid var(--stroke);overflow:hidden}
+  /* mock app inside preview */
+  .app-h{padding:14px 16px 0}
+  .app-h .t{font-size:15px;font-weight:700}
+  .app-h .s{font-size:11.5px;color:var(--ink2);margin-top:2px}
+  .fld{margin:11px 18px 0}
+  .fld label{font-size:10.5px;font-weight:600;color:var(--ink2);display:block;margin-bottom:4px}
+  .fld .inp{height:32px;border-radius:8px;background:#fff;border:1px solid var(--stroke);display:flex;align-items:center;padding:0 11px;font-size:12.5px;color:var(--ink)}
+  .divider{height:1px;background:var(--stroke);margin:14px 18px 0}
+  .pbtns{position:absolute;inset:0;pointer-events:none}
+  .pbtn{position:absolute;left:0;top:0;padding:8px 16px;border-radius:9px;font-size:12.5px;font-weight:600;white-space:nowrap;
+    transition:transform .7s cubic-bezier(.5,.1,.2,1);transform:translate(120px,180px)}
+  .pbtn.save{background:#1c6b45;color:#fff}
+  .pbtn.cancel{background:#fff;border:1px solid var(--stroke);color:var(--ink)}
+  .pbtn.delete{background:rgba(220,80,60,.1);color:#c0392b}
+  .reaction{position:absolute;font-size:26px;opacity:0;transition:opacity .3s,transform .5s;pointer-events:none}
+
+  .cap{text-align:center;color:#3a342a;transition:opacity .35s}
+  .cap.swap{opacity:0}
+  .cap .n{font-size:15px;font-weight:600;letter-spacing:-.2px}
+  .cap .s{font-size:11px;font-weight:600;letter-spacing:2px;text-transform:uppercase;opacity:.55;margin-top:4px}
+  @media (prefers-reduced-motion:reduce){*{transition:none!important;animation:none!important}}
+</style>
+</head>
+<body>
+  <div class="win">
+    <!-- sidebar -->
+    <div class="side">
+      <div class="brand"><svg width="20" height="20" viewBox="0 0 24 24" fill="var(--coral)"><path d="M12 1.5l2.7 7 7-2.7-2.7 7 2.7 7-7-2.7-2.7 7-2.7-7-7 2.7 2.7-7-2.7-7 7 2.7z"/></svg><b>Claude</b></div>
+      <div class="newchat"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 5v14M5 12h14" stroke-linecap="round"/></svg>New chat</div>
+      <div class="rec">Recents</div>
+      <div class="ri on">move buttons pls</div>
+      <div class="ri">the button saga</div>
+      <div class="ri">still moving buttons…</div>
+      <div class="ri">design system v4</div>
+      <div class="prof"><span class="av"></span><span>Kasia</span></div>
+    </div>
+
+    <!-- chat -->
+    <div class="chat">
+      <div class="ctop"><span class="model" style="margin-left:auto">Claude Opus 4.8 ⌄</span></div>
+      <div class="feed" id="feed"></div>
+      <div class="composer">
+        <div class="field">
+          <div class="txt empty" id="itxt">Reply to Claude…</div>
+          <div class="frow"><span class="plus">+</span><span class="model" style="margin-left:auto;font-size:12px;color:var(--ink2)">Opus 4.8 ⌄</span><span class="send" style="margin-left:10px"><svg width="13" height="13" viewBox="0 0 14 14" fill="none"><path d="M7 11V3M3.5 6.5L7 3l3.5 3.5" stroke="#fff" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg></span></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- artifact preview -->
+    <div class="art">
+      <div class="atop"><span class="fdots"><i></i><i></i><i></i></span><span class="file">App preview</span><span class="badge" id="abadge">Buttons.tsx</span></div>
+      <div class="stage" id="pstage">
+        <div class="app-h"><div class="t">Account settings</div><div class="s">Manage your profile and preferences</div></div>
+        <div class="fld"><label>Full name</label><div class="inp">Kasia Debosz</div></div>
+        <div class="fld"><label>Email address</label><div class="inp">kasia@acme.app</div></div>
+        <div class="divider"></div>
+        <div class="pbtns" id="pbtns">
+          <div class="pbtn cancel" id="bCancel">Cancel</div>
+          <div class="pbtn save" id="bSave">Save changes</div>
+          <div class="pbtn delete" id="bDelete">Delete</div>
+        </div>
+        <div class="reaction" id="react">😬</div>
+      </div>
+    </div>
+  </div>
+  <div class="cap"><div class="n">When you ask me to move the buttons…</div><div class="s">a love story in 3 acts</div></div>
+
+<script>
+const $=id=>document.getElementById(id);
+const feed=$('feed');
+const wait=ms=>new Promise(r=>setTimeout(r,ms));
+const gate=async()=>{while(window.__paused)await new Promise(r=>setTimeout(r,150))};
+
+// button layouts: [x,y,scale,rot] per [cancel, save, delete] — all TIDY (confidently wrong, not broken)
+const NEAT={delete:[16,186,1,0], cancel:[188,186,1,0], save:[268,186,1,0]};
+const ROUNDS=[
+  { // wants right → tidily aligned LEFT
+    user:"move the buttons to the right →",
+    reply:"On it — moving them to the right. ✨",
+    cap:["Act I — “to the right”","…went left"],
+    react:"🙂",
+    layout:{delete:[16,186,1,0], cancel:[96,186,1,0], save:[176,186,1,0]} },
+  { // right, but neatly STACKED vertically
+    user:"no 😅 the OTHER right",
+    reply:"Got it — right side, coming up. 👍",
+    cap:["Act II — “the OTHER right”","right… but stacked"],
+    react:"😐",
+    layout:{save:[268,14,1,0], cancel:[268,58,1,0], delete:[268,102,1,0]} },
+  { // a ROW… at the top, order reversed
+    user:"bro. a ROW. on the RIGHT. 😤",
+    reply:"Say less — a row, on the right. 🎯",
+    cap:["Act III — “a ROW, on the RIGHT”","a row! …at the top, reversed"],
+    react:"😶",
+    layout:{save:[16,14,1,0], cancel:[142,14,1,0], delete:[246,14,1,0]} },
+];
+const FINAL={ user:"…I'll just do it myself 🙃", reply:"fair. third time wasn't the charm. 😅" };
+
+function setButtons(L){
+  for(const id of ['cancel','save','delete']){
+    const el=$('b'+id[0].toUpperCase()+id.slice(1));
+    const [x,y,s,r]=L[id]; el.style.transform=`translate(${x}px,${y}px) scale(${s}) rotate(${r}deg)`;
+  }
+}
+function popReaction(emoji,x,y){
+  const r=$('react'); r.textContent=emoji; r.style.left=x+'px'; r.style.top=y+'px';
+  r.style.opacity='0'; r.style.transform='scale(.5)';
+  requestAnimationFrame(()=>{ r.style.opacity='1'; r.style.transform='scale(1) translateY(-6px)'; });
+  setTimeout(()=>{ r.style.opacity='0'; }, 1500);
+}
+function addUser(text){
+  const d=document.createElement('div'); d.className='umsg msg-in';
+  d.innerHTML=`<div class="ubub">${text}</div>`; feed.appendChild(d); scroll();
+}
+function addClaude(){
+  const d=document.createElement('div'); d.className='amsg msg-in';
+  d.innerHTML=`<span class="sp"><svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M12 1.5l2.7 7 7-2.7-2.7 7 2.7 7-7-2.7-2.7 7-2.7-7-7 2.7 2.7-7-2.7-7 7 2.7z"/></svg></span><div class="body"><span class="dots3"><i></i><i></i><i></i></span></div>`;
+  feed.appendChild(d); scroll(); return d.querySelector('.body');
+}
+function scroll(){ feed.scrollTop=feed.scrollHeight; }
+
+async function typeInput(text){
+  const t=$('itxt'); t.classList.remove('empty'); t.innerHTML='';
+  for(let i=0;i<text.length;i++){ if(window.__paused)await gate(); t.innerHTML=text.slice(0,i+1)+'<span class="icaret"></span>'; await wait(34); }
+  await wait(450);
+}
+function clearInput(){ const t=$('itxt'); t.classList.add('empty'); t.textContent='Reply to Claude…'; }
+
+function setCap(arr){
+  const cap=document.querySelector('.cap'); cap.classList.add('swap');
+  setTimeout(()=>{ cap.querySelector('.n').textContent=arr[0]; cap.querySelector('.s').textContent=arr.slice(1).join(' · '); cap.classList.remove('swap'); },350);
+}
+
+function reset(){ feed.innerHTML=''; setButtons(NEAT); $('abadge').textContent='Buttons.tsx'; clearInput(); }
+
+setButtons(NEAT);
+
+async function loop(){
+  while(true){
+    reset(); await gate(); await wait(700);
+    for(let i=0;i<ROUNDS.length;i++){
+      const R=ROUNDS[i];
+      await gate();
+      await typeInput(R.user);
+      clearInput(); addUser(R.user);
+      await wait(450);
+      const body=addClaude();                 // shows typing dots
+      await wait(900);
+      body.innerHTML=R.reply;                  // reply text
+      $('abadge').textContent='Buttons.tsx · editing…';
+      await wait(550);
+      setButtons(R.layout);                    // buttons mis-move
+      await wait(750);
+      $('abadge').textContent='Buttons.tsx · saved';
+      popReaction(R.react, 300, 18);
+      setCap(R.cap);
+      await wait(2100);
+    }
+    // final beat
+    await gate();
+    await typeInput(FINAL.user); clearInput(); addUser(FINAL.user);
+    await wait(500);
+    const body=addClaude(); await wait(800); body.innerHTML=FINAL.reply;
+    setCap(["…I'll do it myself 🙃","every. single. time."]);
+    setButtons(NEAT);
+    await wait(3000);
+  }
+}
+window.__pause=()=>window.__paused=true; window.__resume=()=>window.__paused=false;
+window.__setButtons=setButtons; window.__layouts=ROUNDS;
+if(document.fonts&&document.fonts.ready){document.fonts.ready.then(()=>setTimeout(loop,400));}else{setTimeout(loop,600);}
+</script>
+</body>
+</html>

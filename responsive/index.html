@@ -1,0 +1,215 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Widelab Motion — responsive preview</title>
+    <style>
+      :root {
+        --bg: #f5f5f4;
+        --fg: #ffffff;
+        --text: #1c1c1a;
+        --text-subtle: #6f6f6a;
+        --stroke: #e6e5e1;
+        --brand: #4734f7;
+        --shadow: 0 1px 2px rgba(0, 0, 0, 0.04), 0 8px 24px rgba(0, 0, 0, 0.06);
+      }
+      * { box-sizing: border-box; }
+      html, body { height: 100%; margin: 0; }
+      body {
+        background: var(--bg);
+        color: var(--text);
+        font: 14px/1.4 -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+        display: flex;
+        flex-direction: column;
+        overflow: hidden;
+      }
+
+      header {
+        flex: 0 0 auto;
+        background: var(--fg);
+        border-bottom: 1px solid var(--stroke);
+        padding: 10px 16px;
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        min-height: 56px;
+      }
+      .brand {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        font-weight: 600;
+        color: var(--text);
+        white-space: nowrap;
+      }
+      .brand img { width: 20px; height: 20px; }
+      .brand small { color: var(--text-subtle); font-weight: 400; margin-left: 4px; }
+
+      .tabs {
+        flex: 1;
+        display: flex;
+        align-items: center;
+        gap: 4px;
+        overflow-x: auto;
+        scrollbar-width: thin;
+      }
+      .tab {
+        flex: 0 0 auto;
+        padding: 6px 10px;
+        border-radius: 6px;
+        font-size: 13px;
+        font-weight: 500;
+        color: var(--text-subtle);
+        cursor: pointer;
+        border: 1px solid transparent;
+        background: transparent;
+        white-space: nowrap;
+        line-height: 1.2;
+        transition: background 0.12s, color 0.12s, border-color 0.12s;
+      }
+      .tab:hover { background: rgba(0,0,0,0.04); color: var(--text); }
+      .tab[aria-selected="true"] {
+        background: var(--text);
+        color: white;
+        border-color: var(--text);
+      }
+      .tab .dim {
+        margin-left: 6px;
+        font-variant-numeric: tabular-nums;
+        opacity: 0.65;
+        font-weight: 400;
+      }
+      .tab[aria-selected="true"] .dim { opacity: 0.7; }
+
+      .stage {
+        flex: 1;
+        min-height: 0;
+        overflow: auto;
+        display: flex;
+        align-items: flex-start;
+        justify-content: center;
+        padding: 24px;
+        background:
+          radial-gradient(circle, rgba(0,0,0,0.08) 1px, transparent 1px) 0 0 / 14px 14px,
+          var(--bg);
+      }
+      .frame {
+        background: var(--fg);
+        border-radius: 12px;
+        box-shadow: var(--shadow);
+        border: 1px solid var(--stroke);
+        overflow: hidden;
+        transition: width 0.18s ease, height 0.18s ease;
+        max-width: 100%;
+        position: relative;
+      }
+      .frame iframe {
+        display: block;
+        width: 100%;
+        height: 100%;
+        border: 0;
+        background: var(--bg);
+      }
+
+      .meta {
+        position: absolute;
+        top: 8px;
+        right: 12px;
+        font-size: 11px;
+        color: var(--text-subtle);
+        background: rgba(255,255,255,0.85);
+        backdrop-filter: blur(4px);
+        padding: 2px 8px;
+        border-radius: 999px;
+        font-variant-numeric: tabular-nums;
+        pointer-events: none;
+      }
+
+      .open-link {
+        font-size: 12px;
+        color: var(--text-subtle);
+        text-decoration: none;
+        padding: 6px 10px;
+        border-radius: 6px;
+      }
+      .open-link:hover { background: rgba(0,0,0,0.04); color: var(--text); }
+
+      @media (max-width: 720px) {
+        header { flex-wrap: wrap; padding: 8px 12px; }
+        .brand small { display: none; }
+        .stage { padding: 12px; }
+      }
+    </style>
+  </head>
+  <body>
+    <header>
+      <div class="brand">
+        <img src="/favicon.svg" alt="" onerror="this.style.display='none'" />
+        Widelab Motion <small>responsive preview</small>
+      </div>
+      <nav class="tabs" id="tabs" role="tablist" aria-label="Device width"></nav>
+      <a class="open-link" href="/" target="_blank" rel="noopener">Open without frame ↗</a>
+    </header>
+
+    <main class="stage">
+      <div class="frame" id="frame" style="width: 390px; height: 844px;">
+        <span class="meta" id="meta">390 × 844</span>
+        <iframe id="app" title="Widelab Motion preview" src="/"></iframe>
+      </div>
+    </main>
+
+    <script>
+      const SIZES = [
+        { id: "iphone",   label: "iPhone",   w: 390,  h: 844 },
+        { id: "android",  label: "Android",  w: 430,  h: 932 },
+        { id: "large",    label: "Large",    w: 640,  h: 1024 },
+        { id: "tablet",   label: "Tablet",   w: 768,  h: 1024 },
+        { id: "laptop",   label: "Laptop",   w: 1024, h: 768 },
+        { id: "desktop",  label: "Desktop",  w: 1440, h: 900 },
+        { id: "wide",     label: "Wide",     w: 1920, h: 1080 },
+      ];
+
+      const tabsEl = document.getElementById("tabs");
+      const frameEl = document.getElementById("frame");
+      const metaEl = document.getElementById("meta");
+
+      function pick(id) {
+        const s = SIZES.find(x => x.id === id) || SIZES[0];
+        frameEl.style.width = s.w + "px";
+        frameEl.style.height = s.h + "px";
+        metaEl.textContent = s.w + " × " + s.h;
+        for (const btn of tabsEl.querySelectorAll("button")) {
+          btn.setAttribute("aria-selected", btn.dataset.id === s.id ? "true" : "false");
+        }
+        // Persist + reflect in URL so links stay shareable.
+        try { localStorage.setItem("rwd:size", s.id); } catch {}
+        const url = new URL(window.location.href);
+        url.searchParams.set("size", s.id);
+        history.replaceState(null, "", url);
+      }
+
+      for (const s of SIZES) {
+        const btn = document.createElement("button");
+        btn.className = "tab";
+        btn.dataset.id = s.id;
+        btn.setAttribute("role", "tab");
+        btn.innerHTML = s.label + ' <span class="dim">' + s.w + "</span>";
+        btn.addEventListener("click", () => pick(s.id));
+        tabsEl.appendChild(btn);
+      }
+
+      // Optional deep link into an inner page: /responsive/?page=/queries/
+      const params = new URLSearchParams(window.location.search);
+      const page = params.get("page");
+      if (page && page.startsWith("/") && !page.startsWith("//")) {
+        document.getElementById("app").src = page;
+      }
+
+      const urlSize = params.get("size");
+      let initial;
+      try { initial = urlSize || localStorage.getItem("rwd:size"); } catch { initial = urlSize; }
+      pick(initial || "iphone");
+    </script>
+  </body>
+</html>

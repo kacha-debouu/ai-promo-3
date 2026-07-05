@@ -1,0 +1,199 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Ideas · multiplied</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@500;600&display=swap" rel="stylesheet" />
+<style>
+  *{box-sizing:border-box;margin:0;padding:0}
+  html,body{height:100%}
+  body{overflow:hidden;font-family:'Inter',system-ui,sans-serif;-webkit-font-smoothing:antialiased;
+    background:
+      radial-gradient(120% 90% at 18% 0%, #1a1d2e 0%, transparent 55%),
+      radial-gradient(120% 90% at 90% 100%, #221a2b 0%, transparent 55%),
+      #0a0b11;
+    display:flex;align-items:center;justify-content:center;color:#eef0f6}
+  #stage{display:flex;flex-direction:column;align-items:center;gap:22px}
+
+  .panel{width:736px;background:linear-gradient(180deg,rgba(28,30,44,.72),rgba(16,17,26,.72));
+    border:1px solid rgba(255,255,255,.08);border-radius:22px;backdrop-filter:blur(20px);
+    box-shadow:0 50px 120px rgba(0,0,0,.55);overflow:hidden}
+  .head{display:flex;align-items:center;gap:12px;padding:16px 20px;border-bottom:1px solid rgba(255,255,255,.07)}
+  .spark{width:20px;height:20px;color:#9fb3ff;flex:none}
+  .ttl{font-size:14.5px;font-weight:700;letter-spacing:-.2px}
+  .pr{flex:1;display:flex;align-items:center;gap:7px;background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.08);border-radius:9px;padding:6px 11px;font-size:12.5px;color:#aab;max-width:380px}
+  .pr .pcaret{display:inline-block;width:1.5px;height:13px;background:#9fb3ff;margin-left:1px;transform:translateY(2px);animation:bl 1s steps(1) infinite}
+  @keyframes bl{0%,50%{opacity:1}51%,100%{opacity:0}}
+  .count{display:flex;align-items:baseline;gap:5px;font-family:'JetBrains Mono',monospace}
+  .count b{font-size:17px;font-weight:600;color:#fff;font-variant-numeric:tabular-nums}
+  .count span{font-size:10.5px;color:#8a8fa8;text-transform:uppercase;letter-spacing:1px}
+
+  .grid{position:relative;display:grid;gap:12px;padding:20px;height:392px;
+    grid-template-columns:repeat(4,1fr);grid-template-rows:repeat(4,1fr);
+    transition:grid-template-columns .6s ease}
+  .ov{position:absolute;inset:0;pointer-events:none;z-index:5}
+  .ov line{stroke:#9fb3ff;stroke-width:2;stroke-linecap:round;stroke-dasharray:6 7;opacity:0;filter:drop-shadow(0 0 6px #9fb3ff)}
+
+  .card{position:relative;border-radius:14px;overflow:hidden;background:#171922;border:1px solid rgba(255,255,255,.09);
+    display:flex;flex-direction:column;transform:scale(0);opacity:0;
+    transition:transform .55s cubic-bezier(.34,1.56,.5,1),opacity .4s ease,box-shadow .4s ease,border-color .4s ease}
+  .card.in{transform:scale(1);opacity:1}
+  .card.glow{box-shadow:0 0 0 2px #9fb3ff,0 0 26px rgba(159,179,255,.55);border-color:#9fb3ff;z-index:6}
+  .card .thumb{height:52%;position:relative;overflow:hidden}
+  .card .thumb svg{position:absolute;inset:0;width:100%;height:100%}
+  .card .meta{flex:1;padding:8px 10px;display:flex;flex-direction:column;justify-content:center;gap:5px}
+  .card .nm{font-size:12px;font-weight:700;letter-spacing:-.2px;line-height:1.15;color:#f1f2f8}
+  .card .tg{font-size:9px;font-weight:700;letter-spacing:.6px;text-transform:uppercase;align-self:flex-start;padding:2px 6px;border-radius:5px}
+  .card .body{display:flex;flex-direction:column;height:100%}
+  .swap{animation:swap .5s ease}
+  @keyframes swap{0%{transform:rotateY(0) scale(1)}45%{transform:rotateY(75deg) scale(.94);opacity:.3}55%{transform:rotateY(-75deg) scale(.94);opacity:.3}100%{transform:rotateY(0) scale(1)}}
+
+  .cap{text-align:center;color:#fff;transition:opacity .35s}
+  .cap.swap2{opacity:0}
+  .cap .n{font-size:15px;font-weight:600;letter-spacing:-.2px}
+  .cap .s{font-size:11px;font-weight:600;letter-spacing:2px;text-transform:uppercase;opacity:.5;margin-top:4px}
+  @media (prefers-reduced-motion:reduce){*{transition:none!important;animation:none!important}}
+</style>
+</head>
+<body>
+  <div id="stage">
+    <div class="panel">
+      <div class="head">
+        <svg class="spark" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2l2.4 6.3L21 11l-6.6 2.7L12 20l-2.4-6.3L3 11l6.6-2.7z"/></svg>
+        <span class="ttl">Ideas</span>
+        <span class="pr"><span id="ptxt"></span><span class="pcaret" id="pcaret"></span></span>
+        <span class="count"><b id="cnum">1</b><span>ideas</span></span>
+      </div>
+      <div class="grid" id="grid"><svg class="ov" id="ov"><line id="ovl"/></svg></div>
+    </div>
+    <div class="cap"><div class="n">One prompt, a hundred directions</div><div class="s">ideas, multiplied</div></div>
+  </div>
+
+<script>
+const $=id=>document.getElementById(id);
+const grid=$('grid'), ov=$('ov'), ovl=$('ovl');
+const wait=ms=>new Promise(r=>setTimeout(r,ms));
+const gate=async()=>{while(window.__paused)await new Promise(r=>setTimeout(r,150))};
+const rnd=a=>a[Math.floor(Math.random()*a.length)];
+
+const PAL=[ // [a,b,accent,tagbg,tagfg]  — no purple
+ ['#ff8a5c','#ff5e62','#ff5e62','rgba(255,94,98,.16)','#ff9b8a'],
+ ['#5ec8ff','#3a7bff','#5ec8ff','rgba(94,200,255,.16)','#9ad4ff'],
+ ['#39e0b0','#13a37f','#39e0b0','rgba(57,224,176,.16)','#7df0cf'],
+ ['#ffd166','#ff9f1c','#ffc14d','rgba(255,193,77,.16)','#ffd98a'],
+ ['#ff7eb6','#ff4d8d','#ff7eb6','rgba(255,126,182,.16)','#ffa6cd'],
+ ['#a8e063','#56ab2f','#a8e063','rgba(168,224,99,.16)','#c6ef96'],
+ ['#7ad7f0','#0fb8c9','#5fe0e6','rgba(95,224,230,.16)','#a5eef2'],
+ ['#fca5a5','#e05656','#fca5a5','rgba(252,165,165,.16)','#ffc3c3'],
+ ['#c3cad9','#8a93a8','#c3cad9','rgba(195,202,217,.16)','#d8dde8'],
+ ['#ffe08a','#e8b53d','#ffd166','rgba(232,181,61,.16)','#ffe3a3'],
+];
+const TITLES=['Neon Bauhaus','Liquid serif','Brutalist zine','Soft gradient OS','Retro arcade','Editorial mono','Organic clay','Vapor grid','Ink & gold','Risograph pop','Glass terrarium','Kinetic type','Pastel maximal','Noir minimal','Solar punk','Tactile paper','Data garden','Hand-drawn','Midnight aurora','Chrome dream','Paper cut','Bold mono','Warm minimal','Acid pop'];
+const TAGS=['Brand','UI kit','Poster','Type','Motion','Palette','Logo','Layout','Web','App'];
+const MOTIFS=['mesh','rings','blob','dots','wave','glyph','mesh','blob','rings','dots','wave'];
+
+function thumbSVG(motif,p){
+  const [a,b]=p, id='g'+Math.random().toString(36).slice(2,7);
+  let inner='';
+  if(motif==='mesh') inner=`<circle cx="30" cy="28" r="34" fill="${a}" opacity=".9"/><circle cx="78" cy="40" r="30" fill="${b}" opacity=".85"/><circle cx="55" cy="14" r="20" fill="#fff" opacity=".18"/>`;
+  else if(motif==='rings') inner=`<g fill="none" stroke-width="4"><circle cx="55" cy="30" r="10" stroke="${a}"/><circle cx="55" cy="30" r="20" stroke="${b}" opacity=".8"/><circle cx="55" cy="30" r="30" stroke="${a}" opacity=".5"/></g>`;
+  else if(motif==='blob') inner=`<path d="M30 14 C58 2 92 14 88 34 C84 54 50 60 32 50 C14 40 12 24 30 14Z" fill="url(#${id})"/>`;
+  else if(motif==='dots'){ for(let y=8;y<56;y+=12)for(let x=12;x<100;x+=14) inner+=`<circle cx="${x}" cy="${y}" r="3.4" fill="${Math.random()>.5?a:b}" opacity="${(0.4+Math.random()*0.6).toFixed(2)}"/>`; }
+  else if(motif==='wave') inner=`<path d="M0 40 Q27 14 54 32 T110 26 V60 H0Z" fill="url(#${id})"/><path d="M0 46 Q27 22 54 40 T110 34" fill="none" stroke="#fff" stroke-width="2" opacity=".35"/>`;
+  else inner=`<text x="55" y="46" font-family="Georgia,serif" font-size="44" font-weight="700" fill="url(#${id})" text-anchor="middle">Aa</text>`;
+  return `<svg viewBox="0 0 110 60" preserveAspectRatio="xMidYMid slice"><defs><linearGradient id="${id}" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="${a}"/><stop offset="1" stop-color="${b}"/></linearGradient></defs><rect width="110" height="60" fill="${a}" opacity=".10"/>${inner}</svg>`;
+}
+function ideaHTML(){
+  const p=rnd(PAL), motif=rnd(MOTIFS), title=rnd(TITLES), tag=rnd(TAGS);
+  return `<div class="body"><div class="thumb">${thumbSVG(motif,p)}</div><div class="meta"><div class="nm">${title}</div><span class="tg" style="background:${p[3]};color:${p[4]}">${tag}</span></div></div>`;
+}
+
+// build 16 cards
+const N=16, cards=[];
+for(let i=0;i<N;i++){ const c=document.createElement('div'); c.className='card'; c.innerHTML=ideaHTML(); grid.appendChild(c); cards.push(c); }
+
+let ideaCount=1;
+function bumpCount(by){ ideaCount+=by; const e=$('cnum'); const t=ideaCount;
+  const s=performance.now(),from=+e.textContent.replace(/\D/g,'')||0;
+  (function tick(now){const k=Math.min(1,(now-s)/500);e.textContent=Math.round(from+(t-from)*k);if(k<1)requestAnimationFrame(tick);})(performance.now());
+}
+
+function show(idx,on){ cards[idx].classList.toggle('in',on); }
+function regen(idx){ const c=cards[idx]; const inner=c.firstChild; inner.classList.add('swap');
+  setTimeout(()=>{ c.innerHTML=ideaHTML(); },230); setTimeout(()=>{ /*cleanup*/ },520); }
+
+async function typePrompt(text){ const t=$('ptxt'),c=$('pcaret'); c.style.display='inline-block'; t.textContent='';
+  for(let i=0;i<text.length;i++){ if(window.__paused)await gate(); t.textContent=text.slice(0,i+1); await wait(28);} await wait(400); c.style.display='none'; }
+
+function setCap(n,s){ const cap=document.querySelector('.cap'); cap.classList.add('swap2');
+  setTimeout(()=>{cap.querySelector('.n').textContent=n;cap.querySelector('.s').textContent=s;cap.classList.remove('swap2');},350); }
+
+async function mergeEvent(){
+  const vis=cards.map((c,i)=>i).filter(i=>cards[i].classList.contains('in'));
+  if(vis.length<2)return;
+  const A=rnd(vis); let B=rnd(vis); let guard=0; while(B===A&&guard++<10)B=rnd(vis);
+  const a=cards[A],b=cards[B];
+  a.classList.add('glow'); b.classList.add('glow');
+  const gr=grid.getBoundingClientRect(), ra=a.getBoundingClientRect(), rb=b.getBoundingClientRect();
+  ovl.setAttribute('x1',ra.left-gr.left+ra.width/2); ovl.setAttribute('y1',ra.top-gr.top+ra.height/2);
+  ovl.setAttribute('x2',rb.left-gr.left+rb.width/2); ovl.setAttribute('y2',rb.top-gr.top+rb.height/2);
+  ovl.style.transition='opacity .3s'; ovl.style.opacity='1';
+  await wait(700);
+  // fuse → B becomes a recombined idea
+  regen(B); bumpCount(1);
+  ovl.style.opacity='0'; a.classList.remove('glow'); b.classList.remove('glow');
+}
+
+applyInitial();
+function applyInitial(){ cards.forEach((c,i)=>c.classList.remove('in')); }
+
+async function loop(){
+  while(true){
+    // 1 · seed
+    await gate();
+    grid.style.gridTemplateColumns='repeat(4,1fr)';
+    cards.forEach(c=>c.classList.remove('in'));
+    cards[5].classList.add('in'); ideaCount=1; $('cnum').textContent='1';
+    await typePrompt('a brand identity for a dance studio');
+    setCap('One idea','the seed');
+    await wait(700);
+
+    // 2 · multiply to 8 (stagger from center)
+    const first=[5,6,9,10,1,2,4,7];
+    for(let k=0;k<first.length;k++){ cards[first[k]].classList.add('in'); bumpCount(1); await wait(110); }
+    setCap('Multiply','8 directions');
+    await wait(900);
+
+    // 3 · churn + a merge
+    for(let r=0;r<7;r++){ await gate(); const vis=cards.map((c,i)=>i).filter(i=>cards[i].classList.contains('in'));
+      regen(rnd(vis)); regen(rnd(vis)); bumpCount(2); await wait(520); }
+    await mergeEvent(); await wait(500);
+
+    // 4 · multiply to 16
+    setCap('Again','16 directions');
+    const rest=[0,3,8,11,12,13,14,15];
+    for(let k=0;k<rest.length;k++){ cards[rest[k]].classList.add('in'); bumpCount(1); await wait(80); }
+    await wait(700);
+
+    // 5 · churn storm + merges
+    for(let r=0;r<9;r++){ await gate(); const vis=cards.map((c,i)=>i).filter(i=>cards[i].classList.contains('in'));
+      regen(rnd(vis)); regen(rnd(vis)); regen(rnd(vis)); bumpCount(3);
+      if(r===3||r===7){ await mergeEvent(); } else { await wait(480); } }
+    setCap('Endless','keep generating');
+    await wait(1500);
+
+    // 6 · collapse back to seed
+    const order=[15,14,13,12,11,8,3,0,7,4,2,1,10,9,6];
+    for(const i of order){ cards[i].classList.remove('in'); await wait(45); }
+    await wait(700);
+  }
+}
+window.__pause=()=>window.__paused=true; window.__resume=()=>window.__paused=false;
+window.__fillAll=()=>{cards.forEach(c=>c.classList.add('in'));};
+if(document.fonts&&document.fonts.ready){document.fonts.ready.then(()=>setTimeout(loop,400));}else{setTimeout(loop,600);}
+</script>
+</body>
+</html>
