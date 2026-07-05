@@ -1,0 +1,469 @@
+<!doctype html>
+<!-- wide-motion · Scenario A · "One system, infinite brands" · 18s
+     Wideset Core components rebuilt with token-driven CSS; accent / radius /
+     light-dark are live-tweened design tokens. Works at 16:9 and 1:1. -->
+<html><head><meta charset="utf-8"><title>Wideset · One system, infinite brands</title>
+<script>document.documentElement.style.fontSize = Math.min(innerWidth/96, innerHeight/54) + 'px';</script>
+<style>
+  *{box-sizing:border-box;margin:0;padding:0}
+  html,body{overflow:hidden;width:100%;height:100%}
+  :root{
+    --accent:#5B45E0; --accent-soft:#EDE9FD;
+    --bg:#EFEFF2; --surface:#FFFFFF; --surface2:#F3F3F6;
+    --text:#1A1A1E; --muted:#75757D; --border:#E6E6EB;
+    --r:0.7rem;
+    --ch1:#4838C9; --ch2:#DCD2F8; --ch3:#9B8AEF; --ch4:#F5A623;
+  }
+  body{font-family:-apple-system,'SF Pro Text','Inter','Segoe UI',sans-serif;
+    -webkit-font-smoothing:antialiased;background:var(--bg)}
+  #stage{position:fixed;inset:0;overflow:hidden;background:var(--bg)}
+  #spot{position:absolute;inset:-25%;pointer-events:none;
+    background:radial-gradient(55% 50% at 40% 32%, rgba(255,255,255,.9), rgba(255,255,255,0) 70%)}
+  #vig{position:absolute;inset:0;pointer-events:none;
+    background:radial-gradient(120% 115% at 50% 45%, transparent 62%, rgba(10,10,18,.10))}
+  #camera{position:absolute;inset:0;will-change:transform;transform-origin:50% 50%}
+  #canvas{position:absolute;left:50%;top:50%;width:96rem;height:54rem;margin:-27rem 0 0 -48rem}
+
+  /* ---------- shared component kit ---------- */
+  .fl{position:absolute;will-change:transform}
+  .card{background:var(--surface);border:1px solid var(--border);border-radius:var(--r);
+    color:var(--text);
+    box-shadow:0 1.4rem 3.2rem -1rem rgba(15,15,25,.16), 0 .2rem .6rem rgba(15,15,25,.05)}
+  .btn{display:inline-flex;align-items:center;gap:.3rem;font-weight:600;white-space:nowrap;
+    border-radius:calc(var(--r)*.5)}
+  .btn.sm{font-size:.62rem;padding:.34rem .6rem}
+  .btn.xs{font-size:.55rem;padding:.24rem .4rem}
+  .btn.ghost{border:1px solid var(--border);color:var(--text);background:var(--surface)}
+  .btn.soft{background:var(--surface2);color:var(--text)}
+  .btn.primary{background:var(--accent);color:#fff}
+
+  /* upload widget */
+  .w-upload{width:20rem;padding:.9rem 1rem 1rem}
+  .uhead{display:flex;justify-content:space-between;align-items:flex-start}
+  .lbl{font-size:.6rem;color:var(--muted)}
+  .big{font-size:1.05rem;font-weight:650;margin-top:.12rem}
+  .uchart{display:block;width:100%;height:4.6rem;margin:.75rem 0 .8rem}
+  .mrow{display:flex;font-size:.6rem;padding:.15rem 0}
+  .mrow span{color:var(--muted);width:6.6rem;flex:none}
+  .mrow b{font-weight:600}
+
+  /* modal */
+  .w-modal{width:19.5rem}
+  .mhead{display:flex;justify-content:space-between;align-items:center;
+    padding:.75rem 1rem;border-bottom:1px solid var(--border);font-size:.72rem}
+  .mhead b{font-weight:650}
+  .mx{color:var(--muted);font-size:.66rem}
+  .mbody{padding:.85rem 1rem .5rem}
+  .flabel{font-size:.62rem;font-weight:600;margin:.6rem 0 .3rem;
+    display:flex;justify-content:space-between;align-items:baseline}
+  .flabel:first-child{margin-top:0}
+  .fcnt,.fopt{color:var(--muted);font-weight:400;font-size:.56rem}
+  .finput{display:flex;align-items:center;border:1px solid var(--border);
+    border-radius:calc(var(--r)*.5);padding:.42rem .55rem;font-size:.62rem;background:var(--surface)}
+  .finput.ta{height:3.3rem;align-items:flex-start}
+  .ph{color:var(--muted)}
+  .fhelp{font-size:.54rem;color:var(--muted);margin-top:.32rem}
+  .wtag{display:inline-flex;align-items:center;gap:.3rem;background:var(--surface2);
+    border-radius:.3rem;padding:.15rem .4rem .15rem .18rem;font-weight:600;font-size:.6rem}
+  .wtag i{width:.82rem;height:.82rem;border-radius:.22rem;background:var(--accent);color:#fff;
+    font-style:normal;font-size:.5rem;display:grid;place-items:center;font-weight:700}
+  .wtag em{font-style:normal;color:var(--muted);margin-left:.1rem;font-size:.55rem}
+  .chev{margin-left:auto;color:var(--muted);font-size:.48rem}
+  .mfoot{display:flex;align-items:center;gap:.45rem;padding:.7rem 1rem;border-top:1px solid var(--border)}
+  .fstep{font-size:.6rem;color:var(--muted)}
+  .spacer{flex:1}
+
+  /* analytics */
+  .w-ana{width:20rem;padding:.9rem 1rem}
+  .ahead{display:flex;gap:.45rem;align-items:center;font-size:.74rem}
+  .ahead b{font-weight:650}
+  .aic{width:1.05rem;height:1.05rem;border-radius:.3rem;background:var(--accent);
+    display:grid;place-items:center;flex:none}
+  .adesc{font-size:.58rem;color:var(--muted);margin:.35rem 0 .7rem;max-width:15.5rem;line-height:1.45}
+  .astats{display:flex;gap:.5rem;margin-bottom:.85rem}
+  .stat{flex:1;display:flex;gap:.4rem;align-items:center}
+  .sic{width:1.5rem;height:1.5rem;border-radius:.42rem;background:var(--surface2);
+    display:grid;place-items:center;color:var(--muted);flex:none}
+  .slbl{font-size:.52rem;color:var(--muted)}
+  .sval{font-size:.7rem;font-weight:650;display:block}
+  .aplot{display:flex;gap:.5rem;height:7rem;margin-bottom:.2rem}
+  .ay{display:flex;flex-direction:column;justify-content:space-between;font-size:.48rem;
+    color:var(--muted);text-align:right;transform:translateY(.18rem)}
+  .abars{position:relative;flex:1;display:flex;align-items:flex-end;
+    justify-content:space-around;border-bottom:1px solid var(--border)}
+  .gl{position:absolute;left:0;right:0;height:1px;background:var(--border);opacity:.55}
+  .bar{position:relative;width:1.5rem;height:100%;display:flex;flex-direction:column-reverse;
+    justify-content:flex-start;gap:.06rem;transform-origin:bottom}
+  .bar i{display:block;border-radius:.09rem}
+  .aleg{display:flex;gap:.85rem;font-size:.55rem;justify-content:center;margin:.65rem 0 .75rem}
+  .aleg i{display:inline-block;width:.42rem;height:.42rem;border-radius:.12rem;
+    margin-right:.26rem;vertical-align:-0.02rem}
+  .afoot{display:flex;align-items:center;gap:.45rem;border-top:1px solid var(--border);padding-top:.7rem}
+  .afl{font-size:.6rem;font-weight:600}
+
+  /* listing card */
+  .w-list{width:17rem;padding:.85rem .9rem}
+  .lrow{display:flex;gap:.6rem;align-items:center}
+  .llogo{width:2.3rem;height:2.3rem;border:1px solid var(--border);flex:none;
+    border-radius:calc(var(--r)*.5);display:grid;place-items:center;
+    font-family:Georgia,'Times New Roman',serif;font-size:.34rem;letter-spacing:.09em;
+    background:var(--surface2);color:var(--text)}
+  .lname{font-size:.74rem;font-weight:650}
+  .lmeta{font-size:.56rem;color:var(--muted);margin-top:.16rem}
+  .lbtns{display:flex;gap:.45rem;margin-top:.7rem}
+
+  /* ---------- scene chrome ---------- */
+  #title{position:absolute;left:0;right:0;top:16.6rem;text-align:center;pointer-events:none}
+  .t1,.t2{font-size:2.75rem;font-weight:750;letter-spacing:-.015em;line-height:1.22;color:var(--text)}
+  .t2{color:var(--accent)}
+  .lt{display:inline-block;will-change:transform}
+
+  #dock{position:absolute;left:50%;top:36.6rem;display:flex;align-items:center;gap:.55rem;
+    background:var(--surface);border:1px solid var(--border);border-radius:99rem;
+    padding:.5rem .8rem;box-shadow:0 .9rem 2.4rem -0.8rem rgba(15,15,25,.22);
+    transform:translate3d(-50%,3rem,0);will-change:transform}
+  .sw{width:1.1rem;height:1.1rem;border-radius:50%;background:var(--c);position:relative}
+  .sw.on::after{content:'';position:absolute;inset:-.26rem;border:.09rem solid var(--c);border-radius:50%}
+  .sw.wm-active{transform:scale(.84)}
+  .dv{width:1px;height:1.2rem;background:var(--border)}
+  .dpill{font-size:.6rem;font-weight:600;padding:.3rem .55rem;border-radius:99rem;
+    border:1px solid var(--border);color:var(--text);display:inline-flex;align-items:center;gap:.3rem}
+  .dpill.wm-active{transform:scale(.93)}
+  .dpill svg{width:.72rem;height:.72rem}
+
+  #mark{position:absolute;left:0;right:0;top:3.6rem;text-align:center;pointer-events:none}
+  .mk{font-size:1.6rem;font-weight:750;letter-spacing:-.01em;color:var(--text)}
+  .mk span{color:var(--accent)}
+  .mksub{font-size:.66rem;color:var(--muted);margin-top:.32rem;letter-spacing:.02em}
+
+  #sweep{position:absolute;top:-30%;bottom:-30%;width:36%;pointer-events:none;
+    background:linear-gradient(100deg,transparent,rgba(255,255,255,.5),transparent);
+    will-change:transform}
+
+  /* scoped finale themes */
+  .sc-coral-light{--accent:#E8590C;--accent-soft:#FDEBDD;--surface:#FFFFFF;--surface2:#F3F3F6;
+    --text:#1A1A1E;--muted:#75757D;--border:#E6E6EB}
+  .sc-violet-dark{--accent:#6D5AE6;--accent-soft:#2E2A45;--surface:#212126;--surface2:#2C2C32;
+    --text:#F3F3F5;--muted:#9D9DA7;--border:#3A3A41;
+    --ch1:#6D5AE6;--ch2:#494266;--ch3:#9B8AEF;--ch4:#F5A623}
+  .sc-violet-light{--accent:#5B45E0;--accent-soft:#EDE9FD;--surface:#FFFFFF;--surface2:#F3F3F6;
+    --text:#1A1A1E;--muted:#75757D;--border:#E6E6EB}
+
+  #wm-cursor{position:fixed;left:0;top:0;z-index:99;pointer-events:none;will-change:transform;
+    transform:translate(-200px,-200px);opacity:0}
+  #cur-exit{position:absolute;right:-6rem;top:20rem;width:1px;height:1px}
+</style></head><body>
+<div id="stage">
+  <div id="spot"></div>
+  <div id="camera">
+    <div id="canvas">
+
+      <div id="title">
+        <div class="t1">One design system.</div>
+        <div class="t2">Any brand.</div>
+      </div>
+
+      <!-- hero: upload widget, center -->
+      <div class="fl" id="fl-upload" style="left:38rem;top:19.4rem">
+        <div class="card w-upload" id="hero-upload">
+          <div class="uhead">
+            <div><div class="lbl">Finished</div><div class="big"><span id="pct">0</span>%</div></div>
+            <div class="btn sm ghost">
+              <svg width="8" height="9" viewBox="0 0 8 9" fill="currentColor"><rect width="2.6" height="9" rx="0.8"/><rect x="5.4" width="2.6" height="9" rx="0.8"/></svg>
+              Pause
+            </div>
+          </div>
+          <svg class="uchart" viewBox="0 0 320 84" preserveAspectRatio="none">
+            <rect id="ushade" x="0" y="0" width="0" height="84" fill="var(--surface2)"/>
+            <g stroke="var(--border)" stroke-width="1">
+              <line x1="0" y1="21" x2="320" y2="21"/><line x1="0" y1="42" x2="320" y2="42"/><line x1="0" y1="63" x2="320" y2="63"/>
+              <line x1="32" y1="0" x2="32" y2="84"/><line x1="64" y1="0" x2="64" y2="84"/><line x1="96" y1="0" x2="96" y2="84"/>
+              <line x1="128" y1="0" x2="128" y2="84"/><line x1="160" y1="0" x2="160" y2="84"/><line x1="192" y1="0" x2="192" y2="84"/>
+              <line x1="224" y1="0" x2="224" y2="84"/><line x1="256" y1="0" x2="256" y2="84"/><line x1="288" y1="0" x2="288" y2="84"/>
+              <rect x="0.5" y="0.5" width="319" height="83" fill="none"/>
+            </g>
+            <clipPath id="uclip"><rect id="uclipr" x="0" y="0" width="0" height="84"/></clipPath>
+            <path fill="var(--accent)" clip-path="url(#uclip)"
+              d="M0,84 L0,76 C14,74 22,66 34,67 C46,68 52,56 64,52 C76,48 86,44 99,40 C112,36 120,30 132,33 C150,37 160,24 178,22 C192,20 200,26 205,24 L205,84 Z"/>
+            <rect id="uedge" x="-3" y="0" width="1.5" height="84" fill="var(--accent)" opacity="0.55"/>
+          </svg>
+          <div class="meta">
+            <div class="mrow"><span>Speed</span><b>3,53 Mb/s</b></div>
+            <div class="mrow"><span>Estimated time</span><b id="eta">about 6 minutes</b></div>
+            <div class="mrow"><span># of files</span><b>89</b></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- finale bento -->
+      <div class="fl sc-coral-light" id="fl-modal" style="left:10rem;top:9.4rem">
+        <div class="card w-modal" id="c-modal">
+          <div class="mhead"><b>Create team</b><span class="mx">✕</span></div>
+          <div class="mbody">
+            <div class="flabel"><span>Title</span></div>
+            <div class="finput"><span class="ph">Label</span></div>
+            <div class="flabel"><span>Description</span><em class="fcnt">0/100</em></div>
+            <div class="finput ta"><span class="ph">Label</span></div>
+            <div class="fhelp">Supporting text to describe more specifics goes here.</div>
+            <div class="flabel"><span>Workspace</span></div>
+            <div class="finput"><span class="wtag"><i>T</i>Teamwork<em>✕</em></span><span class="chev">▼</span></div>
+            <div class="flabel"><span>Who has access <em class="fopt">Optional</em></span></div>
+            <div class="finput"><span class="ph">Label</span><span class="chev">▼</span></div>
+          </div>
+          <div class="mfoot"><span class="fstep">1 of 3</span><span class="spacer"></span>
+            <div class="btn sm ghost">Cancel</div><div class="btn sm primary">Continue</div></div>
+        </div>
+      </div>
+
+      <div class="fl sc-violet-dark" id="fl-ana" style="left:67.5rem;top:8.6rem">
+        <div class="card w-ana" id="c-ana">
+          <div class="ahead">
+            <span class="aic"><svg width="9" height="9" viewBox="0 0 9 9" fill="#fff"><rect x="0" y="4" width="2" height="5" rx="0.6"/><rect x="3.5" y="2" width="2" height="7" rx="0.6"/><rect x="7" y="0" width="2" height="9" rx="0.6"/></svg></span>
+            <b>Stacked bar chart</b>
+          </div>
+          <div class="adesc">Bar chart which can display multiple data series, stacked or side by side</div>
+          <div class="astats">
+            <div class="stat"><span class="sic"><svg width="11" height="11" viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="1.2"><circle cx="6" cy="3.6" r="2.1"/><path d="M1.5 10.6c.6-2.2 2.4-3.4 4.5-3.4s3.9 1.2 4.5 3.4"/></svg></span>
+              <div><div class="slbl">People</div><b class="sval" id="stA">0</b></div></div>
+            <div class="stat"><span class="sic"><svg width="11" height="11" viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="1.1"><circle cx="6" cy="6" r="4.7"/><ellipse cx="6" cy="6" rx="2.1" ry="4.7"/><line x1="1.3" y1="6" x2="10.7" y2="6"/></svg></span>
+              <div><div class="slbl">Countries</div><b class="sval" id="stB">0</b></div></div>
+            <div class="stat"><span class="sic"><svg width="11" height="11" viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="1.2"><rect x="1.4" y="2.2" width="9.2" height="8.4" rx="1.4"/><line x1="1.4" y1="5" x2="10.6" y2="5"/><line x1="4" y1="1" x2="4" y2="3.2"/><line x1="8" y1="1" x2="8" y2="3.2"/></svg></span>
+              <div><div class="slbl">Length</div><b class="sval" id="stC">0 days</b></div></div>
+          </div>
+          <div class="aplot">
+            <div class="ay"><span>500</span><span>400</span><span>300</span><span>200</span><span>100</span><span>0</span></div>
+            <div class="abars">
+              <div class="gl" style="bottom:20%"></div><div class="gl" style="bottom:40%"></div>
+              <div class="gl" style="bottom:60%"></div><div class="gl" style="bottom:80%"></div><div class="gl" style="bottom:100%"></div>
+              <div class="bar"><i style="height:20%;background:var(--ch4)"></i><i style="height:3.6%;background:var(--ch3)"></i><i style="height:17.6%;background:var(--ch2)"></i><i style="height:46.4%;background:var(--ch1)"></i></div>
+              <div class="bar"><i style="height:25.6%;background:var(--ch4)"></i><i style="height:2.8%;background:var(--ch3)"></i><i style="height:6%;background:var(--ch2)"></i><i style="height:29.2%;background:var(--ch1)"></i></div>
+              <div class="bar"><i style="height:6%;background:var(--ch4)"></i><i style="height:11.6%;background:var(--ch3)"></i><i style="height:12.4%;background:var(--ch2)"></i><i style="height:20.8%;background:var(--ch1)"></i></div>
+              <div class="bar"><i style="height:2.4%;background:var(--ch4)"></i><i style="height:17.6%;background:var(--ch3)"></i><i style="height:14%;background:var(--ch2)"></i><i style="height:36.8%;background:var(--ch1)"></i></div>
+              <div class="bar"><i style="height:5.2%;background:var(--ch4)"></i><i style="height:4.8%;background:var(--ch3)"></i><i style="height:4%;background:var(--ch2)"></i><i style="height:11.6%;background:var(--ch1)"></i></div>
+            </div>
+          </div>
+          <div class="aleg">
+            <span><i style="background:var(--ch1)"></i>Opened</span>
+            <span><i style="background:var(--ch2)"></i>Received</span>
+            <span><i style="background:var(--ch3)"></i>Clicked</span>
+            <span><i style="background:var(--ch4)"></i>Sent</span>
+          </div>
+          <div class="afoot">
+            <div class="btn xs ghost"><svg width="8" height="6" viewBox="0 0 8 6" fill="none" stroke="currentColor" stroke-width="1.3"><path d="M1 4.5 4 1.5 7 4.5"/></svg></div>
+            <span class="afl">Less details</span><span class="spacer"></span>
+            <div class="btn sm ghost">＋ Export</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="fl sc-violet-light" id="fl-list" style="left:39.5rem;top:41.6rem">
+        <div class="card w-list" id="c-list">
+          <div class="lrow">
+            <div class="llogo">SEVILLE</div>
+            <div><div class="lname">The Seville</div><div class="lmeta">Atlantic City&nbsp;&nbsp;·&nbsp;&nbsp;Buckhead Atlanta</div></div>
+          </div>
+          <div class="lbtns"><div class="btn sm soft">Book now</div><div class="btn sm ghost">View menus</div></div>
+        </div>
+      </div>
+
+      <!-- token dock -->
+      <div id="dock">
+        <span class="sw on" id="sw-violet" style="--c:#5B45E0"></span>
+        <span class="sw" id="sw-coral" style="--c:#E8590C"></span>
+        <span class="sw" id="sw-forest" style="--c:#0F9D8C"></span>
+        <span class="dv"></span>
+        <span class="dpill" id="d-rad">Sharp corners</span>
+        <span class="dv"></span>
+        <span class="dpill" id="d-dark"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M20.2 13.6A8.4 8.4 0 1 1 10.4 3.8a6.9 6.9 0 0 0 9.8 9.8z"/></svg>Dark</span>
+      </div>
+
+      <div id="mark">
+        <div class="mk">Wideset <span>Core</span></div>
+        <div class="mksub">One system · Any brand</div>
+      </div>
+
+      <div id="cur-exit"></div>
+    </div>
+  </div>
+  <div id="sweep"></div>
+  <div id="vig"></div>
+  <div id="loopfade" style="position:absolute;inset:0;background:#EFEFF2;opacity:0;pointer-events:none;z-index:90"></div>
+</div>
+<div id="wm-cursor"><svg width="26" height="30" viewBox="0 0 26 30"><path d="M2 2 L2 24 L8 18 L12 28 L16 26 L12 17 L21 17 Z" fill="#111" stroke="#fff" stroke-width="1.6"/></svg></div>
+
+<script src="wm-timeline.js"></script>
+<script>
+(() => {
+  const REM = parseFloat(document.documentElement.style.fontSize);
+  const W = innerWidth, H = innerHeight, CXp = W/2, CYp = H/2;
+
+  // ---- helpers -------------------------------------------------------
+  const hx = h => [parseInt(h.slice(1,3),16), parseInt(h.slice(3,5),16), parseInt(h.slice(5,7),16)];
+  const mix = (a,b,p) => { const A=hx(a),B=hx(b);
+    return `rgb(${A.map((v,i)=>Math.round(v+(B[i]-v)*p)).join(',')})`; };
+  const tweenVars = (at,dur,pairs,ease='smooth',el=document.documentElement) =>
+    WM.tween({at,dur,ease,apply(p){ for(const k in pairs){ const [a,b]=pairs[k];
+      el.style.setProperty(k, mix(a,b,p)); }}});
+  // keyframed CSS-var timeline — safe for multi-step changes of the SAME var
+  // kfs: [{t, v, ease?}] ; v = '#hex' (color) or number (with `unit`)
+  const varTL = (name, kfs, unit=null) => {
+    const end = kfs[kfs.length-1].t;
+    WM.tween({at:0, dur:end, ease:'linear', apply(p, tc, t){
+      let i=0; while(i<kfs.length-1 && t>kfs[i+1].t) i++;
+      const a=kfs[i], b=kfs[Math.min(i+1,kfs.length-1)];
+      const seg = b.t===a.t ? 1 : Math.max(0,Math.min(1,(t-a.t)/(b.t-a.t)));
+      const e = WM.Easings[b.ease||'smooth'](seg);
+      const val = unit===null ? mix(a.v,b.v,e) : (a.v+(b.v-a.v)*e)+unit;
+      document.documentElement.style.setProperty(name,val);
+    }});
+  };
+  // gated tween: inert (applies nothing) before its start time — for exit
+  // tweens whose p=0 state would otherwise stomp earlier tweens
+  const gatedStyle = (sel,at,dur,props,ease) => {
+    const el=document.querySelector(sel);
+    WM.tween({at,dur,ease,apply(p,tc,t){ if(t<at||!el) return;
+      for(const k in props){ const v=props[k];
+        el.style[k] = typeof v==='function' ? v(p,(a,b,pp)=>a+(b-a)*pp)
+          : String(v[0]+(v[1]-v[0])*p); }}});
+  };
+  const F = (sel,s,dx=0,dy=0) => { const r=document.querySelector(sel).getBoundingClientRect();
+    return { x:(CXp-(r.x+r.width/2+dx*REM))*s, y:(CYp-(r.y+r.height/2+dy*REM))*s, scale:s }; };
+  const splitLetters = el => { const txt=el.textContent; el.textContent='';
+    [...txt].forEach(ch=>{ const s=document.createElement('span'); s.className='lt';
+      s.textContent = ch===' ' ? ' ' : ch; el.appendChild(s); }); };
+  const rise = (sel,at,dur=800,dy=2.2,sc=null) => WM.style(sel,at,dur,{
+    opacity:[0,1],
+    transform:(p,l)=>`translate3d(0,${l(dy,0,p)}rem,0)`+(sc?` scale(${l(sc,1,p)})`:'')
+  },'out');
+
+  // ---- palettes ------------------------------------------------------
+  const PAL = {
+    violet:{acc:'#5B45E0', soft:'#EDE9FD'},
+    coral :{acc:'#E8590C', soft:'#FDEBDD'},
+    forest:{acc:'#0F9D8C', soft:'#DDF3EF'},
+  };
+  const LIGHT = {bg:'#EFEFF2',s:'#FFFFFF',s2:'#F3F3F6',t:'#1A1A1E',m:'#75757D',b:'#E6E6EB'};
+  const DARK  = {bg:'#131316',s:'#212126',s2:'#2C2C32',t:'#F3F3F5',m:'#9D9DA7',b:'#3A3A41'};
+
+  // ---- title letters -------------------------------------------------
+  document.querySelectorAll('#title .t1, #title .t2').forEach(splitLetters);
+
+  // ================= TIMELINE (18 000 ms) =============================
+
+  // camera
+  const kUp   = F('#hero-upload', 1.5);
+  const kUp2  = {x:kUp.x*1.02, y:kUp.y*1.02, scale:1.53};
+  const kDock = F('#hero-upload', 1.22, 0, 4.6);   // widget + dock framed
+  const kDock2= {x:kDock.x*1.008, y:kDock.y*1.008, scale:1.235};
+  const kDock3= {x:kDock.x*1.016, y:kDock.y*1.016, scale:1.25};
+  WM.camera([
+    {t:0,     scale:1.05},
+    {t:1700,  scale:1.0},
+    {t:2700,  scale:1.0, ease:'linear'},
+    {t:4200,  ...kUp},
+    {t:5400,  ...kUp2, ease:'linear'},
+    {t:6200,  ...kDock},
+    {t:9600,  ...kDock2, ease:'linear'},
+    {t:12600, ...kDock3, ease:'linear'},
+    {t:14200, scale:1.0, x:0, y:0},
+    {t:18000, scale:1.035, ease:'linear'},
+  ]);
+
+  // scene 1 · titles
+  WM.style('#stage',0,600,{opacity:[0,1]},'out');
+  WM.stagger('#title .t1 .lt',250,24,(el,i,at)=>WM.style(el,at,520,{
+    opacity:[0,1],transform:(p,l)=>`translate3d(0,${l(0.7,0,p)}em,0)`},'out'));
+  WM.stagger('#title .t2 .lt',950,24,(el,i,at)=>WM.style(el,at,520,{
+    opacity:[0,1],transform:(p,l)=>`translate3d(0,${l(0.7,0,p)}em,0)`},'out'));
+  WM.style('#title',2300,550,{opacity:[1,0],
+    transform:(p,l)=>`scale(${l(1,1.12,p)})`},'in');
+
+  // scene 2 · upload widget assembles
+  rise('#hero-upload',2650,850,2.6,0.965);
+  WM.count('#pct',3650,1100,0,31,n=>String(Math.round(n)));
+  WM.tween({at:3650,dur:1450,ease:'cinematic',apply(p){
+    const w=99*p;
+    uclipr.setAttribute('width',w); ushade.setAttribute('width',w);
+    uedge.setAttribute('x',Math.max(0,w-1.5));
+  }});
+  WM.stagger('#hero-upload .mrow',3350,130,(el,i,at)=>WM.style(el,at,520,{
+    opacity:[0,1],transform:(p,l)=>`translate3d(0,${l(0.5,0,p)}rem,0)`},'out'));
+
+  // scene 3 · token dock + brand swaps
+  WM.style('#dock',5300,650,{opacity:[0,1],
+    transform:(p,l)=>`translate3d(-50%,${l(3,0,p)}rem,0)`},'out');
+  WM.style('#wm-cursor',5650,400,{opacity:[0,1]},'out');
+  WM.cursorTo('#sw-coral',5700,750);
+  WM.click('#sw-coral',6550);
+  WM.tween({at:6560,dur:1,apply(p){ if(p===1){
+    document.getElementById('sw-violet').classList.remove('on');
+    document.getElementById('sw-coral').classList.add('on'); }}});
+
+  WM.cursorTo('#sw-forest',7550,550);
+  WM.click('#sw-forest',8150);
+  WM.tween({at:8160,dur:1,apply(p){ if(p===1){
+    document.getElementById('sw-coral').classList.remove('on');
+    document.getElementById('sw-forest').classList.add('on'); }}});
+
+  // brand token journey (single keyframed track per var — no stomping)
+  varTL('--accent',[
+    {t:0,v:PAL.violet.acc},{t:6600,v:PAL.violet.acc},{t:7220,v:PAL.coral.acc},
+    {t:8200,v:PAL.coral.acc},{t:8820,v:PAL.forest.acc}]);
+  varTL('--accent-soft',[
+    {t:0,v:PAL.violet.soft},{t:6600,v:PAL.violet.soft},{t:7220,v:PAL.coral.soft},
+    {t:8200,v:PAL.coral.soft},{t:8820,v:PAL.forest.soft}]);
+
+  // scene 4 · radius token
+  WM.cursorTo('#d-rad',8800,600);
+  WM.click('#d-rad',9450);
+  WM.tween({at:9500,dur:620,ease:'smooth',apply(p){
+    document.documentElement.style.setProperty('--r',(0.7+(0.16-0.7)*p)+'rem');
+  }});
+
+  // scene 5 · dark mode sweep
+  WM.cursorTo('#d-dark',10150,600);
+  WM.click('#d-dark',10800);
+  tweenVars(10850,850,{
+    '--bg':[LIGHT.bg,DARK.bg], '--surface':[LIGHT.s,DARK.s], '--surface2':[LIGHT.s2,DARK.s2],
+    '--text':[LIGHT.t,DARK.t], '--muted':[LIGHT.m,DARK.m], '--border':[LIGHT.b,DARK.b]});
+  WM.style('#spot',10850,850,{opacity:[1,0.07]},'smooth');
+  WM.style('#sweep',10800,950,{
+    opacity:(p,l)=>String(Math.sin(Math.min(1,p)*Math.PI)*0.55),
+    transform:(p,l)=>`translate3d(${l(-0.55*W,1.35*W,p)}px,0,0) rotate(0.001deg)`},'inOut');
+
+  // cursor leaves (gated — must not stomp the entrance states before t)
+  WM.cursorTo('#cur-exit',11900,700);
+  gatedStyle('#wm-cursor',12100,450,{opacity:[1,0]},'smooth');
+  gatedStyle('#dock',12250,550,{opacity:[1,0],
+    transform:(p,l)=>`translate3d(-50%,${l(0,2.6,p)}rem,0)`},'in');
+
+  // scene 6 · bento finale
+  rise('#c-modal',13350,850,2.2,0.955);
+  rise('#c-ana',13650,850,2.2,0.955);
+  rise('#c-list',13950,850,2.2,0.955);
+  WM.stagger('#c-ana .bar',14050,70,(el,i,at)=>WM.style(el,at,620,{
+    transform:(p,l)=>`scaleY(${l(0,1,p)})`},'out'));
+  WM.count('#stA',14250,950,0,1684);
+  WM.count('#stB',14350,950,0,18,n=>String(Math.round(n)));
+  WM.count('#stC',14450,950,0,36,n=>Math.round(n)+' days');
+  WM.style('#mark',15650,800,{opacity:[0,1],
+    transform:(p,l)=>`translate3d(0,${l(1.4,0,p)}rem,0)`},'out');
+
+  // ambient float on all cards during finale
+  [['#fl-upload',0],['#fl-modal',1.7],['#fl-ana',3.4],['#fl-list',5.1]].forEach(([sel,ph])=>{
+    WM.tween({at:12000,dur:6000,ease:'linear',apply(p){
+      const el=document.querySelector(sel);
+      el.style.transform=`translate3d(0,${Math.sin(p*Math.PI*2*1.4+ph)*0.13*REM}px,0)`;
+    }});
+  });
+
+  // loop fade — bridge the dark ending back to the light opening
+  WM.tween({at:17450,dur:550,ease:'smooth',apply(p,tc,t){ if(t<17450) return;
+    document.getElementById('loopfade').style.opacity=String(p); }});
+
+  WM.duration = 18000;
+  WM.seek(0);
+  if (!navigator.webdriver) WM.play(true);
+})();
+</script>
+</body></html>
