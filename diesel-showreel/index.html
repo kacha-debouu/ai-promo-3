@@ -1,0 +1,267 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Diesel · Product Card Showreel</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet" />
+<style>
+/* ── THEME TOKENS ── */
+:root{
+  --stage:#f3f0ea; --surface:#ffffff; --surface2:#f6f6f7;
+  --ink:#141416; --sub:#8a8a8e; --line:rgba(0,0,0,.10);
+  --accent:#E4002B; --accent-soft:#FFE1E7; --acc-text:#ffffff;
+  --radius:18px; --radius-sm:11px;
+  --font:'Inter',-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;
+  /* live product color (cycled) */
+  --tone:#E4002B; --tone-soft:#FFE1E7;
+}
+
+/* ── RUNTIME (do not edit) ─────────────────────── */
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{height:100%}
+body{background:var(--stage);font-family:var(--font);color:var(--ink);
+  -webkit-font-smoothing:antialiased;overflow:hidden;
+  transition:background .7s cubic-bezier(.65,0,.35,1)}
+#stage{position:fixed;inset:0;display:flex;align-items:center;justify-content:center;overflow:hidden}
+.camera{display:flex;align-items:center;justify-content:center;width:100%;height:100%;
+  transition:transform 1.1s cubic-bezier(.65,0,.35,1);will-change:transform}
+.scene{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;
+  opacity:0;pointer-events:none;transform:scale(.985) translateY(10px);
+  transition:opacity .55s cubic-bezier(.22,1,.36,1),transform .55s cubic-bezier(.22,1,.36,1)}
+.scene.on{opacity:1;pointer-events:auto;transform:none}
+[data-in]{opacity:0;transition:opacity .7s cubic-bezier(.22,1,.36,1),
+  transform .7s cubic-bezier(.22,1,.36,1),filter .7s cubic-bezier(.22,1,.36,1),
+  clip-path .7s cubic-bezier(.22,1,.36,1)}
+[data-in=rise]{transform:translateY(24px)}
+[data-in=drop]{transform:translateY(-24px)}
+[data-in=left]{transform:translateX(-32px)}
+[data-in=right]{transform:translateX(32px)}
+[data-in=pop]{transform:scale(.55);transition-timing-function:cubic-bezier(.34,1.56,.64,1)}
+[data-in=blur]{filter:blur(10px);transform:scale(1.03)}
+[data-in=wipe]{clip-path:inset(0 100% 0 0)}
+[data-in=instant]{transition-duration:0s}
+.in[data-in]{opacity:1;transform:none;filter:none;clip-path:inset(0 0 0 0)}
+.card{background:var(--surface);border:1px solid var(--line);border-radius:var(--radius)}
+@keyframes blink{0%,49%{opacity:1}50%,100%{opacity:0}}
+.caret{display:inline-block;width:2px;height:1em;background:var(--accent);
+  vertical-align:-2px;margin-left:1px;animation:blink 1s steps(1,end) infinite}
+@keyframes floaty{0%,100%{transform:translateY(0)}50%{transform:translateY(-10px)}}
+.float{animation:floaty 5.5s ease-in-out infinite}
+
+/* ── DIESEL SHOWREEL ── */
+/* soft gen-z gradient mesh behind everything, tints with the live tone */
+#mesh{position:fixed;inset:0;z-index:0;pointer-events:none;opacity:.9;
+  transition:background .9s cubic-bezier(.65,0,.35,1);
+  background:
+    radial-gradient(60% 55% at 20% 18%, color-mix(in srgb, var(--tone) 26%, transparent), transparent 60%),
+    radial-gradient(55% 55% at 84% 26%, color-mix(in srgb, var(--tone) 18%, transparent), transparent 62%),
+    radial-gradient(70% 60% at 50% 108%, color-mix(in srgb, var(--tone) 20%, transparent), transparent 60%);}
+
+/* Diesel logo — fixed red box, top-left corner */
+#logo{position:fixed;left:34px;top:30px;z-index:40;background:var(--accent);color:#fff;
+  padding:9px 15px 8px;border-radius:5px;line-height:1;
+  box-shadow:0 10px 26px rgba(228,0,43,.32);
+  transition:opacity .6s cubic-bezier(.22,1,.36,1),transform .6s cubic-bezier(.34,1.56,.64,1);
+  opacity:0;transform:translateY(-14px) scale(.9);transform-origin:left top}
+#logo.in{opacity:1;transform:none}
+#logo b{display:block;font-weight:900;font-size:26px;letter-spacing:1.5px;font-style:italic}
+#logo span{display:block;font-size:7.5px;font-weight:700;letter-spacing:2.4px;margin-top:2px;opacity:.92}
+
+/* product tile — the listing card that recolors + resizes */
+#tile{width:360px;padding:0;overflow:hidden;position:relative;background:var(--surface);
+  box-shadow:0 30px 70px rgba(20,20,30,.16);
+  transition:width .9s cubic-bezier(.22,1,.36,1),box-shadow .5s ease,opacity .5s ease,transform .5s cubic-bezier(.34,1.56,.64,1)}
+.imgwrap{position:relative;aspect-ratio:3/4;overflow:hidden;
+  background:var(--tone-soft);transition:background .8s cubic-bezier(.65,0,.35,1)}
+.lib{position:absolute;left:9px;top:20px;transform:rotate(180deg);writing-mode:vertical-rl;
+  font-size:8px;font-weight:800;letter-spacing:2.5px;color:var(--accent);opacity:.7}
+.heart{position:absolute;right:14px;top:12px;color:var(--accent);font-size:19px;line-height:1}
+.tee{position:absolute;left:50%;top:52%;transform:translate(-50%,-50%);width:64%;height:auto;
+  filter:drop-shadow(0 16px 26px rgba(0,0,0,.22))}
+.tee path.body{fill:var(--tone);transition:fill .8s cubic-bezier(.65,0,.35,1)}
+.tee path.shade{fill:rgba(0,0,0,.12)}
+.badges{position:absolute;left:12px;bottom:12px;display:flex;gap:6px}
+.bdg{background:var(--surface);border:1px solid var(--line);border-radius:5px;
+  padding:4px 8px;font-size:10.5px;font-weight:800;letter-spacing:.3px;text-transform:uppercase;
+  transform:scale(.4);opacity:0;transition:transform .34s cubic-bezier(.34,1.56,.64,1),opacity .2s}
+.bdg.in{transform:none;opacity:1}
+.meta{padding:14px 16px 16px}
+.pname{font-size:14px;font-weight:600;letter-spacing:-.1px}
+.price{font-size:14px;font-weight:800;color:var(--accent);margin-top:5px}
+.colors{display:flex;align-items:center;gap:12px;margin-top:12px}
+.colors .lbl{font-size:10.5px;font-weight:700;letter-spacing:1.2px;color:var(--sub)}
+.dots{display:flex;gap:7px}
+.dots i{width:15px;height:15px;border-radius:50%;flex:none;position:relative;cursor:pointer;
+  box-shadow:inset 0 0 0 1px rgba(0,0,0,.12);transition:transform .3s cubic-bezier(.34,1.56,.64,1)}
+.dots i.act{transform:scale(1.18)}
+.dots i.act::after{content:'';position:absolute;inset:-4px;border-radius:50%;
+  border:2px solid var(--ink)}
+
+/* size + color-name captions */
+#cap{position:fixed;left:50%;bottom:52px;transform:translateX(-50%);z-index:30;
+  display:flex;gap:10px;align-items:center;opacity:0;transition:opacity .5s ease}
+#cap.on{opacity:1}
+.capchip{background:var(--surface);border:1px solid var(--line);border-radius:999px;
+  padding:8px 16px;font-size:12.5px;font-weight:700;letter-spacing:.2px;
+  box-shadow:0 10px 26px rgba(20,20,30,.12);display:inline-flex;align-items:center;gap:8px}
+.capchip .sw{width:13px;height:13px;border-radius:50%;background:var(--tone);
+  transition:background .6s ease;box-shadow:inset 0 0 0 1px rgba(0,0,0,.12)}
+
+/* color-sweep highlight over the tile */
+#sweep{position:absolute;inset:-40% -10%;pointer-events:none;z-index:5;opacity:0;
+  background:linear-gradient(105deg,transparent 38%,rgba(255,255,255,.65) 50%,transparent 62%);
+  transform:translateX(-120%) skewX(-8deg)}
+
+/* gen-z sticker pile */
+#pile{position:absolute;inset:0;pointer-events:none;z-index:20}
+.stik{position:absolute;font-weight:900;letter-spacing:.3px;white-space:nowrap;
+  padding:11px 17px;border-radius:14px;font-size:19px;
+  box-shadow:0 10px 26px rgba(0,0,0,.18);opacity:0;transform-origin:center;
+  transition:transform .34s cubic-bezier(.34,1.56,.64,1),opacity .18s ease}
+.stik.emoji{background:none;box-shadow:none;font-size:44px;padding:0}
+.stik.red{background:var(--accent);color:#fff}
+.stik.black{background:#141416;color:#fff}
+.stik.lime{background:#C6FF3A;color:#141416}
+.stik.pink{background:#FF3D8B;color:#fff}
+.stik.white{background:#fff;color:#141416;border:1.5px solid var(--ink)}
+</style>
+</head>
+<body>
+<div id="mesh"></div>
+<div id="logo"><b>DIESEL</b><span>FOR SUCCESSFUL LIVING</span></div>
+
+<div id="stage"><div class="camera" id="cam">
+
+  <div id="tile" class="card float" data-in="pop">
+    <div class="imgwrap">
+      <span class="lib">DIESEL LIBRARY</span>
+      <span class="heart">&#9829;</span>
+      <svg class="tee" viewBox="0 0 200 210" xmlns="http://www.w3.org/2000/svg">
+        <path class="body" d="M70 12 L44 30 L14 66 L36 92 L58 76 L58 198 L142 198 L142 76 L164 92 L186 66 L156 30 L130 12 C124 34 76 34 70 12 Z"/>
+        <path class="shade" d="M58 76 L58 198 L100 198 L100 20 C86 26 66 22 58 76 Z" opacity=".08"/>
+      </svg>
+      <div class="badges">
+        <span class="bdg">New</span>
+        <span class="bdg">Velvet</span>
+      </div>
+    </div>
+    <div class="meta">
+      <div class="pname">D-Ribby Cropped Rib Tank Top</div>
+      <div class="price">&pound;120.00</div>
+      <div class="colors">
+        <span class="lbl">5 COLORS</span>
+        <div class="dots">
+          <i style="background:#E4002B"></i>
+          <i style="background:#1E3AE0"></i>
+          <i style="background:#12B981"></i>
+          <i style="background:#FF3D8B"></i>
+          <i style="background:#15151A"></i>
+        </div>
+      </div>
+    </div>
+    <div id="sweep"></div>
+  </div>
+
+  <div id="pile"></div>
+
+</div></div>
+
+<div id="cap"><span class="capchip"><span class="sw"></span><span id="cname">Racing Red</span></span><span class="capchip" id="sizechip" style="display:none">Regular</span></div>
+
+<script>
+/* ── TIMELINE RUNTIME (do not edit) ── */
+const $=s=>document.querySelector(s), $$=s=>[...document.querySelectorAll(s)];
+const T=[];
+const at=(ms,fn)=>T.push(setTimeout(fn,ms));
+const show=sel=>{const el=typeof sel==='string'?$(sel):sel; el&&el.classList.add('in')};
+const stagger=(ms,gap,els,fn)=>els.forEach((el,i)=>at(ms+i*gap,()=>fn?fn(el,i):el.classList.add('in')));
+function camera(scale=1,x=0,y=0,dur=1100){const c=$('#cam');
+  c.style.transitionDuration=dur+'ms';
+  c.style.transform=`translate(${x}px,${y}px) scale(${scale})`}
+const loop=total=>at(total,()=>location.reload());
+window.SCENE={at,show,stagger,camera,loop,$,$$};
+
+/* ══ DIESEL SHOWREEL TIMELINE ══ */
+const root=document.documentElement.style;
+const setTone=(t,s)=>{root.setProperty('--tone',t);root.setProperty('--tone-soft',s);};
+
+// palette for the "5 COLORS" cycle
+const TONES=[
+  {t:'#E4002B',s:'#FFE1E7',name:'Racing Red'},
+  {t:'#1E3AE0',s:'#DEE4FF',name:'Cobalt Blue'},
+  {t:'#12B981',s:'#D6F7EC',name:'Acid Mint'},
+  {t:'#FF3D8B',s:'#FFE0EE',name:'Hot Pink'},
+  {t:'#15151A',s:'#E6E6EA',name:'Washed Black'},
+];
+
+function sweep(){
+  const sw=$('#sweep');
+  sw.style.transition='none'; sw.style.opacity=0;
+  sw.style.transform='translateX(-120%) skewX(-8deg)';
+  requestAnimationFrame(()=>{
+    sw.style.transition='transform .8s cubic-bezier(.65,0,.35,1),opacity .8s ease';
+    sw.style.opacity=1; sw.style.transform='translateX(120%) skewX(-8deg)';
+    setTimeout(()=>{sw.style.opacity=0;},700);
+  });
+}
+
+// intro — logo, card slap, chrome pops
+SCENE.at(200,()=>SCENE.show('#logo'));
+SCENE.at(500,()=>SCENE.show('#tile'));
+SCENE.at(950,()=>SCENE.stagger(0,120,SCENE.$$('.bdg')));
+SCENE.at(1250,()=>{SCENE.$('#cap').classList.add('on');});
+SCENE.at(1100,()=>camera(1.06,0,-8,1300));
+
+// BEAT 1 · change colors (S15 theme sweep) with the "5 COLORS" swatches
+const cBase=1750;
+TONES.forEach((c,i)=>SCENE.at(cBase+i*1050,()=>{
+  setTone(c.t,c.s);
+  SCENE.$$('.dots i').forEach((d,k)=>d.classList.toggle('act',k===i));
+  SCENE.$('#cname').textContent=c.name;
+  sweep();
+}));
+
+// BEAT 2 · scale the box to different sizes (S16 responsive reflow)
+const sStart=cBase+TONES.length*1050+300;   // ~7300
+SCENE.at(sStart-350,()=>{camera(1,0,0,1200);
+  SCENE.$('#sizechip').style.display='inline-flex';});
+const SIZES=[{w:280,l:'Compact · S'},{w:360,l:'Regular · M'},{w:420,l:'Large · L'}];
+SIZES.forEach((z,i)=>SCENE.at(sStart+i*1150,()=>{
+  SCENE.$('#tile').style.width=z.w+'px';
+  SCENE.$('#sizechip').textContent=z.l;
+}));
+// settle back to a friendly size
+const stickBase=sStart+SIZES.length*1150+300;  // ~11150
+SCENE.at(stickBase-450,()=>{SCENE.$('#tile').style.width='400px';
+  SCENE.$('#sizechip').style.display='none';});
+
+// BEAT 3 · gen-z sticker slaps (F2)
+const STICKERS=[
+  {h:'NEW DROP ✦',c:'red',   x:60, y:70,  r:-8, s:1},
+  {h:'🔥',        c:'emoji', x:1070,y:120, r:0,  s:1},
+  {h:'-30%',      c:'black', x:1050,y:470, r:9,  s:1},
+  {h:'so hot rn', c:'lime',  x:120, y:520, r:6,  s:1},
+  {h:'TRY IT ON AR',c:'white',x:80, y:300, r:-5, s:1},
+  {h:'♥',         c:'emoji', x:1130,y:300, r:0,  s:1},
+  {h:'SALE',      c:'pink',  x:1000,y:640, r:-7, s:1},
+  {h:'★',         c:'emoji', x:200, y:130, r:0,  s:1},
+];
+STICKERS.forEach((s,i)=>SCENE.at(stickBase+i*300,()=>{
+  const el=document.createElement('div');
+  el.className='stik '+s.c; el.textContent=s.h;
+  el.style.left=s.x+'px'; el.style.top=s.y+'px';
+  el.style.transform=`rotate(${s.r}deg) scale(1.7)`;
+  SCENE.$('#pile').appendChild(el);
+  requestAnimationFrame(()=>{el.style.opacity=1;el.style.transform=`rotate(${s.r}deg) scale(1)`;});
+}));
+// tiny camera nudge as the stickers land
+SCENE.at(stickBase,()=>camera(1.02,0,0,900));
+
+// hold, then loop
+SCENE.loop(stickBase+STICKERS.length*300+2600);
+</script>
+</body>
+</html>
