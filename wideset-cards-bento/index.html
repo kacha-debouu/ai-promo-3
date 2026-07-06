@@ -111,6 +111,8 @@
   .lmeta{font-size:.56rem;color:var(--muted);margin-top:.16rem}
   .lbtns{display:flex;gap:.45rem;margin-top:.7rem}
 
+  /* titles + slogans removed — components only */
+  #ctitle,#dim,#cmark{display:none!important}
   /* kinetic title */
   #ctitle{position:absolute;left:0;right:0;top:20.4rem;text-align:center;pointer-events:none}
   .cti{font-size:4.8rem;font-weight:800;color:var(--text);letter-spacing:.35em}
@@ -133,7 +135,7 @@
   <div id="camera">
     <div id="canvas">
 
-      <div class="fl" id="fl-upload" style="left:15rem;top:7rem">
+      <div class="fl" id="fl-upload" style="left:27.55rem;top:9.8rem">
         <div class="card w-upload" id="c-upload">
           <div class="uhead">
             <div><div class="lbl">Finished</div><div class="big"><span id="pct">0</span>%</div></div>
@@ -164,7 +166,7 @@
         </div>
       </div>
 
-      <div class="fl" id="fl-modal" style="left:50rem;top:4.5rem">
+      <div class="fl" id="fl-modal" style="left:48.95rem;top:9.8rem">
         <div class="card w-modal" id="c-modal">
           <div class="mhead"><b>Create team</b><span class="mx">✕</span></div>
           <div class="mbody">
@@ -183,7 +185,7 @@
         </div>
       </div>
 
-      <div class="fl" id="fl-ana" style="left:15rem;top:24.5rem">
+      <div class="fl" id="fl-ana" style="left:27.55rem;top:24.55rem">
         <div class="card w-ana" id="c-ana">
           <div class="ahead">
             <span class="aic"><svg width="9" height="9" viewBox="0 0 9 9" fill="#fff"><rect x="0" y="4" width="2" height="5" rx="0.6"/><rect x="3.5" y="2" width="2" height="7" rx="0.6"/><rect x="7" y="0" width="2" height="9" rx="0.6"/></svg></span>
@@ -224,7 +226,7 @@
         </div>
       </div>
 
-      <div class="fl" id="fl-list" style="left:50rem;top:35rem">
+      <div class="fl" id="fl-list" style="left:48.95rem;top:34rem">
         <div class="card w-list" id="c-list">
           <div class="lrow">
             <div class="llogo">SEVILLE</div>
@@ -320,8 +322,8 @@
   WM.style('#ctitle',1550,480,{opacity:[1,0],
     transform:(p,l)=>`scale(${l(1,1.14,p)})`},'in');
 
-  // beat 1 · bento pop
-  pop('#c-upload',1750); pop('#c-modal',1870); pop('#c-ana',1990); pop('#c-list',2110);
+  // beat 1 · bento pop (pulled early — no title to wait on)
+  pop('#c-upload',200); pop('#c-modal',320); pop('#c-ana',440); pop('#c-list',560);
 
   // beat 2 · analytics performs
   WM.stagger('#c-ana .bar',3050,60,(el,i,at)=>WM.style(el,at,520,{

@@ -113,6 +113,8 @@
   .lbtns{display:flex;gap:.45rem;margin-top:.7rem}
 
   /* ---------- scene chrome ---------- */
+  /* titles + slogans removed — components only */
+  #title,#mark{display:none!important}
   #title{position:absolute;left:0;right:0;top:16.6rem;text-align:center;pointer-events:none}
   .t1,.t2{font-size:2.75rem;font-weight:750;letter-spacing:-.015em;line-height:1.22;color:var(--text)}
   .t2{color:var(--accent)}
@@ -196,7 +198,7 @@
       </div>
 
       <!-- finale bento -->
-      <div class="fl sc-coral-light" id="fl-modal" style="left:10rem;top:9.4rem">
+      <div class="fl sc-coral-light" id="fl-modal" style="left:17.1rem;top:19.4rem">
         <div class="card w-modal" id="c-modal">
           <div class="mhead"><b>Create team</b><span class="mx">✕</span></div>
           <div class="mbody">
@@ -215,7 +217,7 @@
         </div>
       </div>
 
-      <div class="fl sc-violet-dark" id="fl-ana" style="left:67.5rem;top:8.6rem">
+      <div class="fl sc-violet-dark" id="fl-ana" style="left:59.4rem;top:19.4rem">
         <div class="card w-ana" id="c-ana">
           <div class="ahead">
             <span class="aic"><svg width="9" height="9" viewBox="0 0 9 9" fill="#fff"><rect x="0" y="4" width="2" height="5" rx="0.6"/><rect x="3.5" y="2" width="2" height="7" rx="0.6"/><rect x="7" y="0" width="2" height="9" rx="0.6"/></svg></span>
@@ -256,7 +258,7 @@
         </div>
       </div>
 
-      <div class="fl sc-violet-light" id="fl-list" style="left:39.5rem;top:41.6rem">
+      <div class="fl sc-violet-light" id="fl-list" style="left:38rem;top:34.15rem">
         <div class="card w-list" id="c-list">
           <div class="lrow">
             <div class="llogo">SEVILLE</div>
@@ -378,15 +380,15 @@
   WM.style('#title',2300,550,{opacity:[1,0],
     transform:(p,l)=>`scale(${l(1,1.12,p)})`},'in');
 
-  // scene 2 · upload widget assembles
-  rise('#hero-upload',2650,850,2.6,0.965);
-  WM.count('#pct',3650,1100,0,31,n=>String(Math.round(n)));
-  WM.tween({at:3650,dur:1450,ease:'cinematic',apply(p){
+  // scene 2 · upload widget assembles (pulled early — no title to wait on)
+  rise('#hero-upload',250,850,2.6,0.965);
+  WM.count('#pct',900,1100,0,31,n=>String(Math.round(n)));
+  WM.tween({at:900,dur:1450,ease:'cinematic',apply(p){
     const w=99*p;
     uclipr.setAttribute('width',w); ushade.setAttribute('width',w);
     uedge.setAttribute('x',Math.max(0,w-1.5));
   }});
-  WM.stagger('#hero-upload .mrow',3350,130,(el,i,at)=>WM.style(el,at,520,{
+  WM.stagger('#hero-upload .mrow',650,130,(el,i,at)=>WM.style(el,at,520,{
     opacity:[0,1],transform:(p,l)=>`translate3d(0,${l(0.5,0,p)}rem,0)`},'out'));
 
   // scene 3 · token dock + brand swaps

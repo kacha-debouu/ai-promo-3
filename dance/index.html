@@ -163,16 +163,6 @@
   <div id="stage">
     <div id="card" data-style="original" data-mode="light">
       <div class="pad">
-        <div class="thumb">
-          <div class="scene" id="scene"></div>
-          <div class="badge"><span class="rec"></span><span id="badgetxt">Rehearsal clips · 12 takes</span></div>
-        </div>
-        <div class="topbar">
-          <div class="iconbtn"><svg width="14" height="14" viewBox="0 0 14 14" fill="none"><path d="M8.5 3.5L5 7l3.5 3.5" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg></div>
-          <div class="placeholder">Add some moves…</div>
-          <div class="iconbtn"><svg width="14" height="14" viewBox="0 0 14 14" fill="none"><path d="M7 10.5V3.5M3.5 7L7 3.5l3.5 3.5" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg></div>
-        </div>
-
         <div class="pills">
           <b>Dance</b><span class="middot"></span>
           <span class="seed"></span>
@@ -444,7 +434,7 @@ function applyTokens(styleKey, mode) {
   for (const k in map) { stage.style.setProperty(k, map[k]); card.style.setProperty(k, map[k]); }
   card.dataset.style = styleKey;
   card.dataset.mode = mode;
-  if (scene.dataset.style !== styleKey) {   // only re-inject when the style actually changes
+  if (scene && scene.dataset.style !== styleKey) {   // only re-inject when the style actually changes
     scene.innerHTML = DANCERS[styleKey];
     scene.dataset.style = styleKey;
   }
