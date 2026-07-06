@@ -132,6 +132,22 @@
   .pseg span.on{background:var(--surface);color:var(--text);
     box-shadow:0 .08rem .25rem rgba(0,0,0,.12)}
 
+  /* Claude prompt window — sits below the centred component cluster */
+  #prompt-box{width:39rem;display:flex;align-items:center;gap:.75rem;
+    background:var(--surface);border:1px solid var(--border);border-radius:calc(var(--r)*1.15);
+    box-shadow:0 1.6rem 3.6rem -1rem rgba(15,15,25,.20), 0 .2rem .6rem rgba(15,15,25,.05);
+    padding:.85rem 1rem;will-change:transform}
+  .pb-ai{width:1.95rem;height:1.95rem;border-radius:calc(var(--r)*.72);background:var(--accent-soft);
+    display:grid;place-items:center;flex:none;will-change:transform}
+  .pb-body{flex:1;font-size:.82rem;color:var(--text);letter-spacing:-.1px;
+    display:flex;align-items:center;min-height:1.3rem;white-space:nowrap;overflow:hidden}
+  #pb-type:empty::before{content:'Ask Claude to restyle the system…';color:var(--muted)}
+  .pb-caret{display:inline-block;width:.1rem;height:1.05em;background:var(--accent);
+    margin-left:.14rem;transform:translateY(.12rem);animation:cursor-blink 1s steps(1,end) infinite}
+  .pb-send{width:1.95rem;height:1.95rem;border-radius:calc(var(--r)*.72);background:var(--accent);
+    display:grid;place-items:center;flex:none;color:#fff;will-change:transform}
+  @keyframes cursor-blink{50%{opacity:0}}
+
   /* slogan removed — components only */
   #mark{display:none!important}
   #mark{position:absolute;left:0;right:0;top:46.4rem;text-align:center;pointer-events:none;z-index:4}
@@ -145,7 +161,7 @@
   #wm-cursor{position:fixed;left:0;top:0;z-index:99;pointer-events:none;will-change:transform;
     transform:translate(-200px,-200px);opacity:0}
   #cur-exit{position:absolute;right:-6rem;top:44rem;width:1px;height:1px}
-  #mid{position:absolute;left:34rem;top:23rem;width:1px;height:1px}
+  #mid{position:absolute;left:28.4rem;top:26.8rem;width:1px;height:1px}
 </style></head><body>
 <div id="stage">
   <div id="spot"></div>
@@ -253,6 +269,15 @@
         </div>
       </div>
 
+      <!-- Claude prompt window — centred below the component cluster -->
+      <div class="fl" id="fl-prompt" style="left:9rem;top:42.6rem">
+        <div id="prompt-box">
+          <span class="pb-ai"><svg width="14" height="14" viewBox="0 0 24 24" fill="var(--accent)"><path d="M12 0 C13 7.2 16.8 11 24 12 C16.8 13 13 16.8 12 24 C11 16.8 7.2 13 0 12 C7.2 11 11 7.2 12 0 Z"/></svg></span>
+          <span class="pb-body"><span id="pb-type"></span><span class="pb-caret"></span></span>
+          <span class="pb-send"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="M12 19 V5 M6 11 L12 5 L18 11"/></svg></span>
+        </div>
+      </div>
+
       <div id="mark">
         <div class="mk">Wideset <span>Core</span></div>
         <div class="mksub">Every token is yours</div>
@@ -261,18 +286,6 @@
       <div id="mid"></div>
       <div id="cur-exit"></div>
     </div>
-  </div>
-
-  <div id="panel">
-    <div class="phead"><span class="pic"><svg width="8" height="8" viewBox="0 0 9 9" fill="#fff"><rect x="0" y="4" width="2" height="5" rx="0.6"/><rect x="3.5" y="2" width="2" height="7" rx="0.6"/><rect x="7" y="0" width="2" height="9" rx="0.6"/></svg></span>Theme</div>
-    <div class="psec">Brand color</div>
-    <div class="prow on" id="sw-violet" style="--c:#5B45E0"><span class="dot"></span>Violet<span class="chk">✓</span></div>
-    <div class="prow" id="sw-coral" style="--c:#E8590C"><span class="dot"></span>Coral<span class="chk">✓</span></div>
-    <div class="prow" id="sw-forest" style="--c:#0F9D8C"><span class="dot"></span>Forest<span class="chk">✓</span></div>
-    <div class="psec">Corner radius</div>
-    <div class="pseg"><span id="seg-sharp">Sharp</span><span id="seg-soft" class="on">Soft</span><span id="seg-round">Round</span></div>
-    <div class="psec">Appearance</div>
-    <div class="pseg"><span id="ap-light" class="on">Light</span><span id="ap-dark">Dark</span></div>
   </div>
 
   <div id="sweep"></div>
@@ -321,6 +334,24 @@
   const setOn = (at, offSel, onSel) => WM.tween({at,dur:1,apply(p){ if(p===1){
     document.querySelector(offSel).classList.remove('on');
     document.querySelector(onSel).classList.add('on'); }}});
+  // gated typewriter — inert before `at` so the previous prompt holds until the
+  // next one starts (multiple types on one element are otherwise clobbered by
+  // the always-applied p=0 state).
+  const gType = (sel, at, text, cps=30) => {
+    const el=document.querySelector(sel);
+    const dur=(text.length/cps)*1000;
+    WM.tween({at,dur,ease:'linear',apply(p,tc,t){ if(t<at||!el) return;
+      el.textContent = text.slice(0, Math.round(text.length*p)); }});
+    return at+dur;
+  };
+  // send pulse — the prompt's AI badge + send button give a quick press beat
+  const send = (at) => {
+    WM.style('#pb-send',at,260,{
+      transform:(p)=>`scale(${1-0.14*Math.sin(Math.min(1,p)*Math.PI)})`},'out');
+    WM.style('#pb-ai',at,300,{
+      transform:(p)=>`scale(${1+0.12*Math.sin(Math.min(1,p)*Math.PI)})`},'out');
+    return at;
+  };
 
   const V={acc:'#5B45E0',soft:'#EDE9FD',c1:'#4838C9',c2:'#DCD2F8',c3:'#9B8AEF'};
   const C={acc:'#E8590C',soft:'#FDEBDD',c1:'#B54708',c2:'#FBD9BC',c3:'#F98D4D'};
@@ -328,42 +359,38 @@
   const LIGHT = {bg:'#EFEFF2',s:'#FFFFFF',s2:'#F3F3F6',t:'#1A1A1E',m:'#75757D',b:'#E6E6EB'};
   const DARK  = {bg:'#131316',s:'#212126',s2:'#2C2C32',t:'#F3F3F5',m:'#9D9DA7',b:'#3A3A41'};
 
-  // ================= TIMELINE (20 000 ms) =============================
+  // ================= TIMELINE (20 000 ms) — prompt-driven restyle ======
 
-  const mMod  = F('#c-modal', 1.5, 12);
-  const mAna  = F('#c-ana', 1.45, 12);
-  const mList = F('#c-list', 1.7, 12);
-  const mUp   = F('#c-upload', 1.85, 7);
-  const mWide = F('#mid', 1.12, 6);
-  const kEnd  = F('#mid', 1.12, 3.5);   // balanced wide: cards centred-left, panel right
+  // Centred framing on the whole scene (component cluster + prompt below),
+  // with gentle push-ins as each prompt lands. No more aside panel.
+  const kh = F('#mid', 1.08);
+  const kp = F('#mid', 1.14);
   const drift = (k,f)=>({x:k.x*f, y:k.y*f, scale:k.scale*(1+(f-1)*0.5)});
   WM.camera([
-    {t:0,     ...drift(kEnd,1.03)},
-    {t:1500,  ...kEnd},
-    {t:2400,  ...kEnd, ease:'linear'},
-    {t:3600,  ...mMod},
-    {t:5600,  ...drift(mMod,1.012), ease:'linear'},
-    {t:6900,  ...mAna},
-    {t:9100,  ...drift(mAna,1.012), ease:'linear'},
-    {t:10100, ...mList},
-    {t:13200, ...drift(mList,1.01), ease:'linear'},
-    {t:14200, ...mUp},
-    {t:15900, ...drift(mUp,1.008), ease:'linear'},
-    {t:16700, ...mWide},
-    {t:17900, ...drift(mWide,1.006), ease:'linear'},
-    {t:19100, ...kEnd},
-    {t:20000, ...drift(kEnd,1.02), ease:'linear'},
+    {t:0,     ...drift(kh,1.03)},
+    {t:1500,  ...kh},
+    {t:3900,  ...kh, ease:'linear'},
+    {t:4600,  ...kp},            // coral lands
+    {t:5600,  ...kh, ease:'linear'},
+    {t:7850,  ...kp},            // forest lands
+    {t:8900,  ...kh, ease:'linear'},
+    {t:11500, ...kp},            // corners round
+    {t:12600, ...kh, ease:'linear'},
+    {t:14500, ...kp},            // upload goes live
+    {t:15700, ...kh, ease:'linear'},
+    {t:17000, ...kp},            // dark mode
+    {t:18300, ...kh},
+    {t:20000, ...drift(kh,1.02), ease:'linear'},
   ]);
 
-  // establish
+  // establish — cards + prompt window rise, data populates
   WM.style('#stage',0,600,{opacity:[0,1]},'out');
   rise('#c-upload',300,800,2.4,0.96);
   rise('#c-modal',450,800,2.4,0.96);
   rise('#c-ana',600,800,2.4,0.96);
   rise('#c-list',750,800,2.4,0.96);
-  WM.style('#panel',600,750,{opacity:[0,1],
-    transform:(p,l)=>`translate3d(${l(4,0,p)}rem,-50%,0)`},'out');
-  // data populates
+  WM.style('#prompt-box',850,800,{opacity:[0,1],
+    transform:(p,l)=>`translate3d(0,${l(1.6,0,p)}rem,0)`},'out');
   WM.count('#pct',1200,1000,0,31,n=>String(Math.round(n)));
   WM.tween({at:1200,dur:1250,ease:'cinematic',apply(p,tc,t){
     const w = t<14400 ? 99*Math.min(1,p) : null; if(w===null) return;
@@ -376,34 +403,27 @@
   WM.count('#stB',1550,900,0,18,n=>String(Math.round(n)));
   WM.count('#stC',1650,900,0,36,n=>Math.round(n)+' days');
 
-  // beat 1 · modal + coral
-  WM.style('#wm-cursor',3300,400,{opacity:[0,1]},'out');
-  WM.cursorTo('#sw-coral',3400,750);
-  WM.click('#sw-coral',4250);
-  setOn(4260,'#sw-violet','#sw-coral');
+  // ---- prompt-driven restyle: type an instruction → send → tokens react ----
+  gType('#pb-type', 2500, 'Restyle the system with a warm coral brand.', 30);
+  send(4050);
+  gType('#pb-type', 5900, 'Now switch the accent to forest green.', 30);
+  send(7350);
+  gType('#pb-type', 9600, 'Round every corner across the whole system.', 30);
+  send(11050);
+  gType('#pb-type', 15000, 'Flip the entire UI to dark mode.', 30);
+  send(16650);
 
-  // beat 2 · analytics + forest
-  WM.cursorTo('#sw-forest',6800,600);
-  WM.click('#sw-forest',7500);
-  setOn(7510,'#sw-coral','#sw-forest');
-
-  // brand journeys (single track per var)
+  // brand journeys (single track per var) — each driven by the prompt above
   varTL('--accent',      [{t:0,v:V.acc},{t:4300,v:V.acc},{t:4920,v:C.acc},{t:7550,v:C.acc},{t:8170,v:G.acc}]);
   varTL('--accent-soft', [{t:0,v:V.soft},{t:4300,v:V.soft},{t:4920,v:C.soft},{t:7550,v:C.soft},{t:8170,v:G.soft}]);
   varTL('--ch1',         [{t:0,v:V.c1},{t:4300,v:V.c1},{t:4920,v:C.c1},{t:7550,v:C.c1},{t:8170,v:G.c1}]);
   varTL('--ch2',         [{t:0,v:V.c2},{t:4300,v:V.c2},{t:4920,v:C.c2},{t:7550,v:C.c2},{t:8170,v:G.c2}]);
   varTL('--ch3',         [{t:0,v:V.c3},{t:4300,v:V.c3},{t:4920,v:C.c3},{t:7550,v:C.c3},{t:8170,v:G.c3}]);
 
-  // beat 3 · listing + radius sharp -> round
-  WM.cursorTo('#seg-sharp',10000,650);
-  WM.click('#seg-sharp',10700);
-  setOn(10710,'#seg-soft','#seg-sharp');
-  WM.cursorTo('#seg-round',11700,450);
-  WM.click('#seg-round',12200);
-  setOn(12210,'#seg-sharp','#seg-round');
-  varTL('--r',[{t:0,v:0.7},{t:10700,v:0.7},{t:11320,v:0.14},{t:12200,v:0.14},{t:12820,v:1.05}],'rem');
+  // radius: soft -> round (prompt 3)
+  varTL('--r',[{t:0,v:0.7},{t:11050,v:0.7},{t:11800,v:1.05}],'rem');
 
-  // beat 4 · upload goes live (31% -> 64%)
+  // upload goes live (31% -> 64%) — ambient between prompts
   WM.tween({at:14500,dur:1300,ease:'cinematic',apply(p,tc,t){ if(t<14500) return;
     document.getElementById('pct').textContent = String(Math.round(31+33*p));
   }});
@@ -418,10 +438,7 @@
     else { el.textContent='about 3 minutes'; el.style.opacity=String((p-0.4)/0.6); }
   }});
 
-  // beat 5 · dark mode
-  WM.cursorTo('#ap-dark',16100,600);
-  WM.click('#ap-dark',16800);
-  setOn(16810,'#ap-light','#ap-dark');
+  // dark mode (prompt 4)
   tweenVars(16850,750,{
     '--bg':[LIGHT.bg,DARK.bg], '--surface':[LIGHT.s,DARK.s], '--surface2':[LIGHT.s2,DARK.s2],
     '--text':[LIGHT.t,DARK.t], '--muted':[LIGHT.m,DARK.m], '--border':[LIGHT.b,DARK.b]});
@@ -429,12 +446,6 @@
   WM.style('#sweep',16800,950,{
     opacity:(p,l)=>String(Math.sin(Math.min(1,p)*Math.PI)*0.5),
     transform:(p,l)=>`translate3d(${l(-0.55*W,1.35*W,p)}px,0,0) rotate(0.001deg)`},'inOut');
-
-  // outro
-  WM.cursorTo('#cur-exit',17800,700);
-  gatedStyle('#wm-cursor',18000,450,{opacity:[1,0]},'smooth');
-  WM.style('#mark',19000,750,{opacity:[0,1],
-    transform:(p,l)=>`translate3d(0,${l(1.2,0,p)}rem,0)`},'out');
 
   // loop fade — bridge the dark ending back to the light opening
   WM.tween({at:19450,dur:550,ease:'smooth',apply(p,tc,t){ if(t<19450) return;
