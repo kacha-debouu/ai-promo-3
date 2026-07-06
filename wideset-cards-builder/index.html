@@ -335,11 +335,12 @@
   const mList = F('#c-list', 1.7, 12);
   const mUp   = F('#c-upload', 1.85, 7);
   const mWide = F('#mid', 1.12, 6);
+  const kEnd  = F('#mid', 1.12, 3.5);   // balanced wide: cards centred-left, panel right
   const drift = (k,f)=>({x:k.x*f, y:k.y*f, scale:k.scale*(1+(f-1)*0.5)});
   WM.camera([
-    {t:0,     scale:1.05},
-    {t:1500,  scale:1.0},
-    {t:2400,  scale:1.0, ease:'linear'},
+    {t:0,     ...drift(kEnd,1.03)},
+    {t:1500,  ...kEnd},
+    {t:2400,  ...kEnd, ease:'linear'},
     {t:3600,  ...mMod},
     {t:5600,  ...drift(mMod,1.012), ease:'linear'},
     {t:6900,  ...mAna},
@@ -350,8 +351,8 @@
     {t:15900, ...drift(mUp,1.008), ease:'linear'},
     {t:16700, ...mWide},
     {t:17900, ...drift(mWide,1.006), ease:'linear'},
-    {t:19100, scale:1.0, x:0, y:0},
-    {t:20000, scale:1.02, ease:'linear'},
+    {t:19100, ...kEnd},
+    {t:20000, ...drift(kEnd,1.02), ease:'linear'},
   ]);
 
   // establish

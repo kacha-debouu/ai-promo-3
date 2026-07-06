@@ -355,9 +355,9 @@
   // camera
   const kUp   = F('#hero-upload', 1.5);
   const kUp2  = {x:kUp.x*1.02, y:kUp.y*1.02, scale:1.53};
-  const kDock = F('#hero-upload', 1.22, 0, 4.6);   // widget + dock framed
-  const kDock2= {x:kDock.x*1.008, y:kDock.y*1.008, scale:1.235};
-  const kDock3= {x:kDock.x*1.016, y:kDock.y*1.016, scale:1.25};
+  const kDock = F('#hero-upload', 1.4, 0, 3.3);   // widget + dock framed
+  const kDock2= {x:kDock.x*1.006, y:kDock.y*1.006, scale:1.412};
+  const kDock3= {x:kDock.x*1.012, y:kDock.y*1.012, scale:1.425};
   WM.camera([
     {t:0,     scale:1.05},
     {t:1700,  scale:1.0},
@@ -367,8 +367,8 @@
     {t:6200,  ...kDock},
     {t:9600,  ...kDock2, ease:'linear'},
     {t:12600, ...kDock3, ease:'linear'},
-    {t:14200, scale:1.0, x:0, y:0},
-    {t:18000, scale:1.035, ease:'linear'},
+    {t:14200, scale:1.12, x:0, y:-3.0*REM},
+    {t:18000, scale:1.15, y:-3.2*REM, ease:'linear'},
   ]);
 
   // scene 1 · titles

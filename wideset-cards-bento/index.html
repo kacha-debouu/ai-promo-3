@@ -299,17 +299,17 @@
 
   const anaF = F('#c-ana',1.55), upF = F('#c-upload',1.6), modF = F('#c-modal',1.5);
   WM.camera([
-    {t:0,     scale:1.03},
-    {t:1400,  scale:1.0, ease:'linear'},
-    {t:2400,  scale:1.0},
+    {t:0,     scale:1.32, y:-0.3*REM},
+    {t:1400,  scale:1.28, y:-0.3*REM, ease:'linear'},
+    {t:2400,  scale:1.28, y:-0.3*REM},
     {t:2900,  ...anaF, ease:'inOut'},
     {t:4000,  x:anaF.x*1.012, y:anaF.y*1.012, scale:1.57, ease:'linear'},
     {t:4400,  ...upF, ease:'inOut'},
     {t:5500,  x:upF.x*1.012, y:upF.y*1.012, scale:1.62, ease:'linear'},
     {t:5900,  ...modF, ease:'inOut'},
     {t:7000,  x:modF.x*1.012, y:modF.y*1.012, scale:1.52, ease:'linear'},
-    {t:7500,  scale:0.98, x:0, y:0, ease:'inOut'},
-    {t:14000, scale:1.06, ease:'linear'},
+    {t:7500,  scale:1.28, x:0, y:-0.3*REM, ease:'inOut'},
+    {t:14000, scale:1.34, y:-0.5*REM, ease:'linear'},
   ]);
 
   // beat 0 · kinetic title
