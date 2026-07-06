@@ -150,6 +150,10 @@
     --ch1:#6D5AE6;--ch2:#494266;--ch3:#9B8AEF;--ch4:#F5A623}
   .sc-violet-light{--accent:#5B45E0;--accent-soft:#EDE9FD;--surface:#FFFFFF;--surface2:#F3F3F6;
     --text:#1A1A1E;--muted:#75757D;--border:#E6E6EB}
+  /* uniform dark-mode green — all finale cards share this */
+  .sc-green-dark{--accent:#34D17E;--accent-soft:#123328;--surface:#0E201A;--surface2:#152C23;
+    --text:#E9F6EF;--muted:#84AD99;--border:#204034;
+    --ch1:#34D17E;--ch2:#1C4636;--ch3:#6FE3A6;--ch4:#C8F5DC}
 
   #wm-cursor{position:fixed;left:0;top:0;z-index:99;pointer-events:none;will-change:transform;
     transform:translate(-200px,-200px);opacity:0}
@@ -198,7 +202,7 @@
       </div>
 
       <!-- finale bento -->
-      <div class="fl sc-coral-light" id="fl-modal" style="left:17.1rem;top:19.4rem">
+      <div class="fl sc-green-dark" id="fl-modal" style="left:17.1rem;top:19.4rem">
         <div class="card w-modal" id="c-modal">
           <div class="mhead"><b>Create team</b><span class="mx">✕</span></div>
           <div class="mbody">
@@ -217,7 +221,7 @@
         </div>
       </div>
 
-      <div class="fl sc-violet-dark" id="fl-ana" style="left:59.4rem;top:19.4rem">
+      <div class="fl sc-green-dark" id="fl-ana" style="left:59.4rem;top:19.4rem">
         <div class="card w-ana" id="c-ana">
           <div class="ahead">
             <span class="aic"><svg width="9" height="9" viewBox="0 0 9 9" fill="#fff"><rect x="0" y="4" width="2" height="5" rx="0.6"/><rect x="3.5" y="2" width="2" height="7" rx="0.6"/><rect x="7" y="0" width="2" height="9" rx="0.6"/></svg></span>
@@ -258,7 +262,7 @@
         </div>
       </div>
 
-      <div class="fl sc-violet-light" id="fl-list" style="left:38rem;top:34.15rem">
+      <div class="fl sc-green-dark" id="fl-list" style="left:38rem;top:34.15rem">
         <div class="card w-list" id="c-list">
           <div class="lrow">
             <div class="llogo">SEVILLE</div>
@@ -367,9 +371,15 @@
     {t:6200,  ...kDock},
     {t:9600,  ...kDock2, ease:'linear'},
     {t:12600, ...kDock3, ease:'linear'},
-    {t:14200, scale:1.3, x:0, y:-3.48*REM},
-    {t:18000, scale:1.33, y:-3.7*REM, ease:'linear'},
+    {t:14200, scale:1.44, x:0, y:-3.86*REM},
+    {t:18000, scale:1.48, y:-4.12*REM, ease:'linear'},
   ]);
+
+  // finale: hero card joins the uniform dark-green theme (toggled by time so
+  // the loop resets cleanly on seek(0))
+  WM.tween({at:0,dur:18000,ease:'linear',apply(p,tc,t){
+    document.getElementById('fl-upload').classList.toggle('sc-green-dark', t>=10850);
+  }});
 
   // scene 1 · titles
   WM.style('#stage',0,600,{opacity:[0,1]},'out');

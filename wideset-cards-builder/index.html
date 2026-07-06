@@ -132,21 +132,25 @@
   .pseg span.on{background:var(--surface);color:var(--text);
     box-shadow:0 .08rem .25rem rgba(0,0,0,.12)}
 
-  /* Claude prompt window — sits below the centred component cluster */
-  #prompt-box{width:39rem;display:flex;align-items:center;gap:.75rem;
-    background:var(--surface);border:1px solid var(--border);border-radius:calc(var(--r)*1.15);
-    box-shadow:0 1.6rem 3.6rem -1rem rgba(15,15,25,.20), 0 .2rem .6rem rgba(15,15,25,.05);
-    padding:.85rem 1rem;will-change:transform}
-  .pb-ai{width:1.95rem;height:1.95rem;border-radius:calc(var(--r)*.72);background:var(--accent-soft);
-    display:grid;place-items:center;flex:none;will-change:transform}
-  .pb-body{flex:1;font-size:.82rem;color:var(--text);letter-spacing:-.1px;
-    display:flex;align-items:center;min-height:1.3rem;white-space:nowrap;overflow:hidden}
-  #pb-type:empty::before{content:'Ask Claude to restyle the system…';color:var(--muted)}
-  .pb-caret{display:inline-block;width:.1rem;height:1.05em;background:var(--accent);
-    margin-left:.14rem;transform:translateY(.12rem);animation:cursor-blink 1s steps(1,end) infinite}
-  .pb-send{width:1.95rem;height:1.95rem;border-radius:calc(var(--r)*.72);background:var(--accent);
-    display:grid;place-items:center;flex:none;color:#fff;will-change:transform}
+  /* Claude Code terminal input — centred OVER the component cluster */
+  #cc{width:36rem;font-family:'JetBrains Mono',ui-monospace,'SF Mono',Menlo,monospace;
+    will-change:transform;filter:drop-shadow(0 2rem 4rem rgba(8,8,12,.5))}
+  .cc-title{display:flex;align-items:center;gap:.4rem;font-size:.62rem;color:#B79E92;
+    margin:0 .1rem .4rem;letter-spacing:.2px}
+  .cc-title b{color:#E9E4DF;font-weight:600}
+  .cc-title .sp{color:#D97757}
+  #prompt-box{display:flex;align-items:flex-start;gap:.5rem;
+    background:#1B1B1F;border:1px solid #34343C;border-radius:.7rem;padding:.8rem .95rem}
+  .cc-prompt{color:#D97757;font-weight:700;font-size:.82rem;line-height:1.5}
+  .pb-body{flex:1;font-size:.82rem;line-height:1.5;color:#ECECEC;
+    min-height:1.25rem;white-space:normal;word-break:break-word}
+  #pb-type:empty::before{content:'restyle the system…';color:#6E6E77}
+  .pb-caret{display:inline-block;width:.48rem;height:1.02em;background:#ECECEC;
+    vertical-align:-2px;margin-left:2px;animation:cursor-blink 1s steps(1,end) infinite}
+  .cc-hint{display:flex;gap:1.1rem;margin:.5rem .2rem 0;font-size:.56rem;color:#6E6E77}
+  .cc-hint .r{margin-left:auto;color:#8A8A92}
   @keyframes cursor-blink{50%{opacity:0}}
+  #cc.sending #prompt-box{border-color:#D97757}
 
   /* slogan removed — components only */
   #mark{display:none!important}
@@ -161,7 +165,7 @@
   #wm-cursor{position:fixed;left:0;top:0;z-index:99;pointer-events:none;will-change:transform;
     transform:translate(-200px,-200px);opacity:0}
   #cur-exit{position:absolute;right:-6rem;top:44rem;width:1px;height:1px}
-  #mid{position:absolute;left:28.4rem;top:26.8rem;width:1px;height:1px}
+  #mid{position:absolute;left:28.4rem;top:22rem;width:1px;height:1px}
 </style></head><body>
 <div id="stage">
   <div id="spot"></div>
@@ -270,12 +274,14 @@
       </div>
 
       <!-- Claude prompt window — centred below the component cluster -->
-      <div class="fl" id="fl-prompt" style="left:9rem;top:42.6rem">
+      <!-- Claude Code terminal input — centred over the component cluster -->
+      <div id="cc" style="position:absolute;left:28.4rem;top:21rem;transform:translate(-50%,-50%);z-index:8">
+        <div class="cc-title"><span class="sp">&#10023;</span>&nbsp;<b>Claude Code</b>&nbsp;·&nbsp;wideset-core</div>
         <div id="prompt-box">
-          <span class="pb-ai"><svg width="14" height="14" viewBox="0 0 24 24" fill="var(--accent)"><path d="M12 0 C13 7.2 16.8 11 24 12 C16.8 13 13 16.8 12 24 C11 16.8 7.2 13 0 12 C7.2 11 11 7.2 12 0 Z"/></svg></span>
+          <span class="cc-prompt">&gt;</span>
           <span class="pb-body"><span id="pb-type"></span><span class="pb-caret"></span></span>
-          <span class="pb-send"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="M12 19 V5 M6 11 L12 5 L18 11"/></svg></span>
         </div>
+        <div class="cc-hint"><span>&#9166; send</span><span>esc clear</span><span class="r">claude-opus-4.8</span></div>
       </div>
 
       <div id="mark">
@@ -344,12 +350,12 @@
       el.textContent = text.slice(0, Math.round(text.length*p)); }});
     return at+dur;
   };
-  // send pulse — the prompt's AI badge + send button give a quick press beat
+  // send beat — the Claude Code box flashes its border + a tiny press pulse
   const send = (at) => {
-    WM.style('#pb-send',at,260,{
-      transform:(p)=>`scale(${1-0.14*Math.sin(Math.min(1,p)*Math.PI)})`},'out');
-    WM.style('#pb-ai',at,300,{
-      transform:(p)=>`scale(${1+0.12*Math.sin(Math.min(1,p)*Math.PI)})`},'out');
+    WM.tween({at,dur:460,ease:'out',apply(p,tc,t){
+      document.getElementById('cc').classList.toggle('sending', t>=at && t<at+380); }});
+    WM.style('#prompt-box',at,300,{
+      transform:(p)=>`scale(${1-0.035*Math.sin(Math.min(1,p)*Math.PI)})`},'out');
     return at;
   };
 
@@ -363,8 +369,8 @@
 
   // Centred framing on the whole scene (component cluster + prompt below),
   // with gentle push-ins as each prompt lands. No more aside panel.
-  const kh = F('#mid', 1.08);
-  const kp = F('#mid', 1.14);
+  const kh = F('#mid', 1.2);
+  const kp = F('#mid', 1.27);
   const drift = (k,f)=>({x:k.x*f, y:k.y*f, scale:k.scale*(1+(f-1)*0.5)});
   WM.camera([
     {t:0,     ...drift(kh,1.03)},
@@ -389,8 +395,8 @@
   rise('#c-modal',450,800,2.4,0.96);
   rise('#c-ana',600,800,2.4,0.96);
   rise('#c-list',750,800,2.4,0.96);
-  WM.style('#prompt-box',850,800,{opacity:[0,1],
-    transform:(p,l)=>`translate3d(0,${l(1.6,0,p)}rem,0)`},'out');
+  WM.style('#cc',850,800,{opacity:[0,1],
+    transform:(p,l)=>`translate(-50%,calc(-50% + ${l(1.4,0,p)}rem))`},'out');
   WM.count('#pct',1200,1000,0,31,n=>String(Math.round(n)));
   WM.tween({at:1200,dur:1250,ease:'cinematic',apply(p,tc,t){
     const w = t<14400 ? 99*Math.min(1,p) : null; if(w===null) return;
