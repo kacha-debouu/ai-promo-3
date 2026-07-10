@@ -5,6 +5,10 @@
 <html><head><meta charset="utf-8"><title>Wideset · One system, infinite brands</title>
 <script>document.documentElement.style.fontSize = Math.min(innerWidth/96, innerHeight/54) + 'px';</script>
 <style>
+  @font-face{font-family:"Sequel Sans Disp";src:url("../fonts/SequelSans-RomanDisp.woff2") format("woff2");
+    font-weight:400;font-style:normal;font-display:swap}
+  @font-face{font-family:"Sequel Sans Disp";src:url("../fonts/SequelSans-MediumDisp.woff2") format("woff2");
+    font-weight:500;font-style:normal;font-display:swap}
   *{box-sizing:border-box;margin:0;padding:0}
   html,body{overflow:hidden;width:100%;height:100%}
   :root{
@@ -102,7 +106,7 @@
   .afl{font-size:.6rem;font-weight:600}
 
   /* listing card */
-  .w-list{width:17rem;padding:.85rem .9rem}
+  .w-list{width:20rem;padding:.85rem .9rem}
   .lrow{display:flex;gap:.6rem;align-items:center}
   .llogo{width:2.3rem;height:2.3rem;border:1px solid var(--border);flex:none;
     border-radius:calc(var(--r)*.5);display:grid;place-items:center;
@@ -274,9 +278,15 @@
         <span class="sw" id="sw-coral" style="--c:#E8590C"></span>
         <span class="sw" id="sw-forest" style="--c:#0F9D8C"></span>
         <span class="dv"></span>
-        <span class="dpill" id="d-rad">Round 16px</span>
+        <span class="dpill" id="d-rad">Radius</span>
+        <span class="dv"></span>
+        <span class="dpill" id="d-space">Spacing</span>
+        <span class="dv"></span>
+        <span class="dpill" id="d-font">Aa&nbsp;Font</span>
         <span class="dv"></span>
         <span class="dpill" id="d-dark"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M20.2 13.6A8.4 8.4 0 1 1 10.4 3.8a6.9 6.9 0 0 0 9.8 9.8z"/></svg>Dark</span>
+        <span class="dv"></span>
+        <span class="dpill" id="d-view"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="7" y="3" width="10" height="18" rx="2.4"/><line x1="10.5" y1="18" x2="13.5" y2="18"/></svg>Mobile</span>
       </div>
 
       <div id="mark">
@@ -350,25 +360,27 @@
   // ---- title letters -------------------------------------------------
   document.querySelectorAll('#title .t1, #title .t2').forEach(splitLetters);
 
+  // widget refs (spacing / viewport tweens drive these directly)
+  const hero   = document.getElementById('hero-upload');
+  const uchart = document.querySelector('#hero-upload .uchart');
+
   // ================= TIMELINE (18 000 ms) =============================
 
-  // camera
-  const kUp   = F('#hero-upload', 1.5);
-  const kUp2  = {x:kUp.x*1.02, y:kUp.y*1.02, scale:1.53};
-  const kDock = F('#hero-upload', 1.4, 0, 3.3);   // widget + dock framed
-  const kDock2= {x:kDock.x*1.006, y:kDock.y*1.006, scale:1.412};
-  const kDock3= {x:kDock.x*1.012, y:kDock.y*1.012, scale:1.425};
+  // camera — open large on the component, then pull back to reveal the dock
+  const kUp   = F('#hero-upload', 1.9);
+  const kUp2  = F('#hero-upload', 1.95);
+  const kDock = F('#hero-upload', 1.3, 0, 4.2);   // widget + full settings dock framed
+  const kDock2= {x:kDock.x*1.006, y:kDock.y*1.006, scale:1.315};
+  const kDock3= {x:kDock.x*1.012, y:kDock.y*1.012, scale:1.33};
   WM.camera([
-    {t:0,     scale:1.05},
-    {t:1700,  scale:1.0},
-    {t:2700,  scale:1.0, ease:'linear'},
-    {t:4200,  ...kUp},
-    {t:5400,  ...kUp2, ease:'linear'},
-    {t:6200,  ...kDock},
-    {t:9600,  ...kDock2, ease:'linear'},
-    {t:12600, ...kDock3, ease:'linear'},
-    {t:14200, scale:1.44, x:0, y:-3.86*REM},
-    {t:18000, scale:1.48, y:-4.12*REM, ease:'linear'},
+    {t:0,     ...kUp},
+    {t:2600,  ...kUp2, ease:'linear'},
+    {t:5300,  ...kUp2, ease:'linear'},
+    {t:6100,  ...kDock},
+    {t:11000, ...kDock2, ease:'linear'},
+    {t:15600, ...kDock3, ease:'linear'},
+    {t:16700, scale:1.4, x:0, y:-3.86*REM},
+    {t:22000, scale:1.44, y:-4.12*REM, ease:'linear'},
   ]);
 
   // finale is classic dark grey — driven entirely by the root dark-mode sweep
@@ -394,79 +406,111 @@
   WM.stagger('#hero-upload .mrow',650,130,(el,i,at)=>WM.style(el,at,520,{
     opacity:[0,1],transform:(p,l)=>`translate3d(0,${l(0.5,0,p)}rem,0)`},'out'));
 
-  // scene 3 · token dock + brand swaps
-  WM.style('#dock',5300,650,{opacity:[0,1],
+  // scene 3 · settings dock reveals — every token is a live control
+  WM.style('#dock',5300,700,{opacity:[0,1],
     transform:(p,l)=>`translate3d(-50%,${l(3,0,p)}rem,0)`},'out');
-  WM.style('#wm-cursor',5650,400,{opacity:[0,1]},'out');
-  WM.cursorTo('#sw-coral',5700,750);
-  WM.click('#sw-coral',6550);
-  WM.tween({at:6560,dur:1,apply(p){ if(p===1){
-    document.getElementById('sw-violet').classList.remove('on');
-    document.getElementById('sw-coral').classList.add('on'); }}});
+  WM.style('#wm-cursor',5700,400,{opacity:[0,1]},'out');
 
-  WM.cursorTo('#sw-forest',7550,550);
-  WM.click('#sw-forest',8150);
-  WM.tween({at:8160,dur:1,apply(p){ if(p===1){
-    document.getElementById('sw-coral').classList.remove('on');
-    document.getElementById('sw-forest').classList.add('on'); }}});
+  // deterministic swatch "on" ring — time-gated so it resets cleanly on loop
+  const SWAP_CORAL = 6520, SWAP_FOREST = 7680;
+  WM.tween({at:0,dur:22000,ease:'linear',apply(p,tc,t){
+    const on = t>=SWAP_FOREST ? 'sw-forest' : t>=SWAP_CORAL ? 'sw-coral' : 'sw-violet';
+    ['sw-violet','sw-coral','sw-forest'].forEach(id=>
+      document.getElementById(id).classList.toggle('on', id===on)); }});
 
-  // brand token journey (single keyframed track per var — no stomping)
+  // 3a · colour  (violet → coral → forest)
+  WM.cursorTo('#sw-coral',5820,640);
+  WM.click('#sw-coral',6460);
+  WM.cursorTo('#sw-forest',7080,500);
+  WM.click('#sw-forest',7620);
   varTL('--accent',[
-    {t:0,v:PAL.violet.acc},{t:6600,v:PAL.violet.acc},{t:7220,v:PAL.coral.acc},
-    {t:8200,v:PAL.coral.acc},{t:8820,v:PAL.forest.acc}]);
+    {t:0,v:PAL.violet.acc},{t:6100,v:PAL.violet.acc},{t:6720,v:PAL.coral.acc},
+    {t:7280,v:PAL.coral.acc},{t:7880,v:PAL.forest.acc}]);
   varTL('--accent-soft',[
-    {t:0,v:PAL.violet.soft},{t:6600,v:PAL.violet.soft},{t:7220,v:PAL.coral.soft},
-    {t:8200,v:PAL.coral.soft},{t:8820,v:PAL.forest.soft}]);
+    {t:0,v:PAL.violet.soft},{t:6100,v:PAL.violet.soft},{t:6720,v:PAL.coral.soft},
+    {t:7280,v:PAL.coral.soft},{t:7880,v:PAL.forest.soft}]);
 
-  // scene 4 · radius token
-  WM.cursorTo('#d-rad',8800,600);
-  WM.click('#d-rad',9450);
-  WM.tween({at:9500,dur:620,ease:'smooth',apply(p){
-    document.documentElement.style.setProperty('--r',(6+(16-6)*p)+'px');
-  }});
+  // 3b · radius  (sharp 6px → round 16px)
+  WM.cursorTo('#d-rad',8150,560);
+  WM.click('#d-rad',8710);
+  WM.tween({at:8760,dur:620,ease:'smooth',apply(p){
+    document.documentElement.style.setProperty('--r',(6+(16-6)*p)+'px'); }});
 
-  // scene 5 · dark mode sweep
-  WM.cursorTo('#d-dark',10150,600);
-  WM.click('#d-dark',10800);
-  tweenVars(10850,850,{
+  // 3c · spacing  (comfortable → compact)
+  WM.cursorTo('#d-space',9450,560);
+  WM.click('#d-space',10010);
+  WM.tween({at:10060,dur:640,ease:'smooth',apply(p){
+    const k=1-0.40*p;
+    hero.style.padding = `${(.9*k).toFixed(3)}rem ${(1*k).toFixed(3)}rem ${(1*k).toFixed(3)}rem`;
+    uchart.style.margin = `${(.75*k).toFixed(3)}rem 0 ${(.8*k).toFixed(3)}rem`; }});
+
+  // 3d · font-family  (system → Sequel Sans — time-gated, loop-safe)
+  const FONT_AT = 11450;
+  const F_SYS = `-apple-system,'SF Pro Text','Inter','Segoe UI',sans-serif`;
+  const F_SEQ = `"Sequel Sans Disp",-apple-system,'Segoe UI',sans-serif`;
+  WM.tween({at:0,dur:22000,ease:'linear',apply(p,tc,t){
+    document.body.style.fontFamily = t>=FONT_AT ? F_SEQ : F_SYS; }});
+  WM.cursorTo('#d-font',10900,560);
+  WM.click('#d-font',11400);
+  WM.style('#hero-upload',11400,360,{
+    transform:(p,l)=>`scale(${1-0.012*Math.sin(Math.min(1,p)*Math.PI)})`},'inOut');
+
+  // 3e · dark mode sweep
+  WM.cursorTo('#d-dark',12250,560);
+  WM.click('#d-dark',12810);
+  tweenVars(12860,850,{
     '--bg':[LIGHT.bg,DARK.bg], '--surface':[LIGHT.s,DARK.s], '--surface2':[LIGHT.s2,DARK.s2],
     '--text':[LIGHT.t,DARK.t], '--muted':[LIGHT.m,DARK.m], '--border':[LIGHT.b,DARK.b]});
-  WM.style('#spot',10850,850,{opacity:[1,0.07]},'smooth');
-  WM.style('#sweep',10800,950,{
+  WM.style('#spot',12860,850,{opacity:[1,0.07]},'smooth');
+  WM.style('#sweep',12810,950,{
     opacity:(p,l)=>String(Math.sin(Math.min(1,p)*Math.PI)*0.55),
     transform:(p,l)=>`translate3d(${l(-0.55*W,1.35*W,p)}px,0,0) rotate(0.001deg)`},'inOut');
 
-  // cursor leaves (gated — must not stomp the entrance states before t)
-  WM.cursorTo('#cur-exit',11900,700);
-  gatedStyle('#wm-cursor',12100,450,{opacity:[1,0]},'smooth');
-  gatedStyle('#dock',12250,550,{opacity:[1,0],
+  // 3f · viewport  (desktop → mobile width)
+  WM.cursorTo('#d-view',14100,560);
+  WM.click('#d-view',14660);
+  WM.tween({at:14710,dur:700,ease:'smooth',apply(p){
+    hero.style.width = (20-6*p).toFixed(3)+'rem'; }});   // 20rem → 14rem
+
+  // cursor + dock leave (gated — must not stomp entrance states before t)
+  WM.cursorTo('#cur-exit',15600,700);
+  gatedStyle('#wm-cursor',15800,450,{opacity:[1,0]},'smooth');
+  gatedStyle('#dock',15950,550,{opacity:[1,0],
     transform:(p,l)=>`translate3d(-50%,${l(0,2.6,p)}rem,0)`},'in');
 
-  // scene 6 · bento finale
-  rise('#c-modal',13350,850,2.2,0.955);
-  rise('#c-ana',13650,850,2.2,0.955);
-  rise('#c-list',13950,850,2.2,0.955);
-  WM.stagger('#c-ana .bar',14050,70,(el,i,at)=>WM.style(el,at,620,{
+  // scene 4 · bento finale — widget snaps back to desktop / comfortable as it joins the grid
+  gatedStyle('#hero-upload',16300,650,{
+    width:(p,l)=>l(14,20,p).toFixed(3)+'rem',
+    padding:(p,l)=>`${l(.9*.6,.9,p).toFixed(3)}rem ${l(1*.6,1,p).toFixed(3)}rem ${l(1*.6,1,p).toFixed(3)}rem`
+  },'smooth');
+  gatedStyle('#hero-upload .uchart',16300,650,{
+    margin:(p,l)=>`${l(.75*.6,.75,p).toFixed(3)}rem 0 ${l(.8*.6,.8,p).toFixed(3)}rem`
+  },'smooth');
+
+  rise('#c-modal',16650,850,2.2,0.955);
+  rise('#c-ana',16950,850,2.2,0.955);
+  rise('#c-list',17250,850,2.2,0.955);
+  WM.stagger('#c-ana .bar',17350,70,(el,i,at)=>WM.style(el,at,620,{
     transform:(p,l)=>`scaleY(${l(0,1,p)})`},'out'));
-  WM.count('#stA',14250,950,0,1684);
-  WM.count('#stB',14350,950,0,18,n=>String(Math.round(n)));
-  WM.count('#stC',14450,950,0,36,n=>Math.round(n)+' days');
-  WM.style('#mark',15650,800,{opacity:[0,1],
+  WM.count('#stA',17550,950,0,1684);
+  WM.count('#stB',17650,950,0,18,n=>String(Math.round(n)));
+  WM.count('#stC',17750,950,0,36,n=>Math.round(n)+' days');
+  WM.style('#mark',18950,800,{opacity:[0,1],
     transform:(p,l)=>`translate3d(0,${l(1.4,0,p)}rem,0)`},'out');
 
   // ambient float on all cards during finale
   [['#fl-upload',0],['#fl-modal',1.7],['#fl-ana',3.4],['#fl-list',5.1]].forEach(([sel,ph])=>{
-    WM.tween({at:12000,dur:6000,ease:'linear',apply(p){
+    WM.tween({at:16000,dur:6000,ease:'linear',apply(p){
       const el=document.querySelector(sel);
       el.style.transform=`translate3d(0,${Math.sin(p*Math.PI*2*1.4+ph)*0.13*REM}px,0)`;
     }});
   });
 
   // loop fade — bridge the dark ending back to the light opening
-  WM.tween({at:17450,dur:550,ease:'smooth',apply(p){
+  WM.tween({at:21400,dur:600,ease:'smooth',apply(p){
     document.getElementById('loopfade').style.opacity=String(p); }});
 
-  WM.duration = 18000;
+  WM.duration = 22000;
   WM.seek(0);
   if (!navigator.webdriver) WM.play(true);
 })();
