@@ -5,9 +5,11 @@
      assemble above and get styled. Cards restyle IN PLACE (no shuffle, no UI
      pulse). Each prompt shows a loading spinner in the input's top-right
      corner that morphs into a filled grey checkmark once the restyle lands.
-     3 prompts: coral brand → forest green → dark mode. TRUE loop — no fade:
-     the end-dive into the dark docked input hard-cuts to the light opening
-     frame (same input, same scale). Deterministic, keyframed on t. -->
+     3 prompts: coral brand → forest green → dark mode. Seamless loop:
+     at the end the cards fade away, the input glides back to its opening
+     position, the background fades dark → light and the camera returns to
+     the start framing — the last frame IS the first frame.
+     Deterministic, keyframed on t. -->
 <html><head><meta charset="utf-8"><title>Wideset · Prompt-driven builder · status</title>
 <script>document.documentElement.style.fontSize = Math.min(innerWidth/96, innerHeight/54) + 'px';</script>
 <style>
@@ -292,7 +294,6 @@
       <!-- camera markers -->
       <div class="mkr" id="m-start" style="left:48rem;top:24rem"></div>
       <div class="mkr" id="m-full"  style="left:48rem;top:18.6rem"></div>
-      <div class="mkr" id="m-end"   style="left:48rem;top:31.3rem"></div>
     </div>
   </div>
 
@@ -394,22 +395,21 @@
   const kStart2= F('#m-start',1.94);
   const kFull  = F('#m-full',1.42);
   const kFull2 = F('#m-full',1.40);
-  const kEnd   = F('#m-end',1.85);
-  const kEnd2  = F('#m-end',1.9);
   WM.camera([
     {t:0,     ...kStart},
     {t:2900,  ...kStart2, ease:'linear'},
     {t:4400,  ...kFull},
-    {t:15800, ...kFull2, ease:'linear'},
-    {t:17250, ...kEnd},
-    {t:17500, ...kEnd2, ease:'linear'},
+    {t:15500, ...kFull2, ease:'linear'},
+    {t:17100, ...kStart},                  // return to the opening framing…
+    {t:17500, ...kStart, ease:'linear'},   // …and hold static into the loop cut
   ]);
 
   // establish
   // no entrance fades — the loop hard-cuts straight onto this frame
   // input vertical journey: settle at centre, then dock to the bottom
   numTL([{t:0,v:1.4},{t:150,v:1.4},{t:800,v:0,ease:'out'},
-         {t:3050,v:0},{t:4400,v:7.3,ease:'inOut'}],
+         {t:3050,v:0},{t:4400,v:7.3,ease:'inOut'},
+         {t:15600,v:7.3},{t:16900,v:1.4,ease:'inOut'}],  // glide home for the loop
     v => { document.getElementById('cc').style.transform =
       `translate(-50%,-50%) translate3d(0,${v}rem,0)`; });
 
@@ -455,7 +455,7 @@
   const ccStatus = document.getElementById('cc-status');
   const stSpin   = ccStatus.querySelector('.st-spin');
   // [sendT, doneT (change landed), hideT] per prompt
-  const STq = [[2700,6450,7500],[9200,10350,11150],[12900,14050,16900]];
+  const STq = [[2700,6450,7500],[9200,10350,11150],[12900,14050,15200]];
   WM.tween({at:0,dur:DUR,ease:'linear',apply(p,tc,t){
     let on=false, done=false;
     for(const w of STq){ if(t>=w[0] && t<w[2]){ on=true; done = t>=w[1]; break; } }
@@ -502,8 +502,21 @@
   // Cards stay in their home slots and restyle in place — the only per-prompt
   // feedback is the input's spinner → filled-check status (see STq above).
 
-  // TRUE loop — no fade overlay: the end-dive into the dark docked input
-  // hard-cuts to the light opening frame (same input, same 1.9 scale).
+  // ---- seamless closure: cards fade away… (keyframed track — loop-safe) ----
+  const FLS=['#fl-upload','#fl-modal','#fl-ana','#fl-list'].map(s=>document.querySelector(s));
+  numTL([{t:0,v:1},{t:15300,v:1},{t:15800,v:0,ease:'smooth'}],
+    v => FLS.forEach(el=>{ el.style.opacity=String(v); }));
+
+  // …then the background fades dark → light (gated: only acts at the end;
+  // the un-gated dark tween above owns everything before 13200)
+  const BACK={'--bg':[DARK.bg,LIGHT.bg],'--surface':[DARK.s,LIGHT.s],'--surface2':[DARK.s2,LIGHT.s2],
+              '--text':[DARK.t,LIGHT.t],'--muted':[DARK.m,LIGHT.m],'--border':[DARK.b,LIGHT.b]};
+  WM.tween({at:16200,dur:900,ease:'smooth',apply(p,tc,t){ if(t<16200) return;
+    for(const k in BACK){ const [a,b]=BACK[k];
+      document.documentElement.style.setProperty(k, mix(a,b,p)); }}});
+  gatedStyle('#spot',16200,900,{opacity:[0.07,1]},'smooth');
+  // by 17100 the frame equals t=0 (light bg, input home, camera at kStart)
+  // and holds static into the loop cut — no fade overlay needed.
 
   WM.duration = DUR;
   WM.seek(0);
