@@ -379,7 +379,7 @@
     transform:(p,l)=>`translate3d(0,${l(1.2,0,p)}rem,0) scale(${l(0.96,1,p)})`},'out');
 
   // loop fade — bridge the dark ending back to the light opening
-  WM.tween({at:13600,dur:400,ease:'smooth',apply(p,tc,t){ if(t<13600) return;
+  WM.tween({at:13600,dur:400,ease:'smooth',apply(p){
     document.getElementById('loopfade').style.opacity=String(p); }});
 
   WM.duration = 14000;

@@ -454,7 +454,7 @@
     transform:(p,l)=>`translate3d(${l(-0.55*W,1.35*W,p)}px,0,0) rotate(0.001deg)`},'inOut');
 
   // loop fade — bridge the dark ending back to the light opening
-  WM.tween({at:19450,dur:550,ease:'smooth',apply(p,tc,t){ if(t<19450) return;
+  WM.tween({at:19450,dur:550,ease:'smooth',apply(p){
     document.getElementById('loopfade').style.opacity=String(p); }});
 
   WM.duration = 20000;

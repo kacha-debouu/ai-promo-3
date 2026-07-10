@@ -463,7 +463,7 @@
   });
 
   // loop fade — bridge the dark ending back to the light opening
-  WM.tween({at:17450,dur:550,ease:'smooth',apply(p,tc,t){ if(t<17450) return;
+  WM.tween({at:17450,dur:550,ease:'smooth',apply(p){
     document.getElementById('loopfade').style.opacity=String(p); }});
 
   WM.duration = 18000;
