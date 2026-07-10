@@ -4,79 +4,88 @@
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1" />
 <title>Widelab — Motion</title>
-<link rel="preload" href="fonts/SequelSans-RomanDisp.ttf" as="font" type="font/ttf" crossorigin />
-<link rel="preload" href="fonts/SequelSans-RomanHead.ttf" as="font" type="font/ttf" crossorigin />
+<link rel="preload" href="fonts/SequelSans-RomanDisp.woff2" as="font" type="font/woff2" crossorigin />
+<link rel="preload" href="fonts/SequelSans-MediumDisp.woff2" as="font" type="font/woff2" crossorigin />
 <style>
+  /* EXACT widelab.co webfonts — Sequel Sans Disp, Roman 400 + Medium 500 */
   @font-face{
-    font-family:"Sequel Sans";
-    src:local("Sequel Sans Roman Disp"), local("SequelSans-RomanDisp"),
-        url("fonts/SequelSans-RomanDisp.ttf") format("truetype");
+    font-family:"Sequel Sans Disp";
+    src:url("fonts/SequelSans-RomanDisp.woff2") format("woff2");
     font-weight:400; font-style:normal; font-display:swap;
   }
   @font-face{
-    font-family:"Sequel Sans Head";
-    src:local("Sequel Sans Roman Head"), local("SequelSans-RomanHead"),
-        url("fonts/SequelSans-RomanHead.ttf") format("truetype");
-    font-weight:400; font-style:normal; font-display:swap;
+    font-family:"Sequel Sans Disp";
+    src:url("fonts/SequelSans-MediumDisp.woff2") format("woff2");
+    font-weight:500; font-style:normal; font-display:swap;
   }
   :root{
-    /* light mode — grey stage */
-    --bg:#e8e8e8; --ink:#151515; --sec:#767676; --line:#e6e6e6; --line2:#dcdcdc;
-    --card:#ffffff; --card-h:#ffffff; --chip:#dedede; --chip-h:#d5d5d5; --purple:#4734f7;
-    --font-disp:"Sequel Sans","Helvetica Neue","Arial",sans-serif;
-    --font-head:"Sequel Sans Head","Sequel Sans","Helvetica Neue","Arial",sans-serif;
+    /* deck tile system, flipped to LIGHT — white stage, dark ink */
+    --bg:#ffffff; --ink:#0f0f0f; --sec:#767676; --line:#ececec; --line2:#e2e2e2;
+    --chip:#f1f1f1; --chip-h:#e7e7e7; --purple:#4734f7; --purple-h:#5b4bff;
+    --font-disp:"Sequel Sans Disp","Helvetica Neue","Arial",sans-serif;
+    --font-head:"Sequel Sans Disp","Helvetica Neue","Arial",sans-serif;
   }
   *{box-sizing:border-box;margin:0;padding:0}
   html{-webkit-font-smoothing:antialiased;-moz-osx-font-smoothing:grayscale}
   body{background:var(--bg); color:var(--ink); font-family:var(--font-disp);
+    font-size:1rem; line-height:1.2;
     min-height:100vh; display:flex; flex-direction:column}
   a{color:inherit;text-decoration:none}
+  ::selection{background:var(--purple); color:#fff}
+  a:focus-visible{outline:2px solid var(--purple); outline-offset:3px; border-radius:2px}
 
-  /* ───── top nav ───── */
+  /* ───── top nav (light) ───── */
   .nav{position:sticky; top:0; z-index:50; display:grid; grid-template-columns:1fr auto 1fr;
     align-items:center; gap:24px; padding:22px clamp(24px,4vw,54px);
-    background:rgba(232,232,232,.82); backdrop-filter:blur(12px); -webkit-backdrop-filter:blur(12px);
+    background:rgba(255,255,255,.82); backdrop-filter:blur(12px); -webkit-backdrop-filter:blur(12px);
     border-bottom:1px solid transparent; transition:border-color .3s}
   .nav.is-stuck{border-color:var(--line)}
-  .nav-links{display:flex; align-items:center; gap:32px; font-size:16px}
+  .nav-links{display:flex; align-items:center; gap:32px; font-size:1rem; line-height:1.2}
   .nav-links a{color:var(--ink); opacity:.9; transition:opacity .2s}
   .nav-links a:hover{opacity:.5}
   .nav-links a.is-current{text-decoration:underline; text-underline-offset:4px; text-decoration-thickness:1px}
   .nav-links a.soon{opacity:.4; cursor:default}
   .nav-links a.soon:hover{opacity:.4}
-  .nav-brand{justify-self:center; position:relative; display:block; height:25px; aspect-ratio:5.42}
-  .nav-brand .wm{position:absolute}
-  .nav-brand .wm img{width:100%; height:100%; display:block}
+  .nav-brand{justify-self:center; display:block; height:25px; aspect-ratio:37.0372 / 10.752}
+  .nav-brand img{width:100%; height:100%; display:block}
 
   /* ───── shell ───── */
-  .wrap{width:100%; max-width:1360px; margin:0 auto; padding:0 clamp(24px,4vw,54px) 96px; flex:1 0 auto}
+  .wrap{width:100%; max-width:1360px; margin:0 auto; padding:0 clamp(24px,4vw,54px) 64px; flex:1 0 auto}
 
-  /* ───── hero ───── */
-  .hero{padding:clamp(32px,5vw,64px) 0 clamp(26px,4vw,44px)}
-  .hero h1{font-family:var(--font-head); font-weight:400; line-height:1.0;
-    font-size:clamp(38px,5.2vw,72px); letter-spacing:-.025em}
-  .hero h1 .dim{color:#b3b3b3}
-  .hero p{margin-top:26px; max-width:620px; font-size:clamp(16px,1.5vw,19px);
-    line-height:1.5; color:var(--sec)}
+  /* ───── hero (widelab.co services scale) ───── */
+  .hero{padding:clamp(32px,5vw,72px) 0 clamp(26px,4vw,48px)}
+  .hero h1{font-family:var(--font-head); font-weight:400; margin:0;
+    font-size:5rem; line-height:1; letter-spacing:-.05rem; max-width:74rem}
+  .hero h1 .dim{color:#b6b6b6}
+  .hero p{margin-top:28px; max-width:640px; font-size:1.5rem;
+    line-height:1.333; letter-spacing:.03rem; color:var(--sec)}
+  @media (max-width:991px){ .hero h1{font-size:3.75rem; letter-spacing:-.037rem} }
+  @media (max-width:767px){
+    .hero h1{font-size:3rem; letter-spacing:-.03rem}
+    .hero p{font-size:1.125rem; letter-spacing:.022rem}
+  }
 
-  /* ───── toolbar / filters ───── */
+  /* ───── toolbar / filters — Decks pattern, flipped to light ───── */
   .toolbar{display:flex; align-items:center; justify-content:space-between; gap:20px;
-    flex-wrap:wrap; margin:0 0 32px}
+    flex-wrap:wrap; margin:0 0 32px;
+    /* own stacking context ABOVE the grid so open dropdowns never hide behind tiles
+       (the `rise` fill-forwards animation would otherwise trap the dropdown's z-index) */
+    position:relative; z-index:40}
   .toolbar-left{display:flex; align-items:center; gap:16px}
-  .toolbar .count-total{font-size:14px; color:var(--sec)}
-  .clear{display:none; font-family:var(--font-disp); font-size:13px; color:#555; cursor:pointer;
-    background:none; border:none; border-bottom:1px solid #bbb; padding:0 0 2px; transition:color .2s, border-color .2s}
-  .clear:hover{color:#151515; border-color:#151515}
+  .toolbar .count-total{font-size:.875rem; line-height:1.2; color:var(--sec)}
+  .clear{display:none; font-family:var(--font-disp); font-size:13px; color:#7a7a7a; cursor:pointer;
+    background:none; border:none; border-bottom:1px solid #cfcfcf; padding:0 0 2px; transition:color .2s, border-color .2s}
+  .clear:hover{color:var(--ink); border-color:var(--ink)}
   .clear.show{display:inline-block}
   .filterbar{display:flex; align-items:center; gap:10px; flex-wrap:wrap}
   .fgroup{position:relative}
-  .pill{font-family:var(--font-disp); font-size:14.5px; color:var(--ink); cursor:pointer;
+  .pill{font-family:var(--font-disp); font-size:.9375rem; line-height:1.2; color:var(--ink); cursor:pointer;
     background:var(--chip); border:1px solid transparent; border-radius:999px;
     padding:10px 18px; display:inline-flex; align-items:center; gap:8px;
     transition:background .2s, color .2s}
   .pill:hover{background:var(--chip-h)}
   .pill .chev{width:0;height:0;border-left:4px solid transparent;border-right:4px solid transparent;
-    border-top:5px solid #9a9a9a; transition:transform .2s}
+    border-top:5px solid #8c8c8c; transition:transform .2s}
   .fgroup.open .pill,.pill.is-active{background:#151515; color:#fff}
   .fgroup.open .pill .chev,.pill.is-active .chev{border-top-color:#fff}
   .fgroup.open .pill .chev{transform:rotate(180deg)}
@@ -84,71 +93,105 @@
     min-width:18px; height:18px; padding:0 5px; display:inline-grid; place-items:center}
   .pill:not(.is-active) .badge{display:none}
   .funnel{width:44px; height:44px; border-radius:999px; background:var(--chip); border:none; cursor:pointer;
-    color:#555; display:grid; place-items:center; transition:background .2s}
+    color:#5c5c5c; display:grid; place-items:center; transition:background .2s}
   .funnel:hover{background:var(--chip-h)}
   .funnel svg{width:17px;height:17px}
-
-  .dropdown{position:absolute; top:calc(100% + 10px); right:0; z-index:40; min-width:266px;
-    background:#ffffff; border:1px solid var(--line2); border-radius:18px; padding:8px;
-    box-shadow:0 30px 64px -22px rgba(0,0,0,.22); display:none}
+  .dropdown{position:absolute; top:calc(100% + 10px); right:0; z-index:60; min-width:236px;
+    background:#fff; border:1px solid var(--line2); border-radius:18px; padding:8px;
+    box-shadow:0 30px 64px -26px rgba(20,20,45,.35); display:none}
   .fgroup.open .dropdown{display:block; animation:pop .16s ease}
   @keyframes pop{from{opacity:0; transform:translateY(-4px)} to{opacity:1; transform:none}}
   .opt{display:flex; align-items:center; gap:12px; padding:11px 12px; border-radius:11px; cursor:pointer;
-    font-size:15.5px; transition:background .15s}
-  .opt:hover{background:#f2f2f2}
+    font-size:.9375rem; line-height:1.2; transition:background .15s}
+  .opt:hover{background:#f5f5f5}
   .opt input{appearance:none; -webkit-appearance:none; width:19px; height:19px; flex:none;
-    border:1.6px solid #c9c9c9; border-radius:5px; cursor:pointer; position:relative; transition:.15s}
+    border:1.6px solid #d9d9d9; border-radius:5px; cursor:pointer; position:relative; transition:.15s}
   .opt input:checked{background:var(--purple); border-color:var(--purple)}
   .opt input:checked::after{content:""; position:absolute; left:6px; top:2.5px; width:5px; height:9px;
     border:solid #fff; border-width:0 2px 2px 0; transform:rotate(42deg)}
   .opt .txt{flex:1}
-  .opt .n{color:#a0a0a0; font-size:14px}
+  .opt .n{color:#a3a3a3; font-size:14px}
   .opt.is-zero{opacity:.4}
+  .empty{grid-column:1/-1; padding:80px 0; text-align:center; color:var(--sec); font-size:1rem}
 
-  /* ───── grid + tiles (light bento) ───── */
-  .grid{display:grid; grid-template-columns:repeat(auto-fill,minmax(340px,1fr)); gap:26px}
-  .empty{grid-column:1/-1; padding:80px 0; text-align:center; color:var(--sec); font-size:16px}
+  /* ───── grid + tiles — EXACT deck case-study layout (widelab.co .portfolio_item), light ───── */
+  .grid{display:grid; grid-template-columns:repeat(3,1fr); column-gap:1.5rem; row-gap:8.75rem}
 
-  .tile{position:relative; border-radius:16px; background:var(--card);
-    overflow:hidden; display:flex; flex-direction:column; padding:12px;
-    opacity:0; transform:translateY(14px);
-    animation:rise .6s cubic-bezier(.2,.7,.2,1) forwards; animation-delay:var(--d,.2s);
-    transition:transform .3s, background .3s}
-  .tile:hover{transform:translateY(-4px); background:#fafafa}
+  .tile{position:relative; border:none; border-radius:0; background:transparent;
+    display:flex; flex-direction:column; row-gap:2.5rem}
+  .tile:hover{z-index:20} /* lift above sibling stacking contexts so chips never hide */
+  @media (prefers-reduced-motion:no-preference){
+    .tile{opacity:0; transform:translateY(14px);
+      animation:rise .6s cubic-bezier(.2,.7,.2,1) forwards; animation-delay:var(--d,.2s)}
+    .hero h1,.hero p,.toolbar{opacity:0; transform:translateY(12px);
+      animation:rise .55s cubic-bezier(.2,.7,.2,1) forwards}
+    .hero p{animation-delay:.08s}
+    .toolbar{animation-delay:.16s}
+  }
 
-  .thumb{position:relative; aspect-ratio:16/9; overflow:hidden; background:#eeeeee; border-radius:16px}
-  /* render the promo at full 16:9 then scale the whole iframe down to fit the
-     thumb (via JS) — shows the entire page as a thumbnail, never a zoomed crop */
-  .thumb .cover{position:absolute; top:0; left:0; width:1280px; height:720px; border:0;
-    transform-origin:0 0; pointer-events:none; background:#eeeeee; z-index:1}
-  .thumb .ttl{position:absolute; left:24px; bottom:22px; right:24px;
-    font-family:var(--font-head); font-weight:400; font-size:26px; line-height:1.04; letter-spacing:-.01em; color:#151515}
-  .thumb .ttl em{font-style:normal; color:#9a9a9a}
+  /* full-bleed live cover, deck-style — hairline, sharp corners (widelab.co) */
+  .thumb{position:relative; aspect-ratio:16/9; overflow:hidden; width:100%;
+    border-radius:0; border:1px solid var(--line); background:#f2f1ee; display:block}
+  /* the promo renders at full 1280×720 then the whole iframe is scaled down (via JS)
+     to fit the thumb — the entire page shows as a thumbnail, never a zoomed crop */
+  .cover{position:absolute; inset:0; z-index:1; transform-origin:center 30%; transform:scale(1);
+    transition:transform .9s cubic-bezier(.2,.7,.2,1)}          /* quick, smooth return */
+  .cover .frame{position:absolute; top:0; left:0; width:1280px; height:720px; border:0;
+    transform-origin:0 0; pointer-events:none; background:#f2f1ee; display:block}
+  /* hover = the opening move of an ai-promo scene: a slow cinematic camera push
+     over the loop — long ease-out, keeps travelling the whole time you look */
+  .tile:hover .cover{transform:scale(1.12) translateY(-2%);
+    transition:transform 6s cubic-bezier(.16,.55,.22,1)}
+  @media (prefers-reduced-motion:reduce){
+    .cover{transition:none}
+    .tile:hover .cover{transform:none}
+  }
+  /* widelab.co-style "Watch" badge — lime circle, follows the cursor, pops on hover */
+  .seemore{position:absolute; inset:0; z-index:2; pointer-events:none}
+  .seemore span{position:absolute; left:50%; top:50%;
+    width:clamp(104px,28%,158px); aspect-ratio:1; border-radius:50%;
+    background:#e2fb52; color:#0f0f0f; display:grid; place-items:center; text-align:center;
+    font-family:var(--font-disp); font-size:1.0625rem; letter-spacing:-.01em; line-height:1.1;
+    opacity:0; transform:translate(-50%,-50%) scale(.5);
+    transition:opacity .28s ease, transform .42s cubic-bezier(.2,.7,.2,1),
+               left .24s cubic-bezier(.2,.7,.2,1), top .24s cubic-bezier(.2,.7,.2,1)}
+  .tile:hover .seemore span{opacity:1; transform:translate(-50%,-50%) scale(1)}
+  @media (prefers-reduced-motion:reduce){
+    .seemore span{transition:opacity .2s ease, left .1s linear, top .1s linear}
+    .tile:hover .seemore span{transform:translate(-50%,-50%) scale(1)}
+  }
 
-  .chips{position:absolute; top:22px; right:22px; z-index:3; display:flex; gap:8px; align-items:center}
-  .tagchip{font-family:var(--font-disp); font-size:10.5px; letter-spacing:.12em; text-transform:uppercase;
-    padding:6px 10px; border-radius:999px; line-height:1; display:inline-flex; align-items:center; gap:6px;
-    background:rgba(15,15,15,.72); color:#f4f4f4; border:1px solid rgba(255,255,255,.26);
-    backdrop-filter:blur(8px); -webkit-backdrop-filter:blur(8px)}
-  .tagchip--story{background:rgba(71,52,247,.68); color:#fff; border-color:rgba(163,150,255,.7)}
-  .tagchip--live{background:rgba(255,255,255,.82); color:#151515; border-color:rgba(0,0,0,.10)}
+  /* status + category chips, top-right — deck .category-badge placement */
+  .chips{position:absolute; top:1.25rem; right:1.25rem; z-index:3; display:flex; gap:8px; align-items:center}
+  .tagchip{font-family:var(--font-disp); font-size:.7rem; letter-spacing:.05em; text-transform:uppercase;
+    padding:.5rem .7rem; border-radius:1rem; line-height:1; display:inline-flex; align-items:center; gap:7px;
+    background:rgba(255,255,255,.9); color:#151515; border:1px solid rgba(0,0,0,.08);
+    backdrop-filter:blur(10px); -webkit-backdrop-filter:blur(10px)}
+  .tagchip--story{background:rgba(71,52,247,.9); color:#fff; border-color:rgba(255,255,255,.28)}
   .tagchip--live .dot{width:7px;height:7px;border-radius:50%;background:#19c37d;
     box-shadow:0 0 0 0 rgba(25,195,125,.6); animation:pulse 1.8s infinite}
   @keyframes pulse{0%{box-shadow:0 0 0 0 rgba(25,195,125,.55)}70%{box-shadow:0 0 0 7px rgba(25,195,125,0)}100%{box-shadow:0 0 0 0 rgba(25,195,125,0)}}
 
-  .meta{padding:24px 2px 6px; display:flex; flex-direction:column; gap:14px; flex:1}
+  /* content flush with the thumbnail edge — deck meta scale, light ink */
+  .meta{padding:0; margin-left:0; display:flex; flex-direction:column; gap:2rem; flex:1; max-width:33.875rem}
   .meta .row{display:flex; align-items:baseline; justify-content:space-between; gap:12px}
-  .meta h2{font-size:19px; font-weight:400; letter-spacing:-.01em}
-  .meta .count{font-size:12.5px; color:var(--sec); white-space:nowrap}
-  .meta .desc{font-size:13.5px; line-height:1.55; color:#6f6f6f; margin-top:-2px}
-  .versions{display:flex; flex-wrap:wrap; gap:10px; margin-top:auto; align-items:center}
-  .ver{display:inline-flex; align-items:center; gap:8px; padding:9px 15px;
-    border:1px solid var(--line2); border-radius:999px; font-size:13.5px; color:#2a2a2a; background:#fafafa;
-    transition:background .25s, border-color .25s, color .25s}
-  .ver .glyph{font-size:11px; color:var(--sec); transition:transform .25s, color .25s}
-  .ver:hover{background:var(--purple); border-color:var(--purple); color:#fff}
-  .ver:hover .glyph{transform:translateX(3px); color:#fff}
-  .stackchip{font-size:11px; letter-spacing:.04em; color:#8a8a8a; padding:7px 0}
+  /* .is-h4: 2rem / 1.188 / -.02rem, weight 500, text-wrap balance */
+  .meta h2{font-family:var(--font-head); font-size:2rem; font-weight:500; line-height:1.188;
+    letter-spacing:-.02rem; text-wrap:balance; min-width:0; color:var(--ink)}
+  .meta h2 em{font-style:normal; color:#b0b0b0}
+  .meta .count{font-size:1.125rem; line-height:1.333; letter-spacing:.022rem; color:var(--sec); white-space:nowrap; flex:none}
+  /* .is-p-l: 1.125rem / 1.333 / +.022rem */
+  .meta .desc{font-size:1.125rem; line-height:1.333; letter-spacing:.022rem; color:var(--sec)}
+  /* .portfolio_item_content_link: underlined link row, deck pattern in light ink */
+  .versions{display:flex; flex-wrap:wrap; align-items:center; gap:.75rem 1.1rem; margin-top:auto}
+  .ver{display:inline-flex; align-items:center; gap:8px; padding:0; border:none; background:none;
+    font-size:1.125rem; line-height:1.6; letter-spacing:.022rem; color:var(--ink);
+    text-decoration:underline; text-underline-offset:3px; text-decoration-thickness:1px;
+    transition:color .25s}
+  .ver .glyph{font-size:.8125rem; color:var(--sec); transition:transform .25s, color .25s}
+  .ver:hover{color:var(--purple-h)}
+  .ver:hover .glyph{transform:translateX(3px); color:var(--purple-h)}
+  .stackchip{font-size:.7rem; letter-spacing:.12em; text-transform:uppercase; color:#9a9a9a}
 
   footer{flex-shrink:0; padding:26px clamp(24px,4vw,54px); border-top:1px solid var(--line);
     display:flex; justify-content:space-between; align-items:center; color:var(--sec); font-size:12.5px}
@@ -156,9 +199,10 @@
 
   @keyframes rise{to{opacity:1;transform:none}}
   @media (prefers-reduced-motion:reduce){*{animation:none!important; opacity:1!important; transform:none!important}}
+  @media (max-width:1100px){ .grid{grid-template-columns:repeat(2,1fr)} }
+  @media (max-width:767px){ .grid{grid-template-columns:1fr; row-gap:5rem} }
   @media (max-width:720px){ .nav-links{display:none} }
   @media (max-width:620px){
-    .grid{grid-template-columns:1fr}
     .nav{grid-template-columns:auto auto; gap:14px}
     .nav-brand{justify-self:start}
     .toolbar{align-items:flex-start; flex-direction:column}
@@ -173,15 +217,7 @@
       <a href="https://project-ai-projects.pages.dev/" target="_blank" rel="noopener">AI-projects</a>
       <a href="https://project-widelab-timelines.pages.dev/" target="_blank" rel="noopener">Timelines</a>
     </nav>
-    <a class="nav-brand" href="index.html" aria-label="widelab — motion">
-      <span class="wm" style="inset:24.45% 75.15% 2.3% 0"><img src="assets/w0.svg" alt=""></span>
-      <span class="wm" style="inset:0 53.59% 0 31.51%"><img src="assets/w1.svg" alt=""></span>
-      <span class="wm" style="inset:21.04% 37.27% 0.2% 48.51%"><img src="assets/w2.svg" alt=""></span>
-      <span class="wm" style="inset:0.03% 0 0.02% 85.07%"><img src="assets/w3.svg" alt=""></span>
-      <span class="wm" style="inset:21.7% 17.18% 0.65% 70.25%"><img src="assets/w4.svg" alt=""></span>
-      <span class="wm" style="inset:0 31.78% 2.22% 64.78%"><img src="assets/w5.svg" alt=""></span>
-      <span class="wm" style="inset:24.46% 70.67% 2.31% 25.89%"><img src="assets/w6.svg" alt=""></span>
-    </a>
+    <a class="nav-brand" href="index.html" aria-label="widelab"><img src="assets/logo-w.svg" alt="widelab"></a>
     <span aria-hidden="true"></span>
   </header>
 
@@ -195,11 +231,11 @@
     <div class="toolbar">
       <div class="toolbar-left">
         <span class="count-total" id="resultCount"></span>
-        <button class="clear" id="clearBtn" type="button">Clear all ✕</button>
+        <button class="clear" id="clearBtn" type="button">Clear filters</button>
       </div>
       <div class="filterbar" id="filterbar">
         <button class="funnel" id="reset" aria-label="Reset filters" title="Reset filters">
-          <svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M4 5h16l-6 7v6l-4 2v-8L4 5Z" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"/></svg>
+          <svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M4 5h16l-6.2 7.4v5.1L10.2 19v-6.6L4 5Z" stroke="currentColor" stroke-width="1.7" stroke-linejoin="round"/></svg>
         </button>
       </div>
     </div>
@@ -219,6 +255,14 @@
          product : 'wideset' | 'arangodb' | 'biopath' | 'boards' | 'other'
          stack   : 'react' | 'html'                                    */
     const PROMOS = [
+      {
+        name: 'Reevol — Credit Management Dashboard',
+        title: ['Reevol', '— Credit Management Dashboard'],
+        cat:'prototype', product:'reevol', stack:'html',
+        count: '7 beats · ~35s',
+        desc: 'A single continuous camera glide across a rail of floating panels — URL entry → dark dashboard (metrics count in) → the payments chart re-plotting live data → the same product in light mode → a design-system compose canvas — then a pull-back revealing the whole connected flow. Widelab-ship motion language, rebuilt pixel-true from Figma; seamless loop.',
+        href: './reevol/',
+      },
       {
         name: 'Diesel — Product Card Showreel',
         title: ['Diesel', '— Product Card Showreel'],
@@ -392,7 +436,7 @@
     /* ── filter dimensions ── */
     const FILTERS = [
       { key:'cat',     label:'Category', opts:[['showcase','Showcase'],['story','Story'],['prototype','Prototype']] },
-      { key:'product', label:'Product',  opts:[['wideset','Wideset'],['arangodb','ArangoDB'],['biopath','BioPathAI'],['boards','boards.so'],['oktopost','Oktopost'],['other','Other']] },
+      { key:'product', label:'Product',  opts:[['wideset','Wideset'],['arangodb','ArangoDB'],['biopath','BioPathAI'],['boards','boards.so'],['oktopost','Oktopost'],['reevol','Reevol'],['other','Other']] },
       { key:'stack',   label:'Stack',    opts:[['react','React + framer-motion'],['html','HTML + SVG']] },
     ];
     const sel = { cat:new Set(), product:new Set(), stack:new Set() };
@@ -416,15 +460,17 @@
                      <span class="tagchip tagchip--live"><span class="dot"></span>Live</span>`;
 
       tile.innerHTML = `
-        <div class="chips">${chips}</div>
         <a class="thumb" href="${p.href}" target="_blank" rel="noopener" aria-label="${p.name}">
-          <iframe class="cover" src="${p.href}" loading="lazy" scrolling="no" tabindex="-1"
-                  sandbox="allow-scripts allow-same-origin" aria-hidden="true" title="${p.name} — preview"></iframe>
+          <div class="chips">${chips}</div>
+          <div class="cover"><iframe class="frame" src="${p.href}" loading="lazy" scrolling="no" tabindex="-1"
+                  sandbox="allow-scripts allow-same-origin" aria-hidden="true" title="${p.name} — preview"></iframe></div>
+          <span class="seemore"><span>Watch ▶</span></span>
         </a>
         <div class="meta">
-          <div class="row"><h2>${p.title[0]} <em style="font-style:normal;color:#9a9a9a">${p.title[1] || ''}</em></h2><span class="count">${p.count}</span></div>
+          <div class="row"><h2>${p.title[0]} <em>${p.title[1] || ''}</em></h2><span class="count">${p.count}</span></div>
           <p class="desc">${p.desc}</p>
           <div class="versions">
+            <a class="ver" href="${p.href}" target="_blank" rel="noopener">Watch<span class="glyph">→</span></a>
             <span class="stackchip">${STACK_LABEL[p.stack]}</span>
           </div>
         </div>`;
@@ -436,10 +482,10 @@
     empty.className = 'empty'; empty.textContent = 'No motions match those filters.'; empty.style.display = 'none';
     grid.appendChild(empty);
 
-    /* scale each 1280×720 cover down to its thumb width — full-page thumbnail, no crop */
+    /* scale each 1280×720 frame down to its thumb width — full-page thumbnail, no crop */
     function fitCovers(){
       document.querySelectorAll('.thumb').forEach(t => {
-        const cov = t.querySelector('iframe.cover');
+        const cov = t.querySelector('iframe.frame');
         if (!cov) return;
         const w = t.clientWidth;
         if (w) cov.style.transform = `scale(${w / 1280})`;
@@ -447,6 +493,20 @@
     }
     requestAnimationFrame(fitCovers);
     window.addEventListener('resize', fitCovers);
+
+    /* ── "Watch" badge follows the cursor inside each thumbnail ── */
+    grid.querySelectorAll('.thumb').forEach(thumb => {
+      const badge = thumb.querySelector('.seemore span');
+      if (!badge) return;
+      thumb.addEventListener('pointermove', e => {
+        const r = thumb.getBoundingClientRect();
+        badge.style.left = ((e.clientX - r.left) / r.width  * 100) + '%';
+        badge.style.top  = ((e.clientY - r.top)  / r.height * 100) + '%';
+      });
+      thumb.addEventListener('pointerleave', () => {
+        badge.style.left = ''; badge.style.top = '';   /* ease back to centre */
+      });
+    });
 
     /* ── build filter pills + dropdowns ── */
     const bar = document.getElementById('filterbar');
@@ -481,6 +541,7 @@
           apply();
         });
       });
+      g.querySelector('.dropdown').addEventListener('click', e => e.stopPropagation());
     });
 
     document.addEventListener('click', () => document.querySelectorAll('.fgroup.open').forEach(x => x.classList.remove('open')));
@@ -510,6 +571,11 @@
       requestAnimationFrame(fitCovers);
     }
     apply();
+
+    // failsafe: never keep content hidden if the intro animation doesn't run
+    setTimeout(() => document.querySelectorAll('.tile, .hero h1, .hero p, .toolbar').forEach(t => {
+      if (getComputedStyle(t).opacity === '0') { t.style.opacity = '1'; t.style.transform = 'none'; }
+    }), 800);
 
     /* nav hairline on scroll */
     const nav = document.getElementById('nav');
