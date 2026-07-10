@@ -1,0 +1,693 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Dance App · pixel calibration</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Space+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet" />
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html, body { height: 100%; }
+  body {
+    background: #0b0c0e;
+    overflow: hidden;
+    font-family: 'Inter', -apple-system, system-ui, sans-serif;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  /* ---- Pixel display: full-viewport micro grid that calibrates from noise ---- */
+  #px { position: fixed; top: 0; left: 0; z-index: 0; }
+  /* 1px separation lines carve the canvas into tiny discrete pixel cells */
+  #pxgrid {
+    position: fixed; inset: 0; z-index: 1; pointer-events: none;
+    background-image:
+      repeating-linear-gradient(0deg,  rgba(7,8,10,.62) 0 1px, transparent 1px 5px),
+      repeating-linear-gradient(90deg, rgba(7,8,10,.62) 0 1px, transparent 1px 5px);
+  }
+
+  /* ---- Stage: translucent per-style tint over the pixel display ---- */
+  #stage {
+    position: fixed; inset: 0; z-index: 2;
+    display: flex; align-items: center; justify-content: center;
+    background: var(--stage);
+    perspective: 1400px;
+    opacity: 0;                       /* revealed once the display has calibrated */
+    transition: opacity .65s ease;
+  }
+  /* backdrop crossfade: outgoing tint rides on top and fades out */
+  .bgfade { position: absolute; inset: 0; z-index: 0; pointer-events: none; }
+  #stage > #card { position: relative; z-index: 1; }
+
+  /* ---- Card: ONE centered card. innerHTML + tokens swap per scene ---- */
+  #card {
+    position: relative; width: var(--w, 336px);
+    background: var(--card); color: var(--fg);
+    border: var(--border); border-radius: var(--radius); box-shadow: var(--shadow);
+    font-family: var(--font); overflow: hidden;
+    transform-style: preserve-3d;
+    transition:
+      background .4s ease, color .4s ease, border-radius .55s ease,
+      box-shadow .55s ease, border-color .55s ease, transform .45s ease,
+      opacity .45s ease, filter .55s ease;
+  }
+  #card.morphing { opacity: 0; transform: scale(.94) translateY(10px); }
+  /* pre-calibration state: the card "emerges from the display" — soft, small, unfocused */
+  #card.boot {
+    opacity: 0; transform: scale(.955) translateY(10px); filter: blur(5px);
+    transition-duration: .6s;
+  }
+  #card[data-style="glass"] { backdrop-filter: blur(20px) saturate(1.25); -webkit-backdrop-filter: blur(20px) saturate(1.25); }
+
+  .pad { padding: 18px; display: flex; flex-direction: column; gap: 14px; }
+  .pad.glass { padding: 26px; gap: 18px; }
+  .pad.bento { padding: 16px; gap: 12px; }
+  .pad.voice { padding: 40px 30px 30px; gap: 0; align-items: center; }
+
+  /* ---- shared bits ---- */
+  .pills { display: flex; align-items: center; gap: 8px; font-size: 13px; color: var(--sub); flex-wrap: wrap; }
+  .pills b { color: var(--fg); font-weight: 500; }
+  .glass .pills { font-size: 14.5px; gap: 9px; }
+  .seed { width: 13px; height: 13px; border-radius: 50%; flex: none; background: linear-gradient(135deg,#ff9966 0%,#ff5e62 60%,#c33764 100%); box-shadow: 0 0 0 1px var(--chip); }
+  .middot { width: 3px; height: 3px; border-radius: 50%; background: var(--sub); display: inline-block; }
+
+  /* 3D glass ball — white/grey glossy sphere (glass scene) */
+  .ball3d {
+    width: 15px; height: 15px; border-radius: 50%; flex: none;
+    background: radial-gradient(circle at 33% 27%, #ffffff 0%, #eceef1 26%, #b6bbc2 62%, #7c828b 88%, #565b63 100%);
+    box-shadow:
+      inset 0 1px 1.5px rgba(255,255,255,.95),
+      inset 0 -2px 3px rgba(0,0,0,.35),
+      0 2px 4px rgba(0,0,0,.4);
+  }
+
+  .activity { display: flex; align-items: center; gap: 10px; font-size: 13px; color: var(--sub); }
+  .glass .activity { font-size: 14px; }
+  .activity b { color: var(--fg); font-weight: 500; }
+  .dur { margin-left: auto; font-variant-numeric: tabular-nums; }
+  .dotgrid { display: grid; grid-template-columns: repeat(3,3px); grid-template-rows: repeat(3,3px); gap: 2px; }
+  .dotgrid i { width: 3px; height: 3px; border-radius: 50%; background: var(--fg); opacity: .85; }
+
+  .msg { min-height: 46px; font-size: 15px; line-height: 1.45; color: var(--fg); letter-spacing: -.1px; }
+  .glass .msg { font-size: 16px; min-height: 66px; }
+  .caret { display: inline-block; width: 2px; height: 1em; background: var(--fg); margin-left: 1px; transform: translateY(3px); animation: blink 1s steps(1) infinite; }
+  @keyframes blink { 0%,50%{opacity:1} 51%,100%{opacity:0} }
+
+  /* rehearsal-clips row (bento + glass) */
+  .clips { display: flex; align-items: center; gap: 11px; background: var(--chip); border-radius: 14px; padding: 11px 13px; }
+  .clips .folder { width: 34px; height: 34px; flex: none; border-radius: 10px; background: var(--accentbg); color: var(--fg); display: flex; align-items: center; justify-content: center; }
+  .clips .ct b { font-size: 13.5px; font-weight: 600; color: var(--fg); }
+  .clips .ct .sub2 { font-size: 12px; color: var(--sub); margin-top: 1px; }
+
+  .bottom { display: flex; align-items: center; justify-content: space-between; padding-top: 2px; }
+  .upload { display: inline-flex; align-items: center; justify-content: center; gap: 6px; background: var(--btn-bg); color: var(--btn-fg); border: var(--btn-border, none); padding: 10px 16px; border-radius: var(--btn-radius); font-size: 13px; font-weight: 600; cursor: pointer; letter-spacing: -.1px; position: relative; overflow: hidden; box-shadow: var(--btn-shadow, none); font-family: inherit; transition: background .5s ease, color .5s ease, border-radius .5s ease, box-shadow .5s ease, width .38s cubic-bezier(.65,0,.35,1); }
+  .glass .upload { padding: 12px 20px; font-size: 14px; }
+  .upload .lbl { display: inline-flex; align-items: center; gap: 6px; white-space: nowrap; transition: opacity .15s ease; }
+  .upload.loading .lbl, .upload.done .lbl { opacity: 0; }
+  .upload .spin { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; opacity: 0; transition: opacity .15s ease; }
+  .upload.loading .spin { opacity: 1; }
+  .upload .spin svg { animation: rot .8s linear infinite; }
+  @keyframes rot { to { transform: rotate(360deg); } }
+  .upload .ok { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; gap: 6px; background: var(--btn-bg); color: var(--btn-fg); opacity: 0; transform: translateY(100%); }
+  .upload.done .ok { opacity: 1; transform: translateY(0); transition: opacity .25s, transform .35s cubic-bezier(.2,.8,.2,1); }
+  .model { display: inline-flex; align-items: center; gap: 6px; background: var(--model-bg); color: var(--model-fg); padding: 8px 12px; border-radius: 999px; font-size: 12.5px; font-weight: 600; transition: background .5s ease, color .5s ease; }
+  .glass .model { padding: 10px 14px; font-size: 13px; }
+
+  /* real-glass button: translucent fill + blur; colors come from theme vars */
+  .glass .upload { backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px); }
+  .glass .model { border: 1px solid var(--accentbg); }
+  /* the label fades out on .done, so the confirmation can stay transparent glass */
+  .glass .upload .ok { background: transparent; }
+
+  /* ================= BENTO grid ================= */
+  .tiles { display: grid; grid-template-columns: 1fr .78fr; gap: 12px; }
+  .tile { background: var(--chip); border-radius: 18px; padding: 13px 14px; }
+  .tile .tl-k { font-size: 10.5px; font-weight: 700; letter-spacing: .12em; color: var(--sub); text-transform: uppercase; }
+  .tile .tl-v { font-size: 15px; margin-top: 6px; color: var(--fg); display: flex; align-items: center; gap: 7px; }
+  .tile .tl-v b { font-weight: 600; }
+  .tile .tl-v.big { font-size: 22px; font-weight: 700; letter-spacing: -.02em; }
+  .tile.intro { padding: 13px 15px; }
+  .tile.intro .msg { margin-top: 8px; min-height: 66px; }
+
+  /* sticker-boom entrance target — grows in from small with an overshoot pop */
+  .boom { opacity: 0; transform: scale(.35); }
+  .boom.slap { opacity: 1; transform: scale(1); transition: transform .38s cubic-bezier(.3,1.75,.5,1), opacity .16s ease; }
+
+  /* ================= VOICE (mono, 3D, single mode) ================= */
+  .voice { }
+  .mic-wrap { position: relative; width: 180px; height: 180px; display: flex; align-items: center; justify-content: center; margin-bottom: 26px; }
+  .mic-wrap .ring { position: absolute; inset: 0; border-radius: 50%; border: 1.5px solid rgba(255,255,255,.5); opacity: 0; }
+  .mic-wrap.live .ring { animation: pulse 2.6s cubic-bezier(.4,0,.2,1) infinite; }
+  .mic-wrap.live .ring.r2 { animation-delay: .87s; }
+  .mic-wrap.live .ring.r3 { animation-delay: 1.74s; }
+  @keyframes pulse { 0%{ transform: scale(.62); opacity:.55;} 70%{ opacity:0;} 100%{ transform: scale(1.25); opacity:0;} }
+  .mic3d {
+    width: 136px; height: 136px; border-radius: 50%;
+    background: url('assets/mic.png') center/94% no-repeat, radial-gradient(circle at 40% 30%, #e7c8ea, #cfaed6 70%);
+    box-shadow: 0 26px 55px rgba(0,0,0,.6), 0 2px 3px rgba(0,0,0,.5);
+    transform: scale(0);
+  }
+  .mic3d.in { transform: scale(1); transition: transform .5s cubic-bezier(.34,1.56,.64,1); }
+  /* silver mic animation — no circle: feathered edges blend into the silver stage */
+  .micv {
+    position: absolute; left: 50%; top: 50%; width: 250px; height: 250px;
+    transform: translate(-50%, -50%);
+    object-fit: cover; opacity: 0; transition: opacity .9s ease; z-index: 2;
+    -webkit-mask-image: radial-gradient(circle closest-side, #000 58%, transparent 96%);
+    mask-image: radial-gradient(circle closest-side, #000 58%, transparent 96%);
+  }
+  .micv.show { opacity: 1; }
+  .mic-wrap.swap .mic3d { opacity: 0; transition: opacity .9s ease; }
+  .voice-label { font-size: 12px; font-weight: 600; letter-spacing: .22em; text-transform: uppercase; color: rgba(255,255,255,.5); margin-bottom: 20px; transition: color .5s; }
+  .prompt {
+    width: 100%; min-height: 68px; display: flex; align-items: center; gap: 12px;
+    background: linear-gradient(160deg, rgba(38,40,45,.9), rgba(20,21,25,.95));
+    border: 1px solid rgba(255,255,255,.14);
+    box-shadow: inset 0 1px 0 rgba(255,255,255,.10), 0 16px 40px rgba(0,0,0,.55);
+    border-radius: 18px; padding: 8px 8px 8px 18px;
+    transition: background .5s ease, border-color .5s ease, box-shadow .5s ease;
+  }
+  .prompt .ptext { flex: 1; font-size: 16px; line-height: 1.45; color: #f4f4f5; letter-spacing: -.1px; transition: color .5s; }
+  .prompt .caret { background: #fff; }
+  .prompt .send {
+    flex: none; align-self: stretch; aspect-ratio: 1 / 1; min-width: 52px; border-radius: 12px;
+    background: linear-gradient(155deg, #3b3d43 0%, #1b1c1f 52%, #050506 100%);
+    color: #fff; display: flex; align-items: center; justify-content: center;
+    box-shadow: inset 0 1px 0 rgba(255,255,255,.18), inset 0 -2px 4px rgba(0,0,0,.55), 0 3px 10px rgba(0,0,0,.35);
+    opacity: .45; transition: opacity .3s, transform .2s;
+  }
+  .prompt .send.ready { opacity: 1; }
+  /* silver (light) voice mode — matches the mic animation's backdrop */
+  #card[data-mode="light"] .voice-label { color: rgba(23,24,27,.45); }
+  #card[data-mode="light"] .mic-wrap .ring { border-color: rgba(23,24,27,.25); }
+  #card[data-mode="light"] .prompt {
+    background: linear-gradient(160deg, rgba(255,255,255,.94), rgba(238,240,243,.96));
+    border-color: rgba(20,22,27,.08);
+    box-shadow: inset 0 1px 0 #fff;
+  }
+  #card[data-mode="light"] .prompt .ptext { color: #17181b; }
+  #card[data-mode="light"] .prompt .caret { background: #17181b; }
+
+  @media (prefers-reduced-motion: reduce) {
+    * { animation: none !important; transition-duration: .01ms !important; }
+  }
+</style>
+</head>
+<body>
+  <canvas id="px"></canvas>
+  <div id="pxgrid"></div>
+  <div id="stage">
+    <div id="card" class="boot" data-style="original" data-mode="light"></div>
+  </div>
+
+<script>
+const MESSAGE = 'Slow Butoh rise — hollow the chest, fingers unfurl, weight sinking into the floor.';
+const PROMPT  = 'Improve my choreography for rehearsal Butoh, make it bold, make it shine';
+
+/* ============================== THEMES ============================== */
+/* v2: photo backdrops replaced with translucent tints — the micro-pixel
+   display beneath stays visible in every scene */
+const THEMES = {
+  original: { font: "'Inter', system-ui, sans-serif", w: '336px',
+    light: { stage:"radial-gradient(85% 75% at 50% 32%, rgba(200,181,133,.17) 0%, rgba(200,181,133,0) 72%)", card:"#f0ede6", fg:"#1a1a1a", sub:"rgba(26,26,26,.55)", accentbg:"rgba(26,26,26,.06)", chip:"rgba(26,26,26,.06)", border:"1px solid transparent", radius:"28px", shadow:"0 24px 60px rgba(0,0,0,.45)", btnBg:"#1a1a1a", btnFg:"#fff", btnRadius:"999px", modelBg:"rgba(26,26,26,.06)", modelFg:"#1a1a1a" },
+    dark:  { stage:"radial-gradient(85% 75% at 50% 32%, rgba(200,181,133,.10) 0%, rgba(200,181,133,0) 72%)", card:"#1a1a1a", fg:"#fff", sub:"rgba(255,255,255,.55)", accentbg:"rgba(255,255,255,.08)", chip:"rgba(255,255,255,.08)", border:"1px solid transparent", radius:"28px", shadow:"0 24px 60px rgba(0,0,0,.55)", btnBg:"#fff", btnFg:"#1a1a1a", btnRadius:"999px", modelBg:"rgba(255,255,255,.08)", modelFg:"#fff" } },
+
+  bento: { font: "'Inter', system-ui, sans-serif", w: '340px',
+    light: { stage:"radial-gradient(80% 70% at 30% 20%, rgba(42,182,217,.15) 0%, rgba(42,182,217,0) 65%), radial-gradient(70% 65% at 78% 82%, rgba(90,120,240,.10) 0%, rgba(90,120,240,0) 65%)", card:"#ffffff", fg:"#0e0f11", sub:"rgba(14,15,17,.5)", accentbg:"#eef0f4", chip:"#f3f4f7", border:"1px solid #e7e9ee", radius:"30px", shadow:"0 26px 60px rgba(0,0,0,.5)", btnBg:"#0e0f11", btnFg:"#fff", btnRadius:"16px", modelBg:"#f3f4f7", modelFg:"#0e0f11" },
+    dark:  { stage:"radial-gradient(80% 70% at 30% 20%, rgba(42,182,217,.08) 0%, rgba(42,182,217,0) 65%), radial-gradient(70% 65% at 78% 82%, rgba(90,120,240,.06) 0%, rgba(90,120,240,0) 65%)", card:"#0e0f11", fg:"#f5f5f7", sub:"rgba(245,245,247,.5)", accentbg:"#1f2126", chip:"#1a1b1f", border:"1px solid #24262c", radius:"30px", shadow:"0 26px 60px rgba(0,0,0,.55)", btnBg:"#fff", btnFg:"#0e0f11", btnRadius:"16px", modelBg:"#1a1b1f", modelFg:"#f5f5f7" } },
+
+  glass: { font: "'Inter', system-ui, sans-serif", w: '382px',
+    light: { stage:"radial-gradient(70% 60% at 22% 18%, rgba(110,160,255,.20) 0%, transparent 60%), radial-gradient(60% 60% at 82% 28%, rgba(80,220,200,.16) 0%, transparent 65%), radial-gradient(80% 70% at 50% 100%, rgba(255,175,150,.14) 0%, transparent 60%)", card:"linear-gradient(160deg, rgba(255,255,255,.80), rgba(255,255,255,.52))", fg:"#14161b", sub:"rgba(20,22,27,.55)", accentbg:"rgba(20,22,27,.07)", chip:"rgba(255,255,255,.55)", border:"1px solid rgba(255,255,255,.85)", radius:"30px", shadow:"0 34px 80px rgba(0,0,0,.5)", btnBg:"linear-gradient(160deg, rgba(255,255,255,.88), rgba(255,255,255,.45))", btnFg:"#14161b", btnBorder:"1px solid rgba(255,255,255,.95)", btnShadow:"inset 0 1px 0 rgba(255,255,255,.95), 0 8px 20px rgba(40,60,100,.22)", btnRadius:"999px", modelBg:"rgba(255,255,255,.6)", modelFg:"#14161b" },
+    dark:  { stage:"radial-gradient(70% 60% at 22% 18%, rgba(70,90,130,.20) 0%, transparent 60%), radial-gradient(60% 60% at 82% 28%, rgba(40,120,120,.15) 0%, transparent 65%), radial-gradient(80% 70% at 50% 100%, rgba(50,70,110,.15) 0%, transparent 60%)", card:"linear-gradient(160deg, rgba(26,30,40,.62), rgba(8,10,15,.78))", fg:"#eafaff", sub:"rgba(234,250,255,.6)", accentbg:"rgba(255,255,255,.08)", chip:"rgba(255,255,255,.07)", border:"1px solid rgba(255,255,255,.15)", radius:"30px", shadow:"0 34px 80px rgba(4,10,20,.6)", btnBg:"linear-gradient(160deg, rgba(255,255,255,.22), rgba(255,255,255,.07))", btnFg:"#f6f9fd", btnBorder:"1px solid rgba(255,255,255,.34)", btnShadow:"inset 0 1px 0 rgba(255,255,255,.32), 0 8px 22px rgba(0,0,0,.4)", btnRadius:"999px", modelBg:"rgba(255,255,255,.09)", modelFg:"#eafaff" } },
+
+  voice: { font: "'Inter', system-ui, sans-serif", w: '660px',
+    dark:  { stage:"radial-gradient(60% 55% at 50% 38%, rgba(27,28,31,.55) 0%, rgba(8,8,10,.42) 70%, rgba(6,6,7,.32) 100%)", card:"transparent", fg:"#f4f4f5", sub:"rgba(244,244,245,.5)", accentbg:"rgba(255,255,255,.06)", chip:"rgba(255,255,255,.06)", border:"1px solid transparent", radius:"32px", shadow:"none", btnBg:"#fff", btnFg:"#111", btnRadius:"14px", modelBg:"rgba(255,255,255,.06)", modelFg:"#f4f4f5" },
+    light: { stage:"radial-gradient(70% 60% at 50% 30%, rgba(238,240,242,.38) 0%, rgba(216,219,223,.26) 55%, rgba(200,204,210,.18) 100%)", card:"transparent", fg:"#17181b", sub:"rgba(23,24,27,.5)", accentbg:"rgba(23,24,27,.06)", chip:"rgba(23,24,27,.06)", border:"1px solid transparent", radius:"32px", shadow:"none", btnBg:"#17181b", btnFg:"#fff", btnRadius:"14px", modelBg:"rgba(23,24,27,.06)", modelFg:"#17181b" } },
+};
+
+/* ============================== PIXEL DISPLAY ============================== */
+/* Full-viewport micro grid rendered 1 cell = 1 pixel on an offscreen canvas,
+   scaled up nearest-neighbour so each cell becomes a crisp CELL×CELL block.
+   Calibration: cells appear as flickering noise in random clusters, then a
+   soft diagonal wave settles each one into its stable value (~800ms total). */
+const CELL = 5;                        // css px per pixel cell
+const px = document.getElementById('px');
+const pctx = px.getContext('2d');
+let cols, rows, off, octx, oimg, odata;
+let base, tAppear, tResolve, phase;    // per-cell fields
+let calibrated = false;
+
+function buildGrid() {
+  const dpr = Math.min(window.devicePixelRatio || 1, 2);
+  cols = Math.ceil(innerWidth / CELL);
+  rows = Math.ceil(innerHeight / CELL);
+  px.width = cols * CELL * dpr; px.height = rows * CELL * dpr;
+  px.style.width = cols * CELL + 'px'; px.style.height = rows * CELL + 'px';
+  pctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+  off = document.createElement('canvas'); off.width = cols; off.height = rows;
+  octx = off.getContext('2d');
+  oimg = octx.createImageData(cols, rows); odata = oimg.data;
+
+  const n = cols * rows;
+  base = new Float32Array(n); tAppear = new Float32Array(n);
+  tResolve = new Float32Array(n); phase = new Float32Array(n);
+
+  // coarse cluster map: blocks of ~9×9 cells light up together
+  const B = 9, bc = Math.ceil(cols / B);
+  const clusters = new Float32Array(bc * Math.ceil(rows / B));
+  for (let i = 0; i < clusters.length; i++) clusters[i] = Math.random() * 210;
+
+  const cx = cols / 2, cy = rows / 2, maxd = Math.hypot(cx, cy);
+  for (let y = 0; y < rows; y++) {
+    for (let x = 0; x < cols; x++) {
+      const i = y * cols + x;
+      const d = Math.hypot(x - cx, y - cy) / maxd;
+      base[i] = 14 + (1 - d * d) * 7 + Math.random() * 7;   // stable image: soft vignette + fine grain
+      const appear = clusters[((y / B) | 0) * bc + ((x / B) | 0)] + Math.random() * 60;
+      const wave = 200 + ((x + y * 0.35) / (cols + rows * 0.35)) * 420 + Math.random() * 70;
+      tAppear[i] = appear;
+      tResolve[i] = Math.max(appear + 70, wave);
+      phase[i] = Math.random() * Math.PI * 2;
+    }
+  }
+}
+
+function fill(f) {
+  let p = 0;
+  for (let i = 0; i < base.length; i++) {
+    const v = f(i);
+    odata[p++] = v * 0.94;          // cool, slightly blue-leaning dark pixels
+    odata[p++] = v;
+    odata[p++] = v * 1.10 + 2;
+    odata[p++] = 255;
+  }
+}
+function flush() {
+  octx.putImageData(oimg, 0, 0);
+  pctx.imageSmoothingEnabled = false;
+  pctx.drawImage(off, 0, 0, cols, rows, 0, 0, cols * CELL, rows * CELL);
+}
+
+const SETTLE = 180;                    // ms each cell takes to ease from noise to its value
+function calibrate() {
+  return new Promise(resolve => {
+    const t0 = performance.now();
+    const END = 200 + 420 + 70 + SETTLE + 40;   // ≈ 900ms, last cells settle ~800ms in
+    (function frame(now) {
+      const t = now - t0;
+      fill(i => {
+        if (t < tAppear[i]) return 4;                        // not yet lit — blends into body bg
+        const dt = t - tResolve[i];
+        if (dt <= 0) return 6 + Math.random() * 42;          // raw noise flicker
+        if (dt < SETTLE) {                                   // easing into the stable image
+          const p = dt / SETTLE, e = 1 - (1 - p) * (1 - p) * (1 - p);
+          return base[i] + (1 - e) * (Math.random() * 34 - 12);
+        }
+        return base[i];
+      });
+      flush();
+      if (t < END) requestAnimationFrame(frame);
+      else { calibrated = true; resolve(); }
+    })(t0);
+  });
+}
+
+/* ambient: once calibrated the display "breathes" — a slow luminance drift plus
+   a handful of single-cell shimmers. Amplitudes are ~1% — almost imperceptible. */
+const shimmers = [];
+function ambient() {
+  let last = 0;
+  (function frame(now) {
+    requestAnimationFrame(frame);
+    if (now - last < 33) return;                 // ~30fps is plenty at this amplitude
+    last = now;
+    const t = now * 0.00045, sheenT = now * 0.0003;
+    fill(i => base[i] + Math.sin(t + phase[i]) * 1.3 + Math.sin(sheenT - (i % cols) * 0.012) * 0.9);
+    if (shimmers.length < 24 && Math.random() < .25)
+      shimmers.push({ i: (Math.random() * base.length) | 0, t0: now, d: 900 + Math.random() * 1100 });
+    for (let s = shimmers.length - 1; s >= 0; s--) {
+      const sh = shimmers[s], p = (now - sh.t0) / sh.d;
+      if (p >= 1) { shimmers.splice(s, 1); continue; }
+      const v = base[sh.i] + Math.sin(p * Math.PI) * 11;
+      const o = sh.i * 4;
+      odata[o] = v * 0.94; odata[o + 1] = v; odata[o + 2] = v * 1.10 + 2;
+    }
+    flush();
+  })(0);
+}
+
+addEventListener('resize', () => {
+  buildGrid();
+  if (calibrated) { fill(i => base[i]); flush(); }
+});
+
+/* ============================== markup per scene ============================== */
+const goBtn = `<button class="upload">
+  <span class="lbl">Go dance
+    <svg width="12" height="12" viewBox="0 0 12 12" fill="none" style="margin-top:1px"><path d="M2.5 6h7M6.5 3l3 3-3 3" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>
+  </span>
+  <span class="spin">
+    <svg width="15" height="15" viewBox="0 0 16 16" fill="none"><circle cx="8" cy="8" r="6" stroke="currentColor" stroke-width="2" opacity=".25"/><path d="M14 8a6 6 0 0 0-6-6" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
+  </span>
+  <span class="ok">
+    <svg width="13" height="13" viewBox="0 0 14 14" fill="none"><path d="M2.5 7.5L6 11l5.5-7" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+    On stage
+  </span>
+</button>`;
+const model = `<div class="model">Opus 4.8 ⌄</div>`;
+const dotgrid = `<span class="dotgrid"><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i></span>`;
+const folder = `<span class="folder"><svg width="17" height="17" viewBox="0 0 20 20" fill="none"><path d="M2.5 5.5A1.5 1.5 0 0 1 4 4h3.6l1.4 1.6H16a1.5 1.5 0 0 1 1.5 1.5v7A1.5 1.5 0 0 1 16 15.6H4a1.5 1.5 0 0 1-1.5-1.5z" stroke="currentColor" stroke-width="1.4" stroke-linejoin="round"/></svg></span>`;
+const clips = `<div class="clips">${folder}<div class="ct"><b>Rehearsal clips</b><div class="sub2">12 takes</div></div></div>`;
+
+function renderOriginal() {
+  return `<div class="pad orig">
+    <div class="pills"><b>Dance</b><span class="middot"></span><span class="seed"></span><b>Butoh</b><span class="middot"></span><b class="intensity">boldly ⌄</b></div>
+    <div class="activity">${dotgrid}<b>Intro</b><span class="dur">32s</span></div>
+    <div class="msg"><span class="typed"></span><span class="caret"></span></div>
+    <div class="bottom">${goBtn}${model}</div>
+  </div>`;
+}
+function renderBento() {
+  return `<div class="pad bento">
+    <div class="tiles">
+      <div class="tile boom"><div class="tl-k">Topic</div><div class="tl-v"><b>Dance</b><span class="middot"></span>Butoh</div></div>
+      <div class="tile boom"><div class="tl-k">Duration</div><div class="tl-v big">32s</div></div>
+    </div>
+    <div class="tile intro boom"><div class="tl-k">Intro</div><div class="msg"><span class="typed"></span><span class="caret"></span></div></div>
+    <div class="boom">${clips}</div>
+    <div class="bottom boom">${goBtn}${model}</div>
+  </div>`;
+}
+function renderGlass() {
+  return `<div class="pad glass">
+    <div class="pills"><b>Dance</b><span class="middot"></span><span class="ball3d"></span><b>Butoh</b><span class="middot"></span><b>boldly ⌄</b></div>
+    <div class="activity">${dotgrid}<b>Intro</b><span class="dur">32s</span></div>
+    <div class="msg"><span class="typed"></span><span class="caret"></span></div>
+    ${clips}
+    <div class="bottom">${goBtn}${model}</div>
+  </div>`;
+}
+function renderVoice() {
+  return `<div class="pad voice">
+    <div class="mic-wrap">
+      <span class="ring r1"></span><span class="ring r2"></span><span class="ring r3"></span>
+      <div class="mic3d"></div>
+      <video class="micv" src="assets/mic-anim.mp4" muted playsinline loop preload="auto"></video>
+    </div>
+    <div class="voice-label">Listening…</div>
+    <div class="prompt"><span class="ptext"><span class="typed"></span><span class="caret"></span></span><span class="send">
+      <svg width="22" height="22" viewBox="0 0 24 24" fill="none"><path d="M19 5v6a3 3 0 0 1-3 3H6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/><path d="M9.5 10.5L6 14l3.5 3.5" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+    </span></div>
+  </div>`;
+}
+
+/* ============================== runtime ============================== */
+const stage = document.getElementById('stage');
+const card  = document.getElementById('card');
+const wait  = ms => new Promise(r => setTimeout(r, ms));
+let lastStage = null;   // tracks current backdrop for crossfading
+
+function applyTokens(styleKey, mode) {
+  const th = THEMES[styleKey];
+  const t = th[mode];
+  const map = {
+    '--stage': t.stage, '--card': t.card, '--fg': t.fg, '--sub': t.sub,
+    '--accentbg': t.accentbg, '--chip': t.chip, '--border': t.border, '--radius': t.radius,
+    '--shadow': t.shadow, '--btn-bg': t.btnBg, '--btn-fg': t.btnFg, '--btn-radius': t.btnRadius,
+    '--btn-border': t.btnBorder || 'none', '--btn-shadow': t.btnShadow || 'none',
+    '--model-bg': t.modelBg, '--model-fg': t.modelFg, '--font': th.font, '--w': th.w,
+  };
+  const nextStage = map['--stage'];
+  if (lastStage !== null && lastStage !== nextStage) {
+    const ov = document.createElement('div');
+    ov.className = 'bgfade';
+    ov.style.background = lastStage;              // outgoing backdrop sits on top…
+    stage.insertBefore(ov, card);
+    requestAnimationFrame(() => {                 // …then fades out, revealing the new one
+      ov.animate([{ opacity: 1 }, { opacity: 0 }], { duration: 800, easing: 'ease' })
+        .onfinish = () => ov.remove();
+    });
+  }
+  lastStage = nextStage;
+  for (const k in map) { stage.style.setProperty(k, map[k]); card.style.setProperty(k, map[k]); }
+  card.dataset.style = styleKey;
+  card.dataset.mode = mode;
+}
+
+function typewriter(el, text, speed = 26) {
+  return new Promise(resolve => {
+    if (!el) { resolve(); return; }
+    const caret = el.parentElement && el.parentElement.querySelector('.caret');
+    el.textContent = '';
+    const start = performance.now();
+    (function tick(now) {
+      const n = Math.min(text.length, Math.floor((now - start) / speed));
+      el.textContent = text.slice(0, n);
+      if (n < text.length) requestAnimationFrame(tick);
+      else { if (caret) caret.style.display = 'none'; resolve(); }
+    })(start);
+  });
+}
+
+/* small tap interaction — press-pulse an existing control, optionally swap its text.
+   Used to give each style state its OWN bit of UI interaction (not just the button). */
+// fill the message instantly (no typing) + hide the caret — for scenes that
+// should just show the style, not animate text entry
+function fillStatic(el) {
+  if (!el) return;
+  el.textContent = MESSAGE;
+  const caret = el.parentElement && el.parentElement.querySelector('.caret');
+  if (caret) caret.style.display = 'none';
+}
+
+async function tapUI(sel, newText = null, hold = 360) {
+  const el = card.querySelector(sel);
+  if (!el) return;
+  el.animate(
+    [{ transform:'scale(1)' },{ transform:'scale(.92)' },{ transform:'scale(1.03)' },{ transform:'scale(1)' }],
+    { duration: 360, easing: 'cubic-bezier(.3,1.7,.5,1)' });
+  if (newText != null) {
+    await wait(150);
+    el.animate([{ opacity:1 },{ opacity:.25 },{ opacity:1 }], { duration: 300, easing: 'ease' });
+    await wait(90);
+    el.textContent = newText;
+    await wait(Math.max(0, hold - 240));
+  } else {
+    await wait(hold);
+  }
+}
+
+async function doUpload(fast = false) {
+  const btn = card.querySelector('.upload');
+  if (!btn) return;
+  btn.animate(
+    [{ transform:'translateX(0)' },{ transform:'translateX(-5px)' },{ transform:'translateX(5px)' },
+     { transform:'translateX(-3px)' },{ transform:'translateX(3px)' },{ transform:'translateX(0)' }],
+    { duration: fast ? 260 : 360, easing: 'ease-in-out' });
+  await wait(fast ? 300 : 420);
+  btn.animate([{ transform:'scale(1)' },{ transform:'scale(.93)' },{ transform:'scale(1)' }], { duration: 180, easing: 'ease-out' });
+  await wait(fast ? 90 : 120);
+  btn.classList.add('done');
+  await wait(fast ? 950 : 1400);
+  btn.classList.remove('done');
+}
+
+/* glass upload: button collapses into a round loading spinner, then expands to "On stage" */
+async function doUploadGlass() {
+  const btn = card.querySelector('.upload');
+  if (!btn) return;
+  const w = btn.offsetWidth, h = btn.offsetHeight;
+  btn.style.width = w + 'px';
+  btn.animate([{ transform:'scale(1)' },{ transform:'scale(.93)' },{ transform:'scale(1)' }], { duration: 160, easing: 'ease-out' });
+  await wait(200);
+  btn.classList.add('loading');
+  btn.style.width = h + 'px';          // collapse to a circle
+  await wait(1150);
+  btn.style.width = w + 'px';          // expand back with the confirmation
+  btn.classList.remove('loading');
+  btn.classList.add('done');
+  await wait(1400);
+  btn.classList.remove('done');
+  btn.style.width = '';
+}
+
+/* ---- transition: fade/scale card out, swap content + tokens ---- */
+async function morphTo(styleKey, mode, html, firstPaint = false) {
+  if (!firstPaint) { card.classList.add('morphing'); await wait(430); }
+  applyTokens(styleKey, mode);
+  card.innerHTML = html;
+  card.classList.remove('morphing');
+  if (firstPaint) {
+    // card emerges from the completed display: blur + scale resolve together
+    await new Promise(r => requestAnimationFrame(() => requestAnimationFrame(r)));
+    card.classList.remove('boot');
+    await wait(620);
+  } else {
+    await wait(480);
+  }
+}
+
+/* ---- Original: BEFORE / AFTER wipe (clip-path) light → dark ---- */
+async function beforeAfterWipe(styleKey) {
+  const t = THEMES[styleKey].dark;
+  const layer = document.createElement('div');
+  layer.style.cssText = `position:absolute;inset:0;border-radius:inherit;overflow:hidden;background:${t.card};clip-path:inset(0 100% 0 0);z-index:3;`;
+  // dark-themed clone of the current card content
+  layer.style.setProperty('--fg', t.fg); layer.style.setProperty('--sub', t.sub);
+  layer.style.setProperty('--chip', t.chip); layer.style.setProperty('--accentbg', t.accentbg);
+  layer.style.setProperty('--btn-bg', t.btnBg); layer.style.setProperty('--btn-fg', t.btnFg);
+  layer.style.setProperty('--btn-radius', t.btnRadius);
+  layer.style.setProperty('--model-bg', t.modelBg); layer.style.setProperty('--model-fg', t.modelFg);
+  layer.innerHTML = card.querySelector('.pad').outerHTML;
+  const lc = layer.querySelector('.caret'); if (lc) lc.style.display = 'none';
+  card.appendChild(layer);
+  await wait(40);
+  const reduced = matchMedia('(prefers-reduced-motion: reduce)').matches;
+  layer.style.transition = 'clip-path .9s cubic-bezier(.65,0,.35,1)';
+  layer.style.clipPath = 'inset(0 0 0 0)';
+  // darken the un-wiped card in step with the wipe so no white remainder trails the edge
+  card.style.transition = 'background .9s cubic-bezier(.65,0,.35,1), color .9s cubic-bezier(.65,0,.35,1)';
+  applyTokens(styleKey, 'dark');
+  await wait(reduced ? 60 : 950);
+  layer.remove();                       // card beneath is already fully dark — no flash
+  requestAnimationFrame(() => { card.style.transition = ''; });
+}
+
+/* ---- Bento: STICKER BOOM — tiles slap in with overshoot ---- */
+async function stickerBoom() {
+  const els = [...card.querySelectorAll('.boom')];
+  els.forEach((el, i) => setTimeout(() => el.classList.add('slap'), 60 + i * 85));
+  await wait(60 + els.length * 85 + 340);
+}
+async function bentoToDark() {
+  applyTokens('bento', 'dark');
+  const els = [...card.querySelectorAll('.boom')];
+  els.forEach((el) => {
+    el.animate([{ transform:'scale(1)' },{ transform:'scale(1.07)' },{ transform:'scale(1)' }],
+      { duration: 420, easing: 'cubic-bezier(.34,1.56,.64,1)' });
+  });
+  await wait(420);
+}
+
+/* ---- Glass: TOGGLE-FLIP to dark (3D flip, no toggle UI) ---- */
+async function flipToDark(styleKey) {
+  card.style.transition = 'transform .36s cubic-bezier(.65,0,.35,1)';
+  card.style.transform = 'rotateY(88deg)';
+  await wait(360);
+  applyTokens(styleKey, 'dark');
+  card.style.transform = 'rotateY(0deg)';
+  await wait(380);
+  card.style.transition = '';
+  card.style.transform = '';
+}
+
+/* ============================== scenes ============================== */
+async function sceneOriginal(first) {
+  await morphTo('original', 'light', renderOriginal(), first);
+  await wait(160);
+  await typewriter(card.querySelector('.typed'), MESSAGE, 16);
+  await wait(300);
+  await tapUI('.intensity', 'fiercely ⌄');   // pick intensity from the dropdown
+  await wait(260);
+  await doUpload(true);
+  await wait(240);
+  await beforeAfterWipe('original');   // light → dark reveal
+  await wait(1500);
+}
+
+async function sceneBento() {
+  await morphTo('bento', 'light', renderBento());
+  await stickerBoom();                 // sticker BOOM entrance
+  fillStatic(card.querySelector('.intro .typed'));    // show text, don't type it
+  await wait(360);
+  await tapUI('.clips .sub2', '12 takes · synced');   // tap the clips tile
+  await wait(240);
+  await doUpload(true);
+  await wait(240);
+  await bentoToDark();
+  await wait(1400);
+}
+
+async function sceneGlass() {
+  await morphTo('glass', 'light', renderGlass());
+  await wait(320);
+  fillStatic(card.querySelector('.typed'));   // show text, don't type it
+  await wait(520);
+  await tapUI('.model', 'Sonnet 5 ⌄');   // switch the model from the picker
+  await wait(300);
+  await doUploadGlass();               // collapse → spinner → "On stage"
+  await wait(360);
+  await flipToDark('glass');           // toggle-flip to dark theme
+  await wait(2100);
+}
+
+async function sceneVoice() {
+  await morphTo('voice', 'dark', renderVoice());
+  const wrap = card.querySelector('.mic-wrap');
+  const mic  = card.querySelector('.mic3d');
+  await wait(120);
+  if (mic) mic.classList.add('in');
+  await wait(360);
+  if (wrap) wrap.classList.add('live'); // listening rings pulse
+  await wait(700);
+  await typewriter(card.querySelector('.ptext .typed'), PROMPT, 34);
+  const send = card.querySelector('.send'); if (send) send.classList.add('ready');
+  const label = card.querySelector('.voice-label');
+  if (label) { label.textContent = 'On it ✦'; label.style.color = 'rgba(255,255,255,.85)'; }
+  await wait(1600);
+
+  // version 2: fade to the silver UI, the mic animation takes over the badge
+  applyTokens('voice', 'light');
+  if (label) { label.style.color = ''; }             // silver-mode color from CSS
+  if (wrap) { wrap.classList.remove('live'); wrap.classList.add('swap'); } // rings off, badge fades out
+  const v = card.querySelector('.micv');
+  if (v) {
+    try { v.currentTime = 0; await v.play(); } catch (e) { /* autoplay guard */ }
+    v.classList.add('show');
+  }
+  await wait(4600);
+}
+
+async function loop() {
+  await sceneOriginal(true);
+  while (true) {
+    try {
+      await sceneBento();
+      await sceneGlass();
+      await sceneVoice();
+      await sceneOriginal(false);
+    } catch (e) {
+      console.error('dance loop scene failed, recovering', e);
+      await wait(500);
+    }
+  }
+}
+
+/* ---- boot: calibrate the display, then let the card emerge from it ---- */
+async function boot() {
+  // opened in a background tab: hold the power-on until it's actually watched,
+  // otherwise the rAF clock would expire and skip the calibration entirely
+  if (document.hidden) await new Promise(r => {
+    const h = () => { if (!document.hidden) { removeEventListener('visibilitychange', h); r(); } };
+    addEventListener('visibilitychange', h);
+  });
+  buildGrid();
+  applyTokens('original', 'light');    // tint pre-set; #stage is still opacity:0
+  if (matchMedia('(prefers-reduced-motion: reduce)').matches) {
+    calibrated = true; fill(i => base[i]); flush();
+  } else {
+    await calibrate();                 // noise → clusters → wave → stable (~800ms)
+  }
+  ambient();                           // display keeps breathing, imperceptibly
+  await wait(150);
+  stage.style.opacity = '1';           // tint fades up with the card
+  loop();                              // sceneOriginal(true) removes .boot → card emerges
+}
+
+if (document.fonts && document.fonts.ready) {
+  document.fonts.ready.then(() => setTimeout(boot, 250));
+} else { setTimeout(boot, 400); }
+</script>
+</body>
+</html>

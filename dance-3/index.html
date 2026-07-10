@@ -1,0 +1,551 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Dance App · pixel calibration</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html, body { height: 100%; }
+  body {
+    background: #0b0c0e;
+    overflow: hidden;
+    font-family: 'Inter', -apple-system, system-ui, sans-serif;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  /* ---- Stage: full-bleed backdrop ---- */
+  #stage {
+    position: fixed; inset: 0;
+    display: flex; align-items: center; justify-content: center;
+    background: var(--stage);
+    perspective: 1400px;
+  }
+  .bgfade { position: absolute; inset: 0; z-index: 0; pointer-events: none; }
+  #stage > #card { position: relative; z-index: 1; }
+
+  /* ---- Pixel display layer: calibration noise + rainbow flood ---- */
+  #px { position: fixed; inset: 0; z-index: 50; pointer-events: none; }
+
+  /* ---- Card ---- */
+  #card {
+    position: relative; width: var(--w, 336px);
+    background: var(--card); color: var(--fg);
+    border: var(--border); border-radius: var(--radius); box-shadow: var(--shadow);
+    font-family: var(--font); overflow: hidden;
+    transform-style: preserve-3d;
+    transition:
+      background .4s ease, color .4s ease, border-radius .55s ease,
+      box-shadow .55s ease, border-color .55s ease,
+      transform .6s cubic-bezier(.22,1,.36,1), opacity .55s ease;
+  }
+  #card.morphing { opacity: 0; transform: scale(.92) translateY(14px); }
+
+  .pad { padding: 18px; display: flex; flex-direction: column; gap: 14px; }
+  .pad.voice { padding: 40px 30px 30px; gap: 0; align-items: center; }
+
+  /* ---- shared bits ---- */
+  .pills { display: flex; align-items: center; gap: 8px; font-size: 13px; color: var(--sub); flex-wrap: wrap; }
+  .pills b { color: var(--fg); font-weight: 500; }
+  .seed { width: 13px; height: 13px; border-radius: 50%; flex: none; background: linear-gradient(135deg,#ff9966 0%,#ff5e62 60%,#c33764 100%); box-shadow: 0 0 0 1px var(--chip); }
+  .middot { width: 3px; height: 3px; border-radius: 50%; background: var(--sub); display: inline-block; }
+
+  .activity { display: flex; align-items: center; gap: 10px; font-size: 13px; color: var(--sub); }
+  .activity b { color: var(--fg); font-weight: 500; }
+  .dur { margin-left: auto; font-variant-numeric: tabular-nums; }
+  .dotgrid { display: grid; grid-template-columns: repeat(3,3px); grid-template-rows: repeat(3,3px); gap: 2px; }
+  .dotgrid i { width: 3px; height: 3px; border-radius: 50%; background: var(--fg); opacity: .85; }
+
+  .msg { min-height: 46px; font-size: 15px; line-height: 1.45; color: var(--fg); letter-spacing: -.1px; }
+  .caret { display: inline-block; width: 2px; height: 1em; background: var(--fg); margin-left: 1px; transform: translateY(3px); animation: blink 1s steps(1) infinite; }
+  @keyframes blink { 0%,50%{opacity:1} 51%,100%{opacity:0} }
+
+  .bottom { display: flex; align-items: center; justify-content: space-between; padding-top: 2px; }
+  .upload { display: inline-flex; align-items: center; justify-content: center; gap: 6px; background: var(--btn-bg); color: var(--btn-fg); border: none; padding: 10px 16px; border-radius: var(--btn-radius); font-size: 13px; font-weight: 600; cursor: pointer; letter-spacing: -.1px; font-family: inherit; transition: background .5s ease, color .5s ease; }
+  .upload .lbl { display: inline-flex; align-items: center; gap: 6px; white-space: nowrap; }
+  .model { display: inline-flex; align-items: center; gap: 6px; background: var(--model-bg); color: var(--model-fg); padding: 8px 12px; border-radius: 999px; font-size: 12.5px; font-weight: 600; transition: background .5s ease, color .5s ease; }
+
+  /* ================= VOICE ================= */
+  .mic-wrap { position: relative; width: 180px; height: 180px; display: flex; align-items: center; justify-content: center; margin-bottom: 26px; transition: margin-bottom .9s cubic-bezier(.65,0,.35,1); }
+  /* step 5: silver mode pushes the mic and the input apart */
+  .pad.voice.spread .mic-wrap { margin-bottom: 84px; }
+  .mic-wrap .ring { position: absolute; inset: 0; border-radius: 50%; border: 1.5px solid rgba(255,255,255,.5); opacity: 0; }
+  .mic-wrap.live .ring { animation: pulse 2.6s cubic-bezier(.4,0,.2,1) infinite; }
+  .mic-wrap.live .ring.r2 { animation-delay: .87s; }
+  .mic-wrap.live .ring.r3 { animation-delay: 1.74s; }
+  @keyframes pulse { 0%{ transform: scale(.62); opacity:.55;} 70%{ opacity:0;} 100%{ transform: scale(1.25); opacity:0;} }
+  .mic3d {
+    width: 136px; height: 136px; border-radius: 50%;
+    background: url('assets/mic.png') center/94% no-repeat, radial-gradient(circle at 40% 30%, #f4c6e2, #dfa3cc 70%);
+    box-shadow: 0 26px 55px rgba(0,0,0,.6), 0 2px 3px rgba(0,0,0,.5);
+    transform: scale(0);
+  }
+  .mic3d.in { transform: scale(1); transition: transform .5s cubic-bezier(.34,1.56,.64,1); }
+  .micv {
+    position: absolute; left: 50%; top: 50%; width: 250px; height: 250px;
+    transform: translate(-50%, -50%);
+    object-fit: cover; opacity: 0; transition: opacity .9s ease; z-index: 2;
+    -webkit-mask-image: radial-gradient(circle closest-side, #000 58%, transparent 96%);
+    mask-image: radial-gradient(circle closest-side, #000 58%, transparent 96%);
+  }
+  .micv.show { opacity: 1; }
+  .mic-wrap.swap .mic3d { opacity: 0; transition: opacity .9s ease; }
+  .voice-label { font-size: 12px; font-weight: 600; letter-spacing: .22em; text-transform: uppercase; color: rgba(255,255,255,.5); margin-bottom: 20px; transition: color .5s; }
+  .prompt {
+    width: 100%; min-height: 68px; display: flex; align-items: center; gap: 12px;
+    background: linear-gradient(160deg, rgba(38,40,45,.9), rgba(20,21,25,.95));
+    border: 1px solid rgba(255,255,255,.14);
+    box-shadow: inset 0 1px 0 rgba(255,255,255,.10), 0 16px 40px rgba(0,0,0,.55);
+    border-radius: 18px; padding: 8px 8px 8px 18px;
+    transition: background .5s ease, border-color .5s ease, box-shadow .5s ease;
+  }
+  .prompt .ptext { flex: 1; font-size: 16px; line-height: 1.45; color: #f4f4f5; letter-spacing: -.1px; transition: color .5s; }
+  .prompt .caret { background: #fff; }
+  .prompt .send {
+    flex: none; align-self: stretch; aspect-ratio: 1 / 1; min-width: 52px; border-radius: 12px;
+    background: linear-gradient(155deg, #3b3d43 0%, #1b1c1f 52%, #050506 100%);
+    color: #fff; display: flex; align-items: center; justify-content: center;
+    box-shadow: inset 0 1px 0 rgba(255,255,255,.18), inset 0 -2px 4px rgba(0,0,0,.55), 0 3px 10px rgba(0,0,0,.35);
+    opacity: .45; transition: opacity .3s, transform .2s;
+  }
+  .prompt .send.ready { opacity: 1; }
+  .prompt .send .spin svg { animation: rot .8s linear infinite; }
+  @keyframes rot { to { transform: rotate(360deg); } }
+
+  /* step 6: thinking dots */
+  .think .d { display: inline-block; animation: dotb 1.2s ease infinite; }
+  .think .d:nth-child(2) { animation-delay: .18s; }
+  .think .d:nth-child(3) { animation-delay: .36s; }
+  @keyframes dotb { 0%,60%,100%{opacity:.2} 30%{opacity:1} }
+
+  /* step 7: AI answer actions */
+  .actions { margin-top: 20px; opacity: 0; transform: translateY(10px); transition: opacity .55s ease, transform .55s cubic-bezier(.22,1,.36,1); }
+  .actions.show { opacity: 1; transform: none; }
+  .playbtn {
+    display: inline-flex; align-items: center; gap: 9px;
+    background: var(--btn-bg); color: var(--btn-fg); border: none;
+    padding: 13px 24px; border-radius: 999px; font-size: 14px; font-weight: 600;
+    font-family: inherit; cursor: pointer; letter-spacing: -.1px;
+    box-shadow: 0 12px 30px rgba(0,0,0,.22);
+  }
+
+  /* silver (light) voice mode */
+  #card[data-mode="light"] .voice-label { color: rgba(23,24,27,.45); }
+  #card[data-mode="light"] .mic-wrap .ring { border-color: rgba(23,24,27,.25); }
+  #card[data-mode="light"] .prompt {
+    background: linear-gradient(160deg, rgba(255,255,255,.94), rgba(238,240,243,.96));
+    border-color: rgba(20,22,27,.08);
+    box-shadow: inset 0 1px 0 #fff;
+  }
+  #card[data-mode="light"] .prompt .ptext { color: #17181b; }
+  #card[data-mode="light"] .prompt .caret { background: #17181b; }
+
+  @media (prefers-reduced-motion: reduce) {
+    * { animation: none !important; transition-duration: .01ms !important; }
+  }
+</style>
+</head>
+<body>
+  <div id="stage">
+    <div id="card" data-style="original" data-mode="light" class="morphing"></div>
+  </div>
+  <canvas id="px"></canvas>
+
+<script>
+const MESSAGE = 'Slow Butoh rise — hollow the chest, fingers unfurl, weight sinking into the floor.';
+const PROMPT  = 'Improve my choreography for rehearsal Butoh, make it bold, make it shine';
+const ANSWER  = 'Next: 8 counts — hollow-chest rise, spiral to the floor, sharp freeze on 8. Mirror it with the second dancer.';
+
+/* ============================== THEMES ============================== */
+const THEMES = {
+  original: { font: "'Inter', system-ui, sans-serif", w: '336px',
+    light: { stage:"url('assets/bg.jpg') center/cover no-repeat, #c8b98a", card:"#f0ede6", fg:"#1a1a1a", sub:"rgba(26,26,26,.55)", accentbg:"rgba(26,26,26,.06)", chip:"rgba(26,26,26,.06)", border:"1px solid transparent", radius:"28px", shadow:"0 24px 60px rgba(0,0,0,.28)", btnBg:"#1a1a1a", btnFg:"#fff", btnRadius:"999px", modelBg:"rgba(26,26,26,.06)", modelFg:"#1a1a1a" },
+    dark:  { stage:"url('assets/bg.jpg') center/cover no-repeat, #c8b98a", card:"#1a1a1a", fg:"#fff", sub:"rgba(255,255,255,.55)", accentbg:"rgba(255,255,255,.08)", chip:"rgba(255,255,255,.08)", border:"1px solid transparent", radius:"28px", shadow:"0 24px 60px rgba(0,0,0,.5)", btnBg:"#fff", btnFg:"#1a1a1a", btnRadius:"999px", modelBg:"rgba(255,255,255,.08)", modelFg:"#fff" } },
+
+  voice: { font: "'Inter', system-ui, sans-serif", w: '660px',
+    dark:  { stage:"radial-gradient(60% 55% at 50% 38%, #1b1c1f 0%, #0a0a0c 70%, #060607 100%)", card:"transparent", fg:"#f4f4f5", sub:"rgba(244,244,245,.5)", accentbg:"rgba(255,255,255,.06)", chip:"rgba(255,255,255,.06)", border:"1px solid transparent", radius:"32px", shadow:"none", btnBg:"#fff", btnFg:"#111", btnRadius:"14px", modelBg:"rgba(255,255,255,.06)", modelFg:"#f4f4f5" },
+    light: { stage:"radial-gradient(70% 60% at 50% 30%, #eef0f2 0%, #e2e4e7 55%, #d1d4d8 100%)", card:"transparent", fg:"#17181b", sub:"rgba(23,24,27,.5)", accentbg:"rgba(23,24,27,.06)", chip:"rgba(23,24,27,.06)", border:"1px solid transparent", radius:"32px", shadow:"none", btnBg:"#17181b", btnFg:"#fff", btnRadius:"14px", modelBg:"rgba(23,24,27,.06)", modelFg:"#17181b" } },
+};
+
+/* ============================== markup ============================== */
+const goBtn = `<button class="upload">
+  <span class="lbl">Go dance
+    <svg width="12" height="12" viewBox="0 0 12 12" fill="none" style="margin-top:1px"><path d="M2.5 6h7M6.5 3l3 3-3 3" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>
+  </span>
+</button>`;
+const model = `<div class="model">Opus 4.8 ⌄</div>`;
+const dotgrid = `<span class="dotgrid"><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i></span>`;
+
+function renderOriginal() {
+  return `<div class="pad orig">
+    <div class="pills"><b>Dance</b><span class="middot"></span><span class="seed"></span><b>Butoh</b><span class="middot"></span><b class="intensity">boldly ⌄</b></div>
+    <div class="activity">${dotgrid}<b>Intro</b><span class="dur">32s</span></div>
+    <div class="msg"><span class="typed"></span><span class="caret"></span></div>
+    <div class="bottom">${goBtn}${model}</div>
+  </div>`;
+}
+function renderVoice() {
+  return `<div class="pad voice">
+    <div class="mic-wrap">
+      <span class="ring r1"></span><span class="ring r2"></span><span class="ring r3"></span>
+      <div class="mic3d"></div>
+      <video class="micv" src="assets/mic-anim.mp4" muted playsinline loop preload="auto"></video>
+    </div>
+    <div class="voice-label">Listening…</div>
+    <div class="prompt"><span class="ptext"><span class="typed"></span><span class="caret"></span></span><span class="send">
+      <svg class="ic" width="22" height="22" viewBox="0 0 24 24" fill="none"><path d="M19 5v6a3 3 0 0 1-3 3H6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/><path d="M9.5 10.5L6 14l3.5 3.5" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+    </span></div>
+    <div class="actions"><button class="playbtn">
+      <svg width="13" height="13" viewBox="0 0 14 14" fill="currentColor"><path d="M3 1.8v10.4L12 7 3 1.8z"/></svg>
+      Play choreo
+    </button></div>
+  </div>`;
+}
+
+/* ============================== runtime ============================== */
+const stage = document.getElementById('stage');
+const card  = document.getElementById('card');
+const wait  = ms => new Promise(r => setTimeout(r, ms));
+let lastStage = null;
+
+function applyTokens(styleKey, mode) {
+  const th = THEMES[styleKey];
+  const t = th[mode];
+  const map = {
+    '--stage': t.stage, '--card': t.card, '--fg': t.fg, '--sub': t.sub,
+    '--accentbg': t.accentbg, '--chip': t.chip, '--border': t.border, '--radius': t.radius,
+    '--shadow': t.shadow, '--btn-bg': t.btnBg, '--btn-fg': t.btnFg, '--btn-radius': t.btnRadius,
+    '--model-bg': t.modelBg, '--model-fg': t.modelFg, '--font': th.font, '--w': th.w,
+  };
+  const nextStage = map['--stage'];
+  if (lastStage !== null && lastStage !== nextStage) {
+    const ov = document.createElement('div');
+    ov.className = 'bgfade';
+    ov.style.background = lastStage;
+    stage.insertBefore(ov, card);
+    requestAnimationFrame(() => {
+      ov.animate([{ opacity: 1 }, { opacity: 0 }], { duration: 800, easing: 'ease' })
+        .onfinish = () => ov.remove();
+    });
+  }
+  lastStage = nextStage;
+  for (const k in map) { stage.style.setProperty(k, map[k]); card.style.setProperty(k, map[k]); }
+  card.dataset.style = styleKey;
+  card.dataset.mode = mode;
+}
+
+function typewriter(el, text, speed = 26) {
+  return new Promise(resolve => {
+    if (!el) { resolve(); return; }
+    const caret = el.parentElement && el.parentElement.querySelector('.caret');
+    if (caret) caret.style.display = '';
+    el.textContent = '';
+    const start = performance.now();
+    (function tick(now) {
+      const n = Math.min(text.length, Math.floor((now - start) / speed));
+      el.textContent = text.slice(0, n);
+      if (n < text.length) requestAnimationFrame(tick);
+      else { if (caret) caret.style.display = 'none'; resolve(); }
+    })(start);
+  });
+}
+
+/* ---- Original: BEFORE / AFTER wipe (clip-path) light → dark ---- */
+async function beforeAfterWipe(styleKey) {
+  const t = THEMES[styleKey].dark;
+  const layer = document.createElement('div');
+  layer.style.cssText = `position:absolute;inset:0;border-radius:inherit;overflow:hidden;background:${t.card};clip-path:inset(0 100% 0 0);z-index:3;`;
+  layer.style.setProperty('--fg', t.fg); layer.style.setProperty('--sub', t.sub);
+  layer.style.setProperty('--chip', t.chip); layer.style.setProperty('--accentbg', t.accentbg);
+  layer.style.setProperty('--btn-bg', t.btnBg); layer.style.setProperty('--btn-fg', t.btnFg);
+  layer.style.setProperty('--btn-radius', t.btnRadius);
+  layer.style.setProperty('--model-bg', t.modelBg); layer.style.setProperty('--model-fg', t.modelFg);
+  layer.innerHTML = card.querySelector('.pad').outerHTML;
+  const lc = layer.querySelector('.caret'); if (lc) lc.style.display = 'none';
+  card.appendChild(layer);
+  await wait(40);
+  const reduced = matchMedia('(prefers-reduced-motion: reduce)').matches;
+  layer.style.transition = 'clip-path .9s cubic-bezier(.65,0,.35,1)';
+  layer.style.clipPath = 'inset(0 0 0 0)';
+  card.style.transition = 'background .9s cubic-bezier(.65,0,.35,1), color .9s cubic-bezier(.65,0,.35,1)';
+  applyTokens(styleKey, 'dark');
+  await wait(reduced ? 60 : 950);
+  layer.remove();
+  requestAnimationFrame(() => { card.style.transition = ''; });
+}
+
+/* ============================================================
+   PIXEL DISPLAY ENGINE — calibration noise + Dia rainbow flood
+   ============================================================ */
+const px = document.getElementById('px');
+const pctx = px.getContext('2d');
+const CELL = 3;      // micro pixel size — dense retina-subpixel grid
+const RCELL = 22;    // rainbow pixel size (soft)
+let PW, PH, nCols, nRows, seeds, delayIn, delayCover, noiseCv, nctx, nimg;
+let rCols, rRows, rainCv, rctx, rimg;
+
+function pxResize() {
+  PW = px.width = innerWidth; PH = px.height = innerHeight;
+  px.style.width = PW + 'px'; px.style.height = PH + 'px';
+  nCols = Math.ceil(PW / CELL); nRows = Math.ceil(PH / CELL);
+  noiseCv = document.createElement('canvas'); noiseCv.width = nCols; noiseCv.height = nRows;
+  nctx = noiseCv.getContext('2d'); nimg = nctx.createImageData(nCols, nRows);
+  seeds = new Float32Array(nCols * nRows);
+  delayIn = new Float32Array(nCols * nRows);
+  delayCover = new Float32Array(nCols * nRows);
+  for (let y = 0; y < nRows; y++) for (let x = 0; x < nCols; x++) {
+    const i = y * nCols + x;
+    seeds[i] = Math.random();
+    // random clusters + a wave traveling across the screen
+    const cluster = 0.5 + 0.5 * Math.sin(x * 0.33 + 1.7) * Math.sin(y * 0.41 + x * 0.12);
+    delayIn[i]    = (x / nCols) * 800 + cluster * 260 + Math.random() * 90;
+    delayCover[i] = ((nCols - 1 - x) / nCols) * 460 + cluster * 190 + Math.random() * 70;
+  }
+  rCols = Math.ceil(PW / RCELL) + 2; rRows = Math.ceil(PH / RCELL) + 2;
+  rainCv = document.createElement('canvas'); rainCv.width = rCols; rainCv.height = rRows;
+  rctx = rainCv.getContext('2d'); rimg = rctx.createImageData(rCols, rRows);
+}
+pxResize(); addEventListener('resize', pxResize);
+
+const clamp01 = v => Math.max(0, Math.min(1, v));
+const easeOut = t => 1 - Math.pow(1 - t, 3);
+
+// paint the noise grid; alphaFn(i, t) -> 0..1 per cell
+function paintNoise(t, alphaFn, composite = true) {
+  const d = nimg.data;
+  for (let i = 0; i < nCols * nRows; i++) {
+    const a = alphaFn(i, t);
+    if (a <= 0) { d[i * 4 + 3] = 0; continue; }
+    const v = 202 + seeds[i] * 40 + 5 * Math.sin(t * 0.004 + seeds[i] * 40);
+    // faint RGB subpixel character — warm/cool jitter per cell (reads like a real display up close)
+    const ch = (seeds[i] - 0.5) * 22;
+    d[i * 4] = v + ch; d[i * 4 + 1] = v - 3; d[i * 4 + 2] = v - 9 - ch;
+    d[i * 4 + 3] = Math.round(a * 255);
+  }
+  nctx.putImageData(nimg, 0, 0);
+  if (composite) {
+    pctx.clearRect(0, 0, PW, PH);
+    pctx.imageSmoothingEnabled = false;
+    pctx.drawImage(noiseCv, 0, 0, nCols * CELL, nRows * CELL);
+  }
+}
+
+// paint noise fully opaque (initial state / post-flood state)
+function paintNoiseFull() { paintNoise(0, () => 1); }
+
+// STEP 1 — display calibrates: noise resolves into the real page
+function calibrateIn() {
+  return new Promise(res => {
+    const t0 = performance.now();
+    const total = 800 + 260 + 90 + 320;
+    (function tick(now) {
+      const t = now - t0;
+      paintNoise(t, (i) => 1 - easeOut(clamp01((t - delayIn[i]) / 300)));
+      if (t < total) requestAnimationFrame(tick);
+      else { pctx.clearRect(0, 0, PW, PH); res(); }
+    })(t0);
+  });
+}
+
+// STEP 3 — pixels cover the screen, midFn swaps the scene, then resolve out
+async function pixelTransition(midFn) {
+  await new Promise(res => {
+    const t0 = performance.now();
+    const total = 460 + 190 + 70 + 280;
+    (function tick(now) {
+      const t = now - t0;
+      paintNoise(t, (i) => easeOut(clamp01((t - delayCover[i]) / 260)));
+      if (t < total) requestAnimationFrame(tick);
+      else res();
+    })(t0);
+  });
+  midFn();
+  await new Promise(res => {  // hold covered while the scene settles behind
+    const t0 = performance.now();
+    (function tick(now) {
+      const t = now - t0;
+      paintNoise(t, () => 1);
+      if (t < 220) requestAnimationFrame(tick); else res();
+    })(t0);
+  });
+  await calibrateIn();
+}
+
+// rainbow gradient (top of wave → bottom): magenta → yellow → white → blue
+const RSTOPS = [
+  [0.00, 255,  31, 168],
+  [0.30, 255, 210,  31],
+  [0.50, 251, 249, 244],
+  [0.68,  43, 107, 255],
+  [1.00,  16,  36, 222],
+];
+function rcol(u) {
+  u = clamp01(u);
+  let i = 0; while (i < RSTOPS.length - 2 && u > RSTOPS[i + 1][0]) i++;
+  const a = RSTOPS[i], b = RSTOPS[i + 1];
+  const p = (u - a[0]) / (b[0] - a[0]);
+  return [a[1] + (b[1] - a[1]) * p, a[2] + (b[2] - a[2]) * p, a[3] + (b[3] - a[3]) * p];
+}
+function paintRainbow(t, riseH) {
+  const d = rimg.data;
+  const topBase = (PH - riseH) / RCELL;
+  for (let x = 0; x < rCols; x++) {
+    const bump =
+      Math.sin(x * 0.52 + t * 0.0028) * 1.7 +
+      Math.sin(x * 0.21 - t * 0.0019) * 2.4 +
+      Math.sin(x * 1.31 + t * 0.0041) * 0.8;
+    const top = topBase + bump;
+    for (let y = 0; y < rRows; y++) {
+      const i = (y * rCols + x) * 4;
+      const depth = y - top;
+      if (depth < 0) { d[i + 3] = 0; continue; }
+      const c = rcol(depth / 15 + (seeds[(y * nCols + x * 3) % seeds.length] - 0.5) * 0.05);
+      d[i] = c[0]; d[i + 1] = c[1]; d[i + 2] = c[2];
+      d[i + 3] = Math.round(255 * clamp01(depth / 1.2 + 0.35));
+    }
+  }
+  rctx.putImageData(rimg, 0, 0);
+  pctx.clearRect(0, 0, PW, PH);
+  pctx.imageSmoothingEnabled = true;
+  pctx.filter = 'blur(9px)';
+  pctx.drawImage(rainCv, -RCELL, -RCELL, rCols * RCELL, rRows * RCELL);
+  pctx.filter = 'none';
+}
+
+// STEP 7 finale — Dia-style pixel waves flood the screen, then become the
+// calibration noise so the loop can de-pixelate back into the first card
+async function rainbowFlood(midFn) {
+  const RISE = 2000;
+  await new Promise(res => {
+    const t0 = performance.now();
+    (function tick(now) {
+      const t = now - t0;
+      const p = easeOut(clamp01(t / RISE));
+      paintRainbow(t, p * (PH + 9 * RCELL));   // rise past the top (bumps included)
+      if (t < RISE) requestAnimationFrame(tick);
+      else res();
+    })(t0);
+  });
+  midFn();   // reset the scene behind the fully-flooded screen
+  // rainbow crystallises into grey calibration noise
+  await new Promise(res => {
+    const t0 = performance.now();
+    const DUR = 480;
+    (function tick(now) {
+      const t = now - t0;
+      const k = easeOut(clamp01(t / DUR));
+      paintRainbow(t + RISE, PH + 9 * RCELL);
+      paintNoise(t, (i) => clamp01(k * 1.4 - seeds[i] * 0.4), false);
+      nctx.putImageData(nimg, 0, 0);
+      pctx.imageSmoothingEnabled = false;
+      pctx.drawImage(noiseCv, 0, 0, nCols * CELL, nRows * CELL);
+      if (t < DUR) requestAnimationFrame(tick);
+      else { paintNoiseFull(); res(); }
+    })(t0);
+  });
+}
+
+/* ============================== scenes ============================== */
+
+// STEP 2 — first component state, then light → dark
+async function sceneOriginal() {
+  await wait(150);                          // display settles first…
+  card.classList.remove('morphing');        // …then the card emerges from it
+  await wait(650);
+  await typewriter(card.querySelector('.typed'), MESSAGE, 16);
+  await wait(420);
+  await beforeAfterWipe('original');        // light → dark
+  await wait(1300);
+}
+
+// STEPS 4–7 — voice: pink mic → silver + spacing → choreo loading → AI answer
+async function sceneVoice() {
+  const wrap = card.querySelector('.mic-wrap');
+  const mic  = card.querySelector('.mic3d');
+  const label= card.querySelector('.voice-label');
+  const send = card.querySelector('.send');
+  await wait(140);
+  if (mic) mic.classList.add('in');
+  await wait(380);
+  if (wrap) wrap.classList.add('live');
+  await wait(520);
+
+  // step 4 · the input types under the pink microphone
+  await typewriter(card.querySelector('.ptext .typed'), PROMPT, 30);
+  if (send) send.classList.add('ready');
+  if (label) { label.textContent = 'On it ✦'; label.style.color = 'rgba(255,255,255,.85)'; }
+  await wait(1300);
+
+  // step 5 · silver version — mic video takes over, spacing opens up
+  applyTokens('voice', 'light');
+  if (label) label.style.color = '';
+  if (wrap) { wrap.classList.remove('live'); wrap.classList.add('swap'); }
+  const v = card.querySelector('.micv');
+  if (v) { try { v.currentTime = 0; await v.play(); } catch (e) {} v.classList.add('show'); }
+  card.querySelector('.pad').classList.add('spread');   // input ↔ mic gap grows
+  await wait(2100);
+
+  // step 6 · what's next — choreo loading state
+  if (label) label.textContent = 'Choreographing…';
+  const ptext = card.querySelector('.ptext');
+  if (ptext) ptext.innerHTML = `<span class="think">Building your next 8-count<span class="d">.</span><span class="d">.</span><span class="d">.</span></span>`;
+  if (send) send.innerHTML = `<span class="spin"><svg width="18" height="18" viewBox="0 0 16 16" fill="none"><circle cx="8" cy="8" r="6" stroke="currentColor" stroke-width="2" opacity=".25"/><path d="M14 8a6 6 0 0 0-6-6" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg></span>`;
+  await wait(2100);
+
+  // step 7 · AI answer + play button
+  if (label) label.textContent = 'Choreo ready ✦';
+  if (send) send.innerHTML = `<svg width="20" height="20" viewBox="0 0 24 24" fill="none"><path d="M5 12.5l4.5 4.5L19 7" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg>`;
+  if (ptext) ptext.innerHTML = `<span class="typed"></span><span class="caret"></span>`;
+  await typewriter(card.querySelector('.ptext .typed'), ANSWER, 14);
+  const act = card.querySelector('.actions');
+  if (act) act.classList.add('show');
+  await wait(500);
+  const play = card.querySelector('.playbtn');
+  if (play) play.animate(
+    [{ transform:'scale(1)' },{ transform:'scale(.93)' },{ transform:'scale(1.04)' },{ transform:'scale(1)' }],
+    { duration: 420, easing: 'cubic-bezier(.3,1.7,.5,1)' });
+  await wait(1500);
+}
+
+/* ============================== loop ============================== */
+function prepOriginal() {
+  applyTokens('original', 'light');
+  card.innerHTML = renderOriginal();
+  card.classList.add('morphing');
+}
+function prepVoice() {
+  applyTokens('voice', 'dark');
+  card.innerHTML = renderVoice();
+  card.classList.remove('morphing');
+}
+
+async function loop() {
+  prepOriginal();
+  paintNoiseFull();          // the display starts un-calibrated
+  await wait(350);
+  while (true) {
+    try {
+      await calibrateIn();               // 1 · pixels resolve into the page
+      await sceneOriginal();             // 2 · first card, light → dark
+      await pixelTransition(prepVoice);  // 3 · pixel wave carries us over
+      await sceneVoice();                // 4–7 · pink mic → silver → loading → answer
+      await rainbowFlood(prepOriginal);  // 7 · Dia waves flood → noise → loop
+    } catch (e) {
+      console.error('dance-3 loop failed, recovering', e);
+      await wait(500);
+    }
+  }
+}
+
+paintNoiseFull();
+if (location.hash !== '#test') {
+  if (document.fonts && document.fonts.ready) {
+    document.fonts.ready.then(() => setTimeout(loop, 300));
+  } else { setTimeout(loop, 500); }
+}
+</script>
+</body>
+</html>
