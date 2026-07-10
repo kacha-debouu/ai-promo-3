@@ -1,0 +1,477 @@
+<!doctype html>
+<!-- wide-motion · Scenario B · "Prompt-driven builder" · 20s · V3 (status)
+     Opens on a huge Claude Code prompt with a fast-spinning gradient border.
+     Prompt is typed → camera zooms out, input docks to the bottom, components
+     assemble above and get styled. Cards restyle IN PLACE (no shuffle, no UI
+     pulse). Each prompt shows a loading spinner in the input's top-right
+     corner that morphs into a filled checkmark once the restyle lands.
+     Fully deterministic, loop-safe (all state keyframed on t). -->
+<html><head><meta charset="utf-8"><title>Wideset · Prompt-driven builder · status</title>
+<script>document.documentElement.style.fontSize = Math.min(innerWidth/96, innerHeight/54) + 'px';</script>
+<style>
+  *{box-sizing:border-box;margin:0;padding:0}
+  html,body{overflow:hidden;width:100%;height:100%}
+  :root{
+    --accent:#5B45E0; --accent-soft:#EDE9FD;
+    --bg:#EFEFF2; --surface:#FFFFFF; --surface2:#F3F3F6;
+    --text:#1A1A1E; --muted:#75757D; --border:#E6E6EB;
+    --r:0.7rem;
+    --ch1:#4838C9; --ch2:#DCD2F8; --ch3:#9B8AEF; --ch4:#F5A623;
+  }
+  body{font-family:-apple-system,'SF Pro Text','Inter','Segoe UI',sans-serif;
+    -webkit-font-smoothing:antialiased;background:var(--bg)}
+  #stage{position:fixed;inset:0;overflow:hidden;background:var(--bg)}
+  #spot{position:absolute;inset:-25%;pointer-events:none;
+    background:radial-gradient(55% 50% at 40% 32%, rgba(255,255,255,.9), rgba(255,255,255,0) 70%)}
+  #vig{position:absolute;inset:0;pointer-events:none;
+    background:radial-gradient(120% 115% at 50% 45%, transparent 62%, rgba(10,10,18,.10))}
+  #camera{position:absolute;inset:0;will-change:transform;transform-origin:50% 50%}
+  #canvas{position:absolute;left:50%;top:50%;width:96rem;height:54rem;margin:-27rem 0 0 -48rem}
+
+  .fl{position:absolute;will-change:transform;transform:translate(-50%,-50%)}
+  .card{background:var(--surface);border:1px solid var(--border);border-radius:var(--r);
+    color:var(--text);
+    box-shadow:0 1.4rem 3.2rem -1rem rgba(15,15,25,.16), 0 .2rem .6rem rgba(15,15,25,.05)}
+  .btn{display:inline-flex;align-items:center;gap:.3rem;font-weight:600;white-space:nowrap;
+    border-radius:calc(var(--r)*.5)}
+  .btn.sm{font-size:.62rem;padding:.34rem .6rem}
+  .btn.xs{font-size:.55rem;padding:.24rem .4rem}
+  .btn.ghost{border:1px solid var(--border);color:var(--text);background:var(--surface)}
+  .btn.soft{background:var(--surface2);color:var(--text)}
+  .btn.primary{background:var(--accent);color:#fff}
+
+  .w-upload{width:20rem;padding:.9rem 1rem 1rem}
+  .uhead{display:flex;justify-content:space-between;align-items:flex-start}
+  .lbl{font-size:.6rem;color:var(--muted)}
+  .big{font-size:1.05rem;font-weight:650;margin-top:.12rem}
+  .uchart{display:block;width:100%;height:4.6rem;margin:.75rem 0 .8rem}
+  .mrow{display:flex;font-size:.6rem;padding:.15rem 0}
+  .mrow span{color:var(--muted);width:6.6rem;flex:none}
+  .mrow b{font-weight:600}
+
+  .w-modal{width:19.5rem}
+  .mhead{display:flex;justify-content:space-between;align-items:center;
+    padding:.75rem 1rem;border-bottom:1px solid var(--border);font-size:.72rem}
+  .mhead b{font-weight:650}
+  .mx{color:var(--muted);font-size:.66rem}
+  .mbody{padding:.85rem 1rem .5rem}
+  .flabel{font-size:.62rem;font-weight:600;margin:.6rem 0 .3rem;
+    display:flex;justify-content:space-between;align-items:baseline}
+  .flabel:first-child{margin-top:0}
+  .fcnt,.fopt{color:var(--muted);font-weight:400;font-size:.56rem}
+  .finput{display:flex;align-items:center;border:1px solid var(--border);
+    border-radius:calc(var(--r)*.5);padding:.42rem .55rem;font-size:.62rem;background:var(--surface)}
+  .finput.ta{height:3.3rem;align-items:flex-start}
+  .ph{color:var(--muted)}
+  .fhelp{font-size:.54rem;color:var(--muted);margin-top:.32rem}
+  .wtag{display:inline-flex;align-items:center;gap:.3rem;background:var(--surface2);
+    border-radius:.3rem;padding:.15rem .4rem .15rem .18rem;font-weight:600;font-size:.6rem}
+  .wtag i{width:.82rem;height:.82rem;border-radius:.22rem;background:var(--accent);color:#fff;
+    font-style:normal;font-size:.5rem;display:grid;place-items:center;font-weight:700}
+  .wtag em{font-style:normal;color:var(--muted);margin-left:.1rem;font-size:.55rem}
+  .chev{margin-left:auto;color:var(--muted);font-size:.48rem}
+  .mfoot{display:flex;align-items:center;gap:.45rem;padding:.7rem 1rem;border-top:1px solid var(--border)}
+  .fstep{font-size:.6rem;color:var(--muted)}
+  .spacer{flex:1}
+
+  .w-ana{width:20rem;padding:.9rem 1rem}
+  .ahead{display:flex;gap:.45rem;align-items:center;font-size:.74rem}
+  .ahead b{font-weight:650}
+  .aic{width:1.05rem;height:1.05rem;border-radius:.3rem;background:var(--accent);
+    display:grid;place-items:center;flex:none}
+  .adesc{font-size:.58rem;color:var(--muted);margin:.35rem 0 .7rem;max-width:15.5rem;line-height:1.45}
+  .astats{display:flex;gap:.5rem;margin-bottom:.85rem}
+  .stat{flex:1;display:flex;gap:.4rem;align-items:center}
+  .sic{width:1.5rem;height:1.5rem;border-radius:.42rem;background:var(--surface2);
+    display:grid;place-items:center;color:var(--muted);flex:none}
+  .slbl{font-size:.52rem;color:var(--muted)}
+  .sval{font-size:.7rem;font-weight:650;display:block}
+  .aplot{display:flex;gap:.5rem;height:7rem;margin-bottom:.2rem}
+  .ay{display:flex;flex-direction:column;justify-content:space-between;font-size:.48rem;
+    color:var(--muted);text-align:right;transform:translateY(.18rem)}
+  .abars{position:relative;flex:1;display:flex;align-items:flex-end;
+    justify-content:space-around;border-bottom:1px solid var(--border)}
+  .gl{position:absolute;left:0;right:0;height:1px;background:var(--border);opacity:.55}
+  .bar{position:relative;width:1.5rem;height:100%;display:flex;flex-direction:column-reverse;
+    justify-content:flex-start;gap:.06rem;transform-origin:bottom}
+  .bar i{display:block;border-radius:.09rem}
+  .aleg{display:flex;gap:.85rem;font-size:.55rem;justify-content:center;margin:.65rem 0 .75rem}
+  .aleg i{display:inline-block;width:.42rem;height:.42rem;border-radius:.12rem;
+    margin-right:.26rem;vertical-align:-0.02rem}
+  .afoot{display:flex;align-items:center;gap:.45rem;border-top:1px solid var(--border);padding-top:.7rem}
+  .afl{font-size:.6rem;font-weight:600}
+
+  .w-list{width:17rem;padding:.85rem .9rem}
+  .lrow{display:flex;gap:.6rem;align-items:center}
+  .llogo{width:2.3rem;height:2.3rem;border:1px solid var(--border);flex:none;
+    border-radius:calc(var(--r)*.5);display:grid;place-items:center;
+    font-family:Georgia,'Times New Roman',serif;font-size:.34rem;letter-spacing:.09em;
+    background:var(--surface2);color:var(--text)}
+  .lname{font-size:.74rem;font-weight:650}
+  .lmeta{font-size:.56rem;color:var(--muted);margin-top:.16rem}
+  .lbtns{display:flex;gap:.45rem;margin-top:.7rem}
+
+  /* Claude Code terminal input — 2026 style: gradient ring, layered depth */
+  #cc{position:absolute;left:48rem;top:24rem;width:40rem;z-index:8;
+    font-family:'JetBrains Mono',ui-monospace,'SF Mono',Menlo,monospace;
+    will-change:transform;transform:translate(-50%,-50%)}
+  .cc-title{display:flex;align-items:center;gap:.4rem;font-size:.62rem;color:var(--muted);
+    margin:0 .1rem .45rem;letter-spacing:.2px}
+  .cc-title b{color:var(--text);font-weight:600}
+  .cc-title .sp{color:#D97757}
+  #gb-wrap{position:relative;border-radius:.95rem}
+  #gb{position:absolute;inset:-2px;border-radius:.95rem;z-index:0}
+  #gb-glow{position:absolute;inset:-9px;border-radius:1.2rem;filter:blur(18px);
+    opacity:.45;z-index:-1}
+  #prompt-box{position:relative;z-index:1;display:flex;align-items:flex-start;gap:.55rem;
+    background:linear-gradient(180deg,#202024,#161619);border:none;border-radius:.82rem;
+    padding:.95rem 1.1rem;
+    box-shadow:inset 0 1px 0 rgba(255,255,255,.08), inset 0 -1px 0 rgba(0,0,0,.55),
+      0 1.8rem 3.6rem -0.9rem rgba(8,8,14,.6), 0 .4rem 1rem rgba(8,8,14,.35)}
+  .cc-prompt{color:#D97757;font-weight:700;font-size:.95rem;line-height:1.5}
+  .pb-body{flex:1;font-size:.95rem;line-height:1.5;color:#ECECEC;
+    min-height:1.42rem;white-space:normal;word-break:break-word}
+  #pb-type:empty::before{content:'restyle the system…';color:#6E6E77}
+  .pb-caret{display:inline-block;width:.5rem;height:1.02em;background:#ECECEC;
+    vertical-align:-2px;margin-left:2px;animation:cursor-blink 1s steps(1,end) infinite}
+  .cc-hint{display:flex;gap:1.1rem;margin:.55rem .2rem 0;font-size:.58rem;color:var(--muted)}
+  .cc-hint .r{margin-left:auto;color:var(--muted)}
+  @keyframes cursor-blink{50%{opacity:0}}
+  #cc.sending #gb-glow{opacity:.9}
+
+  /* per-prompt status chip in the input's top-right: spinner → filled check */
+  #cc-status{position:absolute;top:.85rem;right:1rem;width:1.15rem;height:1.15rem;z-index:2;
+    opacity:0;transform:scale(.7);transition:opacity .28s ease, transform .28s ease}
+  #cc-status.on{opacity:1;transform:scale(1)}
+  #cc-status svg{position:absolute;inset:0;width:100%;height:100%}
+  #cc-status .st-spin{color:#D97757;opacity:1;transition:opacity .2s ease}
+  #cc-status .st-check{color:#3FA66B;opacity:0;transform:scale(.55);
+    transition:opacity .22s ease, transform .3s cubic-bezier(.2,1.35,.4,1)}
+  #cc-status.done .st-spin{opacity:0}
+  #cc-status.done .st-check{opacity:1;transform:scale(1)}
+
+  #sweep{position:absolute;top:-30%;bottom:-30%;width:36%;pointer-events:none;z-index:6;
+    background:linear-gradient(100deg,transparent,rgba(255,255,255,.5),transparent);
+    will-change:transform}
+  #wm-cursor{position:fixed;left:0;top:0;z-index:99;pointer-events:none;will-change:transform;
+    transform:translate(-200px,-200px);opacity:0}
+  .mkr{position:absolute;width:1px;height:1px}
+</style></head><body>
+<div id="stage">
+  <div id="spot"></div>
+  <div id="camera">
+    <div id="canvas">
+
+      <div class="fl" id="fl-upload" style="left:37rem;top:10rem">
+        <div class="card w-upload" id="c-upload">
+          <div class="uhead">
+            <div><div class="lbl">Finished</div><div class="big"><span id="pct">0</span>%</div></div>
+            <div class="btn sm ghost">
+              <svg width="8" height="9" viewBox="0 0 8 9" fill="currentColor"><rect width="2.6" height="9" rx="0.8"/><rect x="5.4" width="2.6" height="9" rx="0.8"/></svg>
+              Pause
+            </div>
+          </div>
+          <svg class="uchart" viewBox="0 0 320 84" preserveAspectRatio="none">
+            <rect id="ushade" x="0" y="0" width="0" height="84" fill="var(--surface2)"/>
+            <g stroke="var(--border)" stroke-width="1">
+              <line x1="0" y1="21" x2="320" y2="21"/><line x1="0" y1="42" x2="320" y2="42"/><line x1="0" y1="63" x2="320" y2="63"/>
+              <line x1="32" y1="0" x2="32" y2="84"/><line x1="64" y1="0" x2="64" y2="84"/><line x1="96" y1="0" x2="96" y2="84"/>
+              <line x1="128" y1="0" x2="128" y2="84"/><line x1="160" y1="0" x2="160" y2="84"/><line x1="192" y1="0" x2="192" y2="84"/>
+              <line x1="224" y1="0" x2="224" y2="84"/><line x1="256" y1="0" x2="256" y2="84"/><line x1="288" y1="0" x2="288" y2="84"/>
+              <rect x="0.5" y="0.5" width="319" height="83" fill="none"/>
+            </g>
+            <clipPath id="uclip"><rect id="uclipr" x="0" y="0" width="0" height="84"/></clipPath>
+            <path fill="var(--accent)" clip-path="url(#uclip)"
+              d="M0,84 L0,76 C14,74 22,66 34,67 C46,68 52,56 64,52 C76,48 86,44 99,40 C112,36 120,30 132,33 C150,37 160,24 178,22 C192,20 200,26 205,24 L205,84 Z"/>
+            <rect id="uedge" x="-3" y="0" width="1.5" height="84" fill="var(--accent)" opacity="0.55"/>
+          </svg>
+          <div class="meta">
+            <div class="mrow"><span>Speed</span><b>3,53 Mb/s</b></div>
+            <div class="mrow"><span>Estimated time</span><b id="eta">about 6 minutes</b></div>
+            <div class="mrow"><span># of files</span><b>89</b></div>
+          </div>
+        </div>
+      </div>
+
+      <div class="fl" id="fl-modal" style="left:59rem;top:10rem">
+        <div class="card w-modal" id="c-modal">
+          <div class="mhead"><b>Create team</b><span class="mx">✕</span></div>
+          <div class="mbody">
+            <div class="flabel"><span>Title</span></div>
+            <div class="finput"><span class="ph">Label</span></div>
+            <div class="flabel"><span>Description</span><em class="fcnt">0/100</em></div>
+            <div class="finput ta"><span class="ph">Label</span></div>
+            <div class="fhelp">Supporting text to describe more specifics goes here.</div>
+            <div class="flabel"><span>Workspace</span></div>
+            <div class="finput"><span class="wtag"><i>T</i>Teamwork<em>✕</em></span><span class="chev">▼</span></div>
+            <div class="flabel"><span>Who has access <em class="fopt">Optional</em></span></div>
+            <div class="finput"><span class="ph">Label</span><span class="chev">▼</span></div>
+          </div>
+          <div class="mfoot"><span class="fstep">1 of 3</span><span class="spacer"></span>
+            <div class="btn sm ghost">Cancel</div><div class="btn sm primary">Continue</div></div>
+        </div>
+      </div>
+
+      <div class="fl" id="fl-ana" style="left:37rem;top:27.5rem">
+        <div class="card w-ana" id="c-ana">
+          <div class="ahead">
+            <span class="aic"><svg width="9" height="9" viewBox="0 0 9 9" fill="#fff"><rect x="0" y="4" width="2" height="5" rx="0.6"/><rect x="3.5" y="2" width="2" height="7" rx="0.6"/><rect x="7" y="0" width="2" height="9" rx="0.6"/></svg></span>
+            <b>Stacked bar chart</b>
+          </div>
+          <div class="adesc">Bar chart which can display multiple data series, stacked or side by side</div>
+          <div class="astats">
+            <div class="stat"><span class="sic"><svg width="11" height="11" viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="1.2"><circle cx="6" cy="3.6" r="2.1"/><path d="M1.5 10.6c.6-2.2 2.4-3.4 4.5-3.4s3.9 1.2 4.5 3.4"/></svg></span>
+              <div><div class="slbl">People</div><b class="sval" id="stA">0</b></div></div>
+            <div class="stat"><span class="sic"><svg width="11" height="11" viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="1.1"><circle cx="6" cy="6" r="4.7"/><ellipse cx="6" cy="6" rx="2.1" ry="4.7"/><line x1="1.3" y1="6" x2="10.7" y2="6"/></svg></span>
+              <div><div class="slbl">Countries</div><b class="sval" id="stB">0</b></div></div>
+            <div class="stat"><span class="sic"><svg width="11" height="11" viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="1.2"><rect x="1.4" y="2.2" width="9.2" height="8.4" rx="1.4"/><line x1="1.4" y1="5" x2="10.6" y2="5"/><line x1="4" y1="1" x2="4" y2="3.2"/><line x1="8" y1="1" x2="8" y2="3.2"/></svg></span>
+              <div><div class="slbl">Length</div><b class="sval" id="stC">0 days</b></div></div>
+          </div>
+          <div class="aplot">
+            <div class="ay"><span>500</span><span>400</span><span>300</span><span>200</span><span>100</span><span>0</span></div>
+            <div class="abars">
+              <div class="gl" style="bottom:20%"></div><div class="gl" style="bottom:40%"></div>
+              <div class="gl" style="bottom:60%"></div><div class="gl" style="bottom:80%"></div><div class="gl" style="bottom:100%"></div>
+              <div class="bar"><i style="height:20%;background:var(--ch4)"></i><i style="height:3.6%;background:var(--ch3)"></i><i style="height:17.6%;background:var(--ch2)"></i><i style="height:46.4%;background:var(--ch1)"></i></div>
+              <div class="bar"><i style="height:25.6%;background:var(--ch4)"></i><i style="height:2.8%;background:var(--ch3)"></i><i style="height:6%;background:var(--ch2)"></i><i style="height:29.2%;background:var(--ch1)"></i></div>
+              <div class="bar"><i style="height:6%;background:var(--ch4)"></i><i style="height:11.6%;background:var(--ch3)"></i><i style="height:12.4%;background:var(--ch2)"></i><i style="height:20.8%;background:var(--ch1)"></i></div>
+              <div class="bar"><i style="height:2.4%;background:var(--ch4)"></i><i style="height:17.6%;background:var(--ch3)"></i><i style="height:14%;background:var(--ch2)"></i><i style="height:36.8%;background:var(--ch1)"></i></div>
+              <div class="bar"><i style="height:5.2%;background:var(--ch4)"></i><i style="height:4.8%;background:var(--ch3)"></i><i style="height:4%;background:var(--ch2)"></i><i style="height:11.6%;background:var(--ch1)"></i></div>
+            </div>
+          </div>
+          <div class="aleg">
+            <span><i style="background:var(--ch1)"></i>Opened</span>
+            <span><i style="background:var(--ch2)"></i>Received</span>
+            <span><i style="background:var(--ch3)"></i>Clicked</span>
+            <span><i style="background:var(--ch4)"></i>Sent</span>
+          </div>
+          <div class="afoot">
+            <div class="btn xs ghost"><svg width="8" height="6" viewBox="0 0 8 6" fill="none" stroke="currentColor" stroke-width="1.3"><path d="M1 4.5 4 1.5 7 4.5"/></svg></div>
+            <span class="afl">Less details</span><span class="spacer"></span>
+            <div class="btn sm ghost">＋ Export</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="fl" id="fl-list" style="left:59rem;top:27.5rem">
+        <div class="card w-list" id="c-list">
+          <div class="lrow">
+            <div class="llogo">SEVILLE</div>
+            <div><div class="lname">The Seville</div><div class="lmeta">Atlantic City&nbsp;&nbsp;·&nbsp;&nbsp;Buckhead Atlanta</div></div>
+          </div>
+          <div class="lbtns"><div class="btn sm soft">Book now</div><div class="btn sm ghost">View menus</div></div>
+        </div>
+      </div>
+
+      <!-- Claude Code terminal input — huge at open, docks to the bottom -->
+      <div id="cc">
+        <div class="cc-title"><span class="sp">&#10023;</span>&nbsp;<b>Claude Code</b>&nbsp;·&nbsp;wideset-core</div>
+        <div id="gb-wrap">
+          <div id="gb-glow"></div>
+          <div id="gb"></div>
+          <div id="prompt-box">
+            <span class="cc-prompt">&gt;</span>
+            <span class="pb-body"><span id="pb-type"></span><span class="pb-caret"></span></span>
+            <span id="cc-status" aria-hidden="true">
+              <svg class="st-spin" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="9" stroke="currentColor" stroke-width="3" opacity=".22"/><path d="M21 12a9 9 0 0 0-9-9" stroke="currentColor" stroke-width="3" stroke-linecap="round"/></svg>
+              <svg class="st-check" viewBox="0 0 24 24"><circle cx="12" cy="12" r="11" fill="currentColor"/><path d="M6.6 12.3l3.4 3.4L17.4 8.4" fill="none" stroke="#fff" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/></svg>
+            </span>
+          </div>
+        </div>
+        <div class="cc-hint"><span>&#9166; send</span><span>esc clear</span><span class="r">claude-opus-4.8</span></div>
+      </div>
+
+      <!-- camera markers -->
+      <div class="mkr" id="m-start" style="left:48rem;top:24rem"></div>
+      <div class="mkr" id="m-full"  style="left:48rem;top:22.4rem"></div>
+      <div class="mkr" id="m-end"   style="left:48rem;top:41.2rem"></div>
+    </div>
+  </div>
+
+  <div id="sweep"></div>
+  <div id="vig"></div>
+  <div id="loopfade" style="position:absolute;inset:0;background:#EFEFF2;opacity:0;pointer-events:none;z-index:90"></div>
+</div>
+<div id="wm-cursor"><svg width="26" height="30" viewBox="0 0 26 30"><path d="M2 2 L2 24 L8 18 L12 28 L16 26 L12 17 L21 17 Z" fill="#111" stroke="#fff" stroke-width="1.6"/></svg></div>
+
+<script src="wm-timeline.js"></script>
+<script>
+(() => {
+  const REM = parseFloat(document.documentElement.style.fontSize);
+  const W = innerWidth, H = innerHeight, CXp = W/2, CYp = H/2;
+  const DUR = 20000;
+
+  // ---- helpers (all loop-safe: every track is keyframed on absolute t) ----
+  const hx = h => [parseInt(h.slice(1,3),16), parseInt(h.slice(3,5),16), parseInt(h.slice(5,7),16)];
+  const mix = (a,b,p) => { const A=hx(a),B=hx(b);
+    return `rgb(${A.map((v,i)=>Math.round(v+(B[i]-v)*p)).join(',')})`; };
+  const tweenVars = (at,dur,pairs,ease='smooth') =>
+    WM.tween({at,dur,ease,apply(p){ for(const k in pairs){ const [a,b]=pairs[k];
+      document.documentElement.style.setProperty(k, mix(a,b,p)); }}});
+  const varTL = (name, kfs, unit=null) => {
+    WM.tween({at:0, dur:DUR, ease:'linear', apply(p, tc, t){
+      let i=0; while(i<kfs.length-1 && t>kfs[i+1].t) i++;
+      const a=kfs[i], b=kfs[Math.min(i+1,kfs.length-1)];
+      const seg = b.t===a.t ? 1 : Math.max(0,Math.min(1,(t-a.t)/(b.t-a.t)));
+      const e = WM.Easings[b.ease||'smooth'](seg);
+      const val = unit===null ? mix(a.v,b.v,e) : (a.v+(b.v-a.v)*e)+unit;
+      document.documentElement.style.setProperty(name,val);
+    }});
+  };
+  // keyframed number → callback (loop-safe piecewise track)
+  const numTL = (kfs, fn) => WM.tween({at:0,dur:DUR,ease:'linear',apply(p,tc,t){
+    let i=0; while(i<kfs.length-1 && t>kfs[i+1].t) i++;
+    const a=kfs[i], b=kfs[Math.min(i+1,kfs.length-1)];
+    const seg = b.t===a.t ? 1 : Math.max(0,Math.min(1,(t-a.t)/(b.t-a.t)));
+    fn(a.v+(b.v-a.v)*WM.Easings[b.ease||'smooth'](seg), t);
+  }});
+  // keyframed typewriter: text types in from each kf's t; '' clears instantly
+  const textTL = (sel, kfs, cps=32) => {
+    const el=document.querySelector(sel);
+    WM.tween({at:0,dur:DUR,ease:'linear',apply(p,tc,t){
+      let cur=null;
+      for(const k of kfs){ if(t>=k.t) cur=k; else break; }
+      if(!cur){ el.textContent=''; return; }
+      const n=Math.min(cur.text.length, Math.max(0,Math.floor((t-cur.t)/1000*cps)));
+      el.textContent=cur.text.slice(0,n);
+    }});
+  };
+  const gatedStyle = (sel,at,dur,props,ease) => {
+    const el=document.querySelector(sel);
+    WM.tween({at,dur,ease,apply(p,tc,t){ if(t<at||!el) return;
+      for(const k in props){ const v=props[k];
+        el.style[k] = typeof v==='function' ? v(p,(a,b,pp)=>a+(b-a)*pp)
+          : String(v[0]+(v[1]-v[0])*p); }}});
+  };
+  const F = (sel,s) => { const r=document.querySelector(sel).getBoundingClientRect();
+    return { x:(CXp-(r.x+r.width/2))*s, y:(CYp-(r.y+r.height/2))*s, scale:s }; };
+  const rise = (sel,at,dur=750,dy=2.2,sc=0.96) => WM.style(sel,at,dur,{
+    opacity:[0,1],
+    transform:(p,l)=>`translate3d(0,${l(dy,0,p)}rem,0) scale(${l(sc,1,p)})`
+  },'out');
+  // send beat — brief glow flash on the input ring only (no UI/box pulse)
+  const send = (at) => {
+    WM.tween({at,dur:460,ease:'out',apply(p,tc,t){
+      document.getElementById('cc').classList.toggle('sending', t>=at && t<at+380); }});
+  };
+
+  const V={acc:'#5B45E0',soft:'#EDE9FD',c1:'#4838C9',c2:'#DCD2F8',c3:'#9B8AEF'};
+  const C={acc:'#E8590C',soft:'#FDEBDD',c1:'#B54708',c2:'#FBD9BC',c3:'#F98D4D'};
+  const G={acc:'#0F9D8C',soft:'#DDF3EF',c1:'#0B7268',c2:'#C6ECE6',c3:'#4FC3B5'};
+  const LIGHT = {bg:'#EFEFF2',s:'#FFFFFF',s2:'#F3F3F6',t:'#1A1A1E',m:'#75757D',b:'#E6E6EB'};
+  const DARK  = {bg:'#131316',s:'#212126',s2:'#2C2C32',t:'#F3F3F5',m:'#9D9DA7',b:'#3A3A41'};
+
+  // ================= TIMELINE (20 000 ms) =====================
+
+  // camera — open HUGE on the input, zoom out to the builder scene,
+  // dive back into the docked input to close the loop
+  const kStart = F('#m-start',1.9);
+  const kStart2= F('#m-start',1.94);
+  const kFull  = F('#m-full',1.15);
+  const kFull2 = F('#m-full',1.13);
+  const kEnd   = F('#m-end',1.85);
+  const kEnd2  = F('#m-end',1.9);
+  WM.camera([
+    {t:0,     ...kStart},
+    {t:2900,  ...kStart2, ease:'linear'},
+    {t:4400,  ...kFull},
+    {t:18200, ...kFull2, ease:'linear'},
+    {t:19750, ...kEnd},
+    {t:20000, ...kEnd2, ease:'linear'},
+  ]);
+
+  // establish
+  WM.style('#stage',0,500,{opacity:[0,1]},'out');
+  WM.style('#cc',150,650,{opacity:[0,1]},'out');
+  // input vertical journey: settle at centre, then dock to the bottom
+  numTL([{t:0,v:1.4},{t:150,v:1.4},{t:800,v:0,ease:'out'},
+         {t:3050,v:0},{t:4400,v:17.2,ease:'inOut'}],
+    v => { document.getElementById('cc').style.transform =
+      `translate(-50%,-50%) translate3d(0,${v}rem,0)`; });
+
+  // fast-moving gradient ring + glow (runs the whole loop)
+  const gb=document.getElementById('gb'), glow=document.getElementById('gb-glow');
+  WM.tween({at:0,dur:DUR,ease:'linear',apply(p,tc,t){
+    const a=(t*0.26)%360;
+    const g=`conic-gradient(from ${a}deg, #D97757, #5B45E0 30%, #0F9D8C 62%, #F5A623 82%, #D97757)`;
+    gb.style.background=g; glow.style.background=g;
+  }});
+
+  // ---- prompts (typed via keyframed track — clears on send, empty at loop start)
+  textTL('#pb-type',[
+    {t:900,  text:'Restyle the system with a warm coral brand.'},
+    {t:2880, text:''},
+    {t:7600, text:'Now switch the accent to forest green.'},
+    {t:9380, text:''},
+    {t:11300,text:'Round every corner across the whole system.'},
+    {t:13180,text:''},
+    {t:15200,text:'Flip the entire UI to dark mode.'},
+    {t:16780,text:''},
+  ]);
+  send(2700); send(9200); send(13000); send(16600);
+
+  // ---- per-prompt status: spinner in the input's top-right while each
+  //      restyle applies, morphing to a filled check once it lands ----
+  const ccStatus = document.getElementById('cc-status');
+  const stSpin   = ccStatus.querySelector('.st-spin');
+  // [sendT, doneT (change landed), hideT] per prompt
+  const STq = [[2700,6450,7500],[9200,10350,11150],[13000,14050,14850],[16600,17750,19300]];
+  WM.tween({at:0,dur:DUR,ease:'linear',apply(p,tc,t){
+    let on=false, done=false;
+    for(const w of STq){ if(t>=w[0] && t<w[2]){ on=true; done = t>=w[1]; break; } }
+    ccStatus.classList.toggle('on', on);
+    ccStatus.classList.toggle('done', done);
+    stSpin.style.transform = `rotate(${(t*0.66)%360}deg)`;
+  }});
+
+  // ---- components assemble above the docked input (styled for the 1st time)
+  rise('#c-upload',3500); rise('#c-modal',3850); rise('#c-ana',4200); rise('#c-list',4550);
+  WM.count('#pct',4600,900,0,31,n=>String(Math.round(n)));
+  WM.tween({at:4600,dur:1150,ease:'cinematic',apply(p){
+    const w=99*p;
+    uclipr.setAttribute('width',w); ushade.setAttribute('width',w);
+    uedge.setAttribute('x',Math.max(0,w-1.5));
+  }});
+  WM.stagger('#c-ana .bar',4700,70,(el,i,at)=>WM.style(el,at,620,{
+    transform:(p,l)=>`scaleY(${l(0,1,p)})`},'out'));
+  WM.count('#stA',4800,900,0,1684);
+  WM.count('#stB',4900,900,0,18,n=>String(Math.round(n)));
+  WM.count('#stC',5000,900,0,36,n=>Math.round(n)+' days');
+
+  // first styling: violet → warm coral, with a light sweep (prompt 1 lands)
+  WM.style('#sweep',5500,950,{
+    opacity:(p,l)=>String(Math.sin(Math.min(1,p)*Math.PI)*0.5),
+    transform:(p,l)=>`translate3d(${l(-0.55*W,1.35*W,p)}px,0,0) rotate(0.001deg)`},'inOut');
+
+  // brand journeys — every var keyframed once, loop-safe
+  varTL('--accent',      [{t:0,v:V.acc},{t:5600,v:V.acc},{t:6300,v:C.acc},{t:9600,v:C.acc},{t:10250,v:G.acc}]);
+  varTL('--accent-soft', [{t:0,v:V.soft},{t:5600,v:V.soft},{t:6300,v:C.soft},{t:9600,v:C.soft},{t:10250,v:G.soft}]);
+  varTL('--ch1',         [{t:0,v:V.c1},{t:5600,v:V.c1},{t:6300,v:C.c1},{t:9600,v:C.c1},{t:10250,v:G.c1}]);
+  varTL('--ch2',         [{t:0,v:V.c2},{t:5600,v:V.c2},{t:6300,v:C.c2},{t:9600,v:C.c2},{t:10250,v:G.c2}]);
+  varTL('--ch3',         [{t:0,v:V.c3},{t:5600,v:V.c3},{t:6300,v:C.c3},{t:9600,v:C.c3},{t:10250,v:G.c3}]);
+
+  // radius: soft → round (prompt 3)
+  varTL('--r',[{t:0,v:0.7},{t:13300,v:0.7},{t:13950,v:1.05}],'rem');
+
+  // dark mode (prompt 4)
+  tweenVars(16900,750,{
+    '--bg':[LIGHT.bg,DARK.bg], '--surface':[LIGHT.s,DARK.s], '--surface2':[LIGHT.s2,DARK.s2],
+    '--text':[LIGHT.t,DARK.t], '--muted':[LIGHT.m,DARK.m], '--border':[LIGHT.b,DARK.b]});
+  WM.style('#spot',16900,750,{opacity:[1,0.07]},'smooth');
+  gatedStyle('#sweep',16850,950,{
+    opacity:(p)=>String(Math.sin(Math.min(1,p)*Math.PI)*0.5),
+    transform:(p,l)=>`translate3d(${l(-0.55*W,1.35*W,p)}px,0,0) rotate(0.001deg)`},'inOut');
+
+  // Cards stay in their home slots and restyle in place — the only per-prompt
+  // feedback is the input's spinner → filled-check status (see STq above).
+
+  // loop fade — bridge the dark ending back to the light opening
+  WM.tween({at:19350,dur:600,ease:'smooth',apply(p){
+    document.getElementById('loopfade').style.opacity=String(p); }});
+
+  WM.duration = DUR;
+  WM.seek(0);
+  if (!navigator.webdriver) WM.play(true);
+})();
+</script>
+</body></html>
