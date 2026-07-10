@@ -1,11 +1,13 @@
 <!doctype html>
-<!-- wide-motion · Scenario B · "Prompt-driven builder" · 20s · V3 (status)
-     Opens on a huge Claude Code prompt with a fast-spinning gradient border.
+<!-- wide-motion · Scenario B · "Prompt-driven builder" · 17.5s · V3 (status)
+     Opens on a huge Claude Code prompt with a warm corner-flare ring.
      Prompt is typed → camera zooms out, input docks to the bottom, components
      assemble above and get styled. Cards restyle IN PLACE (no shuffle, no UI
      pulse). Each prompt shows a loading spinner in the input's top-right
-     corner that morphs into a filled checkmark once the restyle lands.
-     Fully deterministic, loop-safe (all state keyframed on t). -->
+     corner that morphs into a filled grey checkmark once the restyle lands.
+     3 prompts: coral brand → forest green → dark mode. TRUE loop — no fade:
+     the end-dive into the dark docked input hard-cuts to the light opening
+     frame (same input, same scale). Deterministic, keyframed on t. -->
 <html><head><meta charset="utf-8"><title>Wideset · Prompt-driven builder · status</title>
 <script>document.documentElement.style.fontSize = Math.min(innerWidth/96, innerHeight/54) + 'px';</script>
 <style>
@@ -296,7 +298,6 @@
 
   <div id="sweep"></div>
   <div id="vig"></div>
-  <div id="loopfade" style="position:absolute;inset:0;background:#EFEFF2;opacity:0;pointer-events:none;z-index:90"></div>
 </div>
 <div id="wm-cursor"><svg width="26" height="30" viewBox="0 0 26 30"><path d="M2 2 L2 24 L8 18 L12 28 L16 26 L12 17 L21 17 Z" fill="#111" stroke="#fff" stroke-width="1.6"/></svg></div>
 
@@ -305,7 +306,7 @@
 (() => {
   const REM = parseFloat(document.documentElement.style.fontSize);
   const W = innerWidth, H = innerHeight, CXp = W/2, CYp = H/2;
-  const DUR = 20000;
+  const DUR = 17500;
 
   // ---- helpers (all loop-safe: every track is keyframed on absolute t) ----
   const hx = h => [parseInt(h.slice(1,3),16), parseInt(h.slice(3,5),16), parseInt(h.slice(5,7),16)];
@@ -398,14 +399,13 @@
     {t:0,     ...kStart},
     {t:2900,  ...kStart2, ease:'linear'},
     {t:4400,  ...kFull},
-    {t:18200, ...kFull2, ease:'linear'},
-    {t:19750, ...kEnd},
-    {t:20000, ...kEnd2, ease:'linear'},
+    {t:15800, ...kFull2, ease:'linear'},
+    {t:17250, ...kEnd},
+    {t:17500, ...kEnd2, ease:'linear'},
   ]);
 
   // establish
-  WM.style('#stage',0,500,{opacity:[0,1]},'out');
-  WM.style('#cc',150,650,{opacity:[0,1]},'out');
+  // no entrance fades — the loop hard-cuts straight onto this frame
   // input vertical journey: settle at centre, then dock to the bottom
   numTL([{t:0,v:1.4},{t:150,v:1.4},{t:800,v:0,ease:'out'},
          {t:3050,v:0},{t:4400,v:18.6,ease:'inOut'}],
@@ -416,7 +416,7 @@
   // settling to the quiet grey border once the restyle lands (video ref)
   const gbOr=document.getElementById('gb-orange'), glow=document.getElementById('gb-glow');
   // [typing starts, restyle landed] per prompt — orange inside, grey outside
-  const ORANGE=[[0,6450],[7600,10350],[11300,14050],[15200,17750]];
+  const ORANGE=[[0,6450],[7600,10350],[11300,14050]];
   const orangeAmt = t => {
     let o=0;
     for(const [a,b] of ORANGE){
@@ -444,19 +444,17 @@
     {t:2880, text:''},
     {t:7600, text:'Now switch the accent to forest green.'},
     {t:9380, text:''},
-    {t:11300,text:'Round every corner across the whole system.'},
-    {t:13180,text:''},
-    {t:15200,text:'Flip the entire UI to dark mode.'},
-    {t:16780,text:''},
+    {t:11300,text:'Flip the entire UI to dark mode.'},
+    {t:13080,text:''},
   ]);
-  send(2700); send(9200); send(13000); send(16600);
+  send(2700); send(9200); send(12900);
 
   // ---- per-prompt status: spinner in the input's top-right while each
   //      restyle applies, morphing to a filled check once it lands ----
   const ccStatus = document.getElementById('cc-status');
   const stSpin   = ccStatus.querySelector('.st-spin');
   // [sendT, doneT (change landed), hideT] per prompt
-  const STq = [[2700,6450,7500],[9200,10350,11150],[13000,14050,14850],[16600,17750,19300]];
+  const STq = [[2700,6450,7500],[9200,10350,11150],[12900,14050,16900]];
   WM.tween({at:0,dur:DUR,ease:'linear',apply(p,tc,t){
     let on=false, done=false;
     for(const w of STq){ if(t>=w[0] && t<w[2]){ on=true; done = t>=w[1]; break; } }
@@ -491,24 +489,20 @@
   varTL('--ch2',         [{t:0,v:V.c2},{t:5600,v:V.c2},{t:6300,v:C.c2},{t:9600,v:C.c2},{t:10250,v:G.c2}]);
   varTL('--ch3',         [{t:0,v:V.c3},{t:5600,v:V.c3},{t:6300,v:C.c3},{t:9600,v:C.c3},{t:10250,v:G.c3}]);
 
-  // radius: soft → round (prompt 3)
-  varTL('--r',[{t:0,v:0.7},{t:13300,v:0.7},{t:13950,v:1.05}],'rem');
-
-  // dark mode (prompt 4)
-  tweenVars(16900,750,{
+  // dark mode (prompt 3) — the loop ends dark and hard-cuts back to light
+  tweenVars(13200,750,{
     '--bg':[LIGHT.bg,DARK.bg], '--surface':[LIGHT.s,DARK.s], '--surface2':[LIGHT.s2,DARK.s2],
     '--text':[LIGHT.t,DARK.t], '--muted':[LIGHT.m,DARK.m], '--border':[LIGHT.b,DARK.b]});
-  WM.style('#spot',16900,750,{opacity:[1,0.07]},'smooth');
-  gatedStyle('#sweep',16850,950,{
+  WM.style('#spot',13200,750,{opacity:[1,0.07]},'smooth');
+  gatedStyle('#sweep',13150,950,{
     opacity:(p)=>String(Math.sin(Math.min(1,p)*Math.PI)*0.5),
     transform:(p,l)=>`translate3d(${l(-0.55*W,1.35*W,p)}px,0,0) rotate(0.001deg)`},'inOut');
 
   // Cards stay in their home slots and restyle in place — the only per-prompt
   // feedback is the input's spinner → filled-check status (see STq above).
 
-  // loop fade — bridge the dark ending back to the light opening
-  WM.tween({at:19350,dur:600,ease:'smooth',apply(p){
-    document.getElementById('loopfade').style.opacity=String(p); }});
+  // TRUE loop — no fade overlay: the end-dive into the dark docked input
+  // hard-cuts to the light opening frame (same input, same 1.9 scale).
 
   WM.duration = DUR;
   WM.seek(0);
