@@ -101,7 +101,7 @@
   .afoot{display:flex;align-items:center;gap:.45rem;border-top:1px solid var(--border);padding-top:.7rem}
   .afl{font-size:.6rem;font-weight:600}
 
-  .w-list{width:17rem;padding:.85rem .9rem}
+  .w-list{width:19.5rem;padding:.85rem .9rem}  /* same width as the modal above it */
   .lrow{display:flex;gap:.6rem;align-items:center}
   .llogo{width:2.3rem;height:2.3rem;border:1px solid var(--border);flex:none;
     border-radius:calc(var(--r)*.5);display:grid;place-items:center;
@@ -120,9 +120,14 @@
   .cc-title b{color:var(--text);font-weight:600}
   .cc-title .sp{color:#D97757}
   #gb-wrap{position:relative;border-radius:.95rem}
-  #gb{position:absolute;inset:-2px;border-radius:.95rem;z-index:0}
-  #gb-glow{position:absolute;inset:-9px;border-radius:1.2rem;filter:blur(18px);
-    opacity:.45;z-index:-1}
+  /* quiet grey border ring — the resting state */
+  #gb{position:absolute;inset:-1.5px;border-radius:.95rem;z-index:0;background:#3F3F46}
+  /* orange corner-flare ring — crossfaded in while a prompt is working */
+  #gb-orange{position:absolute;inset:-1.5px;border-radius:.95rem;z-index:0;opacity:0;
+    will-change:opacity}
+  /* soft outer flare hugging the hot corner (video reference) */
+  #gb-glow{position:absolute;inset:-16px;border-radius:1.4rem;filter:blur(20px);
+    opacity:0;z-index:-1;will-change:opacity}
   #prompt-box{position:relative;z-index:1;display:flex;align-items:flex-start;gap:.55rem;
     background:linear-gradient(180deg,#202024,#161619);border:none;border-radius:.82rem;
     padding:.95rem 1.1rem;
@@ -137,15 +142,15 @@
   .cc-hint{display:flex;gap:1.1rem;margin:.55rem .2rem 0;font-size:.58rem;color:var(--muted)}
   .cc-hint .r{margin-left:auto;color:var(--muted)}
   @keyframes cursor-blink{50%{opacity:0}}
-  #cc.sending #gb-glow{opacity:.9}
 
-  /* per-prompt status chip in the input's top-right: spinner → filled check */
-  #cc-status{position:absolute;top:.85rem;right:1rem;width:1.15rem;height:1.15rem;z-index:2;
+  /* per-prompt status chip, vertically centred in the input: spinner → filled check */
+  #cc-status{position:absolute;top:50%;right:1.05rem;width:1.15rem;height:1.15rem;
+    margin-top:-.575rem;z-index:2;
     opacity:0;transform:scale(.7);transition:opacity .28s ease, transform .28s ease}
   #cc-status.on{opacity:1;transform:scale(1)}
   #cc-status svg{position:absolute;inset:0;width:100%;height:100%}
   #cc-status .st-spin{color:#D97757;opacity:1;transition:opacity .2s ease}
-  #cc-status .st-check{color:#3FA66B;opacity:0;transform:scale(.55);
+  #cc-status .st-check{color:#8A8A93;opacity:0;transform:scale(.55);
     transition:opacity .22s ease, transform .3s cubic-bezier(.2,1.35,.4,1)}
   #cc-status.done .st-spin{opacity:0}
   #cc-status.done .st-check{opacity:1;transform:scale(1)}
@@ -269,6 +274,7 @@
         <div id="gb-wrap">
           <div id="gb-glow"></div>
           <div id="gb"></div>
+          <div id="gb-orange"></div>
           <div id="prompt-box">
             <span class="cc-prompt">&gt;</span>
             <span class="pb-body"><span id="pb-type"></span><span class="pb-caret"></span></span>
@@ -284,7 +290,7 @@
       <!-- camera markers -->
       <div class="mkr" id="m-start" style="left:48rem;top:24rem"></div>
       <div class="mkr" id="m-full"  style="left:48rem;top:22.4rem"></div>
-      <div class="mkr" id="m-end"   style="left:48rem;top:41.2rem"></div>
+      <div class="mkr" id="m-end"   style="left:48rem;top:42.6rem"></div>
     </div>
   </div>
 
@@ -361,6 +367,23 @@
   const LIGHT = {bg:'#EFEFF2',s:'#FFFFFF',s2:'#F3F3F6',t:'#1A1A1E',m:'#75757D',b:'#E6E6EB'};
   const DARK  = {bg:'#131316',s:'#212126',s2:'#2C2C32',t:'#F3F3F5',m:'#9D9DA7',b:'#3A3A41'};
 
+  // ---- tidy grid: two columns, aligned tops, equal gutters everywhere ----
+  // (measured from the rendered cards so the gaps stay equal if content changes)
+  (function layoutGrid(){
+    const GX=2.4, GY=2.2, TOP=1.8, CX=48;
+    const wOf=s=>document.querySelector(s).offsetWidth/REM;
+    const cols=[['#fl-upload','#fl-ana'],['#fl-modal','#fl-list']];
+    const cw=[Math.max(wOf('#c-upload'),wOf('#c-ana')),
+              Math.max(wOf('#c-modal'),wOf('#c-list'))];
+    const total=cw[0]+GX+cw[1];
+    const cx=[CX-total/2+cw[0]/2, CX+total/2-cw[1]/2];
+    cols.forEach((col,i)=>{ let y=TOP;
+      col.forEach(sel=>{ const el=document.querySelector(sel);
+        const h=el.offsetHeight/REM;
+        el.style.left=cx[i]+'rem'; el.style.top=(y+h/2)+'rem'; y+=h+GY; });
+    });
+  })();
+
   // ================= TIMELINE (20 000 ms) =====================
 
   // camera — open HUGE on the input, zoom out to the builder scene,
@@ -385,16 +408,34 @@
   WM.style('#cc',150,650,{opacity:[0,1]},'out');
   // input vertical journey: settle at centre, then dock to the bottom
   numTL([{t:0,v:1.4},{t:150,v:1.4},{t:800,v:0,ease:'out'},
-         {t:3050,v:0},{t:4400,v:17.2,ease:'inOut'}],
+         {t:3050,v:0},{t:4400,v:18.6,ease:'inOut'}],
     v => { document.getElementById('cc').style.transform =
       `translate(-50%,-50%) translate3d(0,${v}rem,0)`; });
 
-  // fast-moving gradient ring + glow (runs the whole loop)
-  const gb=document.getElementById('gb'), glow=document.getElementById('gb-glow');
+  // ring state: a warm orange corner-flare while a prompt is working,
+  // settling to the quiet grey border once the restyle lands (video ref)
+  const gbOr=document.getElementById('gb-orange'), glow=document.getElementById('gb-glow');
+  // [typing starts, restyle landed] per prompt — orange inside, grey outside
+  const ORANGE=[[0,6450],[7600,10350],[11300,14050],[15200,17750]];
+  const orangeAmt = t => {
+    let o=0;
+    for(const [a,b] of ORANGE){
+      if(t<a || t>b+560) continue;
+      const rise=Math.min(1,(t-a)/420);
+      const fall=t<=b?1:1-Math.min(1,(t-b)/560);
+      o=Math.max(o,Math.min(rise,fall));
+    }
+    return o;
+  };
   WM.tween({at:0,dur:DUR,ease:'linear',apply(p,tc,t){
-    const a=(t*0.26)%360;
-    const g=`conic-gradient(from ${a}deg, #D97757, #5B45E0 30%, #0F9D8C 62%, #F5A623 82%, #D97757)`;
-    gb.style.background=g; glow.style.background=g;
+    const o=orangeAmt(t);
+    // the hot spot breathes along the top edge — deterministic, loop-safe
+    const fx=9+5*Math.sin(t*0.0011)+3*Math.sin(t*0.0004);
+    const heat=.82+.18*Math.sin(t*0.0021);
+    gbOr.style.background=`radial-gradient(42% 170% at ${fx}% 0%, #FFC24D, #EF8A3B 32%, #3F3F46 72%)`;
+    glow.style.background=`radial-gradient(30% 58% at ${fx}% 4%, rgba(255,178,61,${(.9*heat).toFixed(3)}), rgba(232,89,12,.32) 46%, transparent 72%)`;
+    gbOr.style.opacity=String(o);
+    glow.style.opacity=String(.8*o);
   }});
 
   // ---- prompts (typed via keyframed track — clears on send, empty at loop start)
