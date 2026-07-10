@@ -4,41 +4,44 @@
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1" />
 <title>Widelab — Motion</title>
-<link rel="preload" href="fonts/SequelSans-RomanDisp.ttf" as="font" type="font/ttf" crossorigin />
-<link rel="preload" href="fonts/SequelSans-RomanHead.ttf" as="font" type="font/ttf" crossorigin />
+<link rel="preload" href="fonts/SequelSans-RomanDisp.woff2" as="font" type="font/woff2" crossorigin />
+<link rel="preload" href="fonts/SequelSans-MediumDisp.woff2" as="font" type="font/woff2" crossorigin />
 <style>
+  /* EXACT widelab.co webfonts — Sequel Sans Disp, Roman 400 + Medium 500 */
   @font-face{
-    font-family:"Sequel Sans";
-    src:local("Sequel Sans Roman Disp"), local("SequelSans-RomanDisp"),
-        url("fonts/SequelSans-RomanDisp.ttf") format("truetype");
+    font-family:"Sequel Sans Disp";
+    src:url("fonts/SequelSans-RomanDisp.woff2") format("woff2");
     font-weight:400; font-style:normal; font-display:swap;
   }
   @font-face{
-    font-family:"Sequel Sans Head";
-    src:local("Sequel Sans Roman Head"), local("SequelSans-RomanHead"),
-        url("fonts/SequelSans-RomanHead.ttf") format("truetype");
-    font-weight:400; font-style:normal; font-display:swap;
+    font-family:"Sequel Sans Disp";
+    src:url("fonts/SequelSans-MediumDisp.woff2") format("woff2");
+    font-weight:500; font-style:normal; font-display:swap;
   }
   :root{
-    /* light mode — grey stage */
-    --bg:#e8e8e8; --ink:#151515; --sec:#767676; --line:#e6e6e6; --line2:#dcdcdc;
-    --card:#ffffff; --card-h:#ffffff; --chip:#dedede; --chip-h:#d5d5d5; --purple:#4734f7;
-    --font-disp:"Sequel Sans","Helvetica Neue","Arial",sans-serif;
-    --font-head:"Sequel Sans Head","Sequel Sans","Helvetica Neue","Arial",sans-serif;
+    /* Decks tile system, flipped to LIGHT — white stage, dark ink */
+    --bg:#ffffff; --ink:#0f0f0f; --sec:#767676; --line:#ececec; --line2:#e2e2e2;
+    --chip:#f1f1f1; --chip-h:#e7e7e7; --purple:#4734f7; --purple-h:#5b4bff;
+    --font-disp:"Sequel Sans Disp","Helvetica Neue","Arial",sans-serif;
+    --font-head:"Sequel Sans Disp","Helvetica Neue","Arial",sans-serif;
   }
   *{box-sizing:border-box;margin:0;padding:0}
   html{-webkit-font-smoothing:antialiased;-moz-osx-font-smoothing:grayscale}
+  /* widelab.co base: 1rem / 1.2 */
   body{background:var(--bg); color:var(--ink); font-family:var(--font-disp);
+    font-size:1rem; line-height:1.2;
     min-height:100vh; display:flex; flex-direction:column}
   a{color:inherit;text-decoration:none}
+  ::selection{background:var(--purple); color:#fff}
+  a:focus-visible{outline:2px solid var(--purple); outline-offset:3px; border-radius:2px}
 
-  /* ───── top nav ───── */
+  /* ───── top nav (light) ───── */
   .nav{position:sticky; top:0; z-index:50; display:grid; grid-template-columns:1fr auto 1fr;
     align-items:center; gap:24px; padding:22px clamp(24px,4vw,54px);
-    background:rgba(232,232,232,.82); backdrop-filter:blur(12px); -webkit-backdrop-filter:blur(12px);
+    background:rgba(255,255,255,.82); backdrop-filter:blur(12px); -webkit-backdrop-filter:blur(12px);
     border-bottom:1px solid transparent; transition:border-color .3s}
   .nav.is-stuck{border-color:var(--line)}
-  .nav-links{display:flex; align-items:center; gap:32px; font-size:16px}
+  .nav-links{display:flex; align-items:center; gap:32px; font-size:1rem; line-height:1.2}
   .nav-links a{color:var(--ink); opacity:.9; transition:opacity .2s}
   .nav-links a:hover{opacity:.5}
   .nav-links a.is-current{text-decoration:underline; text-underline-offset:4px; text-decoration-thickness:1px}
@@ -46,37 +49,47 @@
   .nav-links a.soon:hover{opacity:.4}
   .nav-brand{justify-self:center; position:relative; display:block; height:25px; aspect-ratio:5.42}
   .nav-brand .wm{position:absolute}
+  /* wordmark SVGs are ink-fill (#151515) — no invert needed on the light stage */
   .nav-brand .wm img{width:100%; height:100%; display:block}
 
   /* ───── shell ───── */
-  .wrap{width:100%; max-width:1360px; margin:0 auto; padding:0 clamp(24px,4vw,54px) 96px; flex:1 0 auto}
+  .wrap{width:100%; max-width:1360px; margin:0 auto; padding:0 clamp(24px,4vw,54px) 64px; flex:1 0 auto}
 
-  /* ───── hero ───── */
-  .hero{padding:clamp(32px,5vw,64px) 0 clamp(26px,4vw,44px)}
-  .hero h1{font-family:var(--font-head); font-weight:400; line-height:1.0;
-    font-size:clamp(38px,5.2vw,72px); letter-spacing:-.025em}
-  .hero h1 .dim{color:#b3b3b3}
-  .hero p{margin-top:26px; max-width:620px; font-size:clamp(16px,1.5vw,19px);
-    line-height:1.5; color:var(--sec)}
+  /* ───── hero — EXACT widelab.co services hero scale ───── */
+  .hero{padding:clamp(32px,5vw,72px) 0 clamp(26px,4vw,48px)}
+  /* h2.hero_headline: 5rem / lh 1 / ls -.05rem; ≤991px: 3.75rem/-.037rem; ≤767px: 3rem/-.03rem */
+  .hero h1{font-family:var(--font-head); font-weight:400; margin:0;
+    font-size:5rem; line-height:1; letter-spacing:-.05rem; max-width:74rem}
+  .hero h1 .dim{color:#b6b6b6}
+  /* widelab.co p: 1.5rem / 1.333 / +.03rem; ≤767px: 1.125rem / +.022rem */
+  .hero p{margin-top:28px; max-width:620px; font-size:1.5rem;
+    line-height:1.333; letter-spacing:.03rem; color:var(--sec)}
+  @media (max-width:991px){ .hero h1{font-size:3.75rem; letter-spacing:-.037rem} }
+  @media (max-width:767px){
+    .hero h1{font-size:3rem; letter-spacing:-.03rem}
+    .hero p{font-size:1.125rem; letter-spacing:.022rem}
+  }
 
-  /* ───── toolbar / filters ───── */
+  /* ───── toolbar / filters — Decks pattern, flipped to light ───── */
   .toolbar{display:flex; align-items:center; justify-content:space-between; gap:20px;
-    flex-wrap:wrap; margin:0 0 32px}
+    flex-wrap:wrap; margin:0 0 40px;
+    /* own stacking context ABOVE the grid so open dropdowns never hide behind tiles */
+    position:relative; z-index:40}
   .toolbar-left{display:flex; align-items:center; gap:16px}
-  .toolbar .count-total{font-size:14px; color:var(--sec)}
-  .clear{display:none; font-family:var(--font-disp); font-size:13px; color:#555; cursor:pointer;
-    background:none; border:none; border-bottom:1px solid #bbb; padding:0 0 2px; transition:color .2s, border-color .2s}
-  .clear:hover{color:#151515; border-color:#151515}
+  .toolbar .count-total{font-size:.875rem; line-height:1.2; color:var(--sec)}
+  .clear{display:none; font-family:var(--font-disp); font-size:13px; color:#7a7a7a; cursor:pointer;
+    background:none; border:none; border-bottom:1px solid #cfcfcf; padding:0 0 2px; transition:color .2s, border-color .2s}
+  .clear:hover{color:var(--ink); border-color:var(--ink)}
   .clear.show{display:inline-block}
   .filterbar{display:flex; align-items:center; gap:10px; flex-wrap:wrap}
   .fgroup{position:relative}
-  .pill{font-family:var(--font-disp); font-size:14.5px; color:var(--ink); cursor:pointer;
+  .pill{font-family:var(--font-disp); font-size:.9375rem; line-height:1.2; color:var(--ink); cursor:pointer;
     background:var(--chip); border:1px solid transparent; border-radius:999px;
     padding:10px 18px; display:inline-flex; align-items:center; gap:8px;
     transition:background .2s, color .2s}
   .pill:hover{background:var(--chip-h)}
   .pill .chev{width:0;height:0;border-left:4px solid transparent;border-right:4px solid transparent;
-    border-top:5px solid #9a9a9a; transition:transform .2s}
+    border-top:5px solid #8c8c8c; transition:transform .2s}
   .fgroup.open .pill,.pill.is-active{background:#151515; color:#fff}
   .fgroup.open .pill .chev,.pill.is-active .chev{border-top-color:#fff}
   .fgroup.open .pill .chev{transform:rotate(180deg)}
@@ -84,71 +97,78 @@
     min-width:18px; height:18px; padding:0 5px; display:inline-grid; place-items:center}
   .pill:not(.is-active) .badge{display:none}
   .funnel{width:44px; height:44px; border-radius:999px; background:var(--chip); border:none; cursor:pointer;
-    color:#555; display:grid; place-items:center; transition:background .2s}
+    color:#5c5c5c; display:grid; place-items:center; transition:background .2s}
   .funnel:hover{background:var(--chip-h)}
   .funnel svg{width:17px;height:17px}
 
-  .dropdown{position:absolute; top:calc(100% + 10px); right:0; z-index:40; min-width:266px;
-    background:#ffffff; border:1px solid var(--line2); border-radius:18px; padding:8px;
-    box-shadow:0 30px 64px -22px rgba(0,0,0,.22); display:none}
+  .dropdown{position:absolute; top:calc(100% + 10px); right:0; z-index:60; min-width:236px;
+    background:#fff; border:1px solid var(--line2); border-radius:18px; padding:8px;
+    box-shadow:0 30px 64px -26px rgba(20,20,45,.35); display:none}
   .fgroup.open .dropdown{display:block; animation:pop .16s ease}
   @keyframes pop{from{opacity:0; transform:translateY(-4px)} to{opacity:1; transform:none}}
   .opt{display:flex; align-items:center; gap:12px; padding:11px 12px; border-radius:11px; cursor:pointer;
-    font-size:15.5px; transition:background .15s}
-  .opt:hover{background:#f2f2f2}
+    font-size:.9375rem; line-height:1.2; transition:background .15s}
+  .opt:hover{background:#f5f5f5}
   .opt input{appearance:none; -webkit-appearance:none; width:19px; height:19px; flex:none;
-    border:1.6px solid #c9c9c9; border-radius:5px; cursor:pointer; position:relative; transition:.15s}
+    border:1.6px solid #d9d9d9; border-radius:5px; cursor:pointer; position:relative; transition:.15s}
   .opt input:checked{background:var(--purple); border-color:var(--purple)}
   .opt input:checked::after{content:""; position:absolute; left:6px; top:2.5px; width:5px; height:9px;
     border:solid #fff; border-width:0 2px 2px 0; transform:rotate(42deg)}
   .opt .txt{flex:1}
-  .opt .n{color:#a0a0a0; font-size:14px}
+  .opt .n{color:#a3a3a3; font-size:14px}
   .opt.is-zero{opacity:.4}
 
-  /* ───── grid + tiles (light bento) ───── */
-  .grid{display:grid; grid-template-columns:repeat(auto-fill,minmax(340px,1fr)); gap:26px}
-  .empty{grid-column:1/-1; padding:80px 0; text-align:center; color:var(--sec); font-size:16px}
+  /* ───── grid + tiles — Decks case-study layout, light ─────
+     flat tiles, no box: cover + content stacked, sharp corners, hairline frame */
+  .grid{display:grid; grid-template-columns:repeat(3,1fr); column-gap:1.5rem; row-gap:3.5rem}
+  .empty{grid-column:1/-1; padding:80px 0; text-align:center; color:var(--sec); font-size:1rem}
 
-  .tile{position:relative; border-radius:16px; background:var(--card);
-    overflow:hidden; display:flex; flex-direction:column; padding:12px;
+  .tile{position:relative; border:none; border-radius:0; background:transparent;
+    display:flex; flex-direction:column; row-gap:1.25rem;
     opacity:0; transform:translateY(14px);
-    animation:rise .6s cubic-bezier(.2,.7,.2,1) forwards; animation-delay:var(--d,.2s);
-    transition:transform .3s, background .3s}
-  .tile:hover{transform:translateY(-4px); background:#fafafa}
+    animation:rise .6s cubic-bezier(.2,.7,.2,1) forwards; animation-delay:var(--d,.2s)}
 
-  .thumb{position:relative; aspect-ratio:16/9; overflow:hidden; background:#eeeeee; border-radius:16px}
-  /* render the promo at full 16:9 then scale the whole iframe down to fit the
-     thumb (via JS) — shows the entire page as a thumbnail, never a zoomed crop */
+  /* full-bleed cover — hairline frame, sharp corners (widelab.co).
+     each scene renders at 1280×720 and the whole iframe is scaled to the thumb (JS) */
+  .thumb{position:relative; aspect-ratio:16/9; overflow:hidden; width:100%; display:block;
+    border:1px solid var(--line); border-radius:0; background:#f2f1ee; transition:border-color .3s}
+  .tile:hover .thumb{border-color:#d8d8d8}
   .thumb .cover{position:absolute; top:0; left:0; width:1280px; height:720px; border:0;
-    transform-origin:0 0; pointer-events:none; background:#eeeeee; z-index:1}
-  .thumb .ttl{position:absolute; left:24px; bottom:22px; right:24px;
-    font-family:var(--font-head); font-weight:400; font-size:26px; line-height:1.04; letter-spacing:-.01em; color:#151515}
-  .thumb .ttl em{font-style:normal; color:#9a9a9a}
+    transform-origin:0 0; pointer-events:none; background:#f2f1ee; z-index:1}
 
-  .chips{position:absolute; top:22px; right:22px; z-index:3; display:flex; gap:8px; align-items:center}
-  .tagchip{font-family:var(--font-disp); font-size:10.5px; letter-spacing:.12em; text-transform:uppercase;
-    padding:6px 10px; border-radius:999px; line-height:1; display:inline-flex; align-items:center; gap:6px;
-    background:rgba(15,15,15,.72); color:#f4f4f4; border:1px solid rgba(255,255,255,.26);
-    backdrop-filter:blur(8px); -webkit-backdrop-filter:blur(8px)}
-  .tagchip--story{background:rgba(71,52,247,.68); color:#fff; border-color:rgba(163,150,255,.7)}
-  .tagchip--live{background:rgba(255,255,255,.82); color:#151515; border-color:rgba(0,0,0,.10)}
+  /* labels — widelab.co category-badge: radius 1rem, .5rem .7rem, .7rem text.
+     story = purple · showcase/prototype = white · live = white + green dot */
+  .chips{position:absolute; top:1.1rem; right:1.1rem; z-index:3; display:flex; gap:8px; align-items:center}
+  .tagchip{font-family:var(--font-disp); font-size:.7rem; letter-spacing:.05em; text-transform:uppercase;
+    padding:.5rem .7rem; border-radius:1rem; line-height:1; display:inline-flex; align-items:center; gap:7px;
+    backdrop-filter:blur(10px); -webkit-backdrop-filter:blur(10px)}
+  .tagchip--story{background:rgba(71,52,247,.82); color:#fff}
+  .tagchip--kind{background:rgba(255,255,255,.9); color:#151515; border:1px solid rgba(0,0,0,.08)}
+  .tagchip--live{background:rgba(255,255,255,.9); color:#151515; border:1px solid rgba(0,0,0,.08)}
   .tagchip--live .dot{width:7px;height:7px;border-radius:50%;background:#19c37d;
     box-shadow:0 0 0 0 rgba(25,195,125,.6); animation:pulse 1.8s infinite}
   @keyframes pulse{0%{box-shadow:0 0 0 0 rgba(25,195,125,.55)}70%{box-shadow:0 0 0 7px rgba(25,195,125,0)}100%{box-shadow:0 0 0 0 rgba(25,195,125,0)}}
 
-  .meta{padding:24px 2px 6px; display:flex; flex-direction:column; gap:14px; flex:1}
-  .meta .row{display:flex; align-items:baseline; justify-content:space-between; gap:12px}
-  .meta h2{font-size:19px; font-weight:400; letter-spacing:-.01em}
-  .meta .count{font-size:12.5px; color:var(--sec); white-space:nowrap}
-  .meta .desc{font-size:13.5px; line-height:1.55; color:#6f6f6f; margin-top:-2px}
-  .versions{display:flex; flex-wrap:wrap; gap:10px; margin-top:auto; align-items:center}
-  .ver{display:inline-flex; align-items:center; gap:8px; padding:9px 15px;
-    border:1px solid var(--line2); border-radius:999px; font-size:13.5px; color:#2a2a2a; background:#fafafa;
-    transition:background .25s, border-color .25s, color .25s}
-  .ver .glyph{font-size:11px; color:var(--sec); transition:transform .25s, color .25s}
-  .ver:hover{background:var(--purple); border-color:var(--purple); color:#fff}
-  .ver:hover .glyph{transform:translateX(3px); color:#fff}
-  .stackchip{font-size:11px; letter-spacing:.04em; color:#8a8a8a; padding:7px 0}
+  /* content flush with the cover edge */
+  .meta{padding:0; display:flex; flex-direction:column; gap:.85rem; flex:1}
+  .meta .row{display:flex; align-items:baseline; justify-content:space-between; gap:14px}
+  /* .is-h4: 2rem / 1.188 / -.02rem, weight 500, text-wrap balance */
+  .meta h2{font-family:var(--font-head); font-size:2rem; font-weight:500; line-height:1.188;
+    letter-spacing:-.02rem; text-wrap:balance; color:var(--ink)}
+  .meta h2 em{font-style:normal; font-weight:400; color:#b0b0b0}
+  .meta .count{font-size:1.125rem; line-height:1.333; letter-spacing:.022rem; color:var(--sec); white-space:nowrap}
+  /* .is-p-l: 1.125rem / 1.333 / +.022rem */
+  .meta .desc{font-size:1.125rem; line-height:1.333; letter-spacing:.022rem; color:#8f8f8f}
+  /* links — deck underlined rows, with a muted stack label */
+  .versions{display:flex; flex-wrap:wrap; align-items:baseline; gap:.5rem 1.1rem; margin-top:auto}
+  .ver{display:inline-flex; align-items:center; gap:8px; padding:0; border:none; background:none;
+    font-size:1.125rem; line-height:1.6; letter-spacing:.022rem; color:var(--ink);
+    text-decoration:underline; text-underline-offset:3px; text-decoration-thickness:1px;
+    transition:color .2s}
+  .ver .glyph{font-size:.8125rem; color:var(--sec); transition:transform .2s, color .2s}
+  .ver:hover{color:var(--purple-h)}
+  .ver:hover .glyph{transform:translateX(3px); color:var(--purple-h)}
+  .stackchip{font-size:1rem; line-height:1.6; letter-spacing:.02rem; color:var(--sec)}
 
   footer{flex-shrink:0; padding:26px clamp(24px,4vw,54px); border-top:1px solid var(--line);
     display:flex; justify-content:space-between; align-items:center; color:var(--sec); font-size:12.5px}
@@ -156,9 +176,10 @@
 
   @keyframes rise{to{opacity:1;transform:none}}
   @media (prefers-reduced-motion:reduce){*{animation:none!important; opacity:1!important; transform:none!important}}
+  @media (max-width:1100px){ .grid{grid-template-columns:repeat(2,1fr); row-gap:3rem} }
   @media (max-width:720px){ .nav-links{display:none} }
   @media (max-width:620px){
-    .grid{grid-template-columns:1fr}
+    .grid{grid-template-columns:1fr; row-gap:2.5rem}
     .nav{grid-template-columns:auto auto; gap:14px}
     .nav-brand{justify-self:start}
     .toolbar{align-items:flex-start; flex-direction:column}
@@ -411,7 +432,7 @@
       tile.className = 'tile';
       tile.style.setProperty('--d', (0.10 + i * 0.06).toFixed(2) + 's');
 
-      const catCls = p.cat === 'story' ? 'tagchip tagchip--story' : 'tagchip';
+      const catCls = p.cat === 'story' ? 'tagchip tagchip--story' : 'tagchip tagchip--kind';
       const chips = `<span class="${catCls}">${CAT_LABEL[p.cat]}</span>
                      <span class="tagchip tagchip--live"><span class="dot"></span>Live</span>`;
 
@@ -422,9 +443,10 @@
                   sandbox="allow-scripts allow-same-origin" aria-hidden="true" title="${p.name} — preview"></iframe>
         </a>
         <div class="meta">
-          <div class="row"><h2>${p.title[0]} <em style="font-style:normal;color:#9a9a9a">${p.title[1] || ''}</em></h2><span class="count">${p.count}</span></div>
+          <div class="row"><h2>${p.title[0]} <em>${p.title[1] || ''}</em></h2><span class="count">${p.count}</span></div>
           <p class="desc">${p.desc}</p>
           <div class="versions">
+            <a class="ver" href="${p.href}" target="_blank" rel="noopener"><span>Open motion</span><span class="glyph">→</span></a>
             <span class="stackchip">${STACK_LABEL[p.stack]}</span>
           </div>
         </div>`;
@@ -481,6 +503,7 @@
           apply();
         });
       });
+      g.querySelector('.dropdown').addEventListener('click', e => e.stopPropagation());
     });
 
     document.addEventListener('click', () => document.querySelectorAll('.fgroup.open').forEach(x => x.classList.remove('open')));
