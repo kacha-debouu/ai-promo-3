@@ -1,0 +1,421 @@
+<!doctype html>
+<!-- wide-motion · Mode A · "DIESEL — Checkerboard Takeover" · 17s · 16:9
+     UI rebuilt pixel-true from the LIVE id.diesel.com/en/woman/tshirts-and-tops PLP:
+     4-column zero-gap grid with thin red hairlines between tiles, 2:3 photos with
+     the red-outline heart, meta = green "Responsible" chip · name (12px/500) ·
+     price (14px/500, sale = red + strikethrough + -50%) · round colour swatches
+     with a red ring on the selected one · red-bordered "+" quick-add. Page chrome
+     is part of the canvas: red announcement bar, DIESEL logo box + nav + icons,
+     compressed red H1 + intro copy, category pills, breadcrumb, Filter/Sort row.
+
+     Header logo = the REAL diesel.com SVG lockup (assets/diesel-logo.svg,
+     lifted from the live site's header markup).
+
+     Beat 1 (0–0.8s)    frame 0 IS a composition: the model card photo close-up, drifting.
+     Beat 2 (0.8–3.3s)  cards pop in around the hero in SEEDED-RANDOM order (mulberry32)
+                        until the PLP fills the frame; the page chrome resolves in last —
+                        full-page money shot at 3.3s.
+     Beat 3 (3.3–9.1s)  camera dives to a bottom card's meta. The colour row shows a plain
+                        "COLOR 4" label → on hover the circles bloom in (springy stagger) →
+                        click Lilac → the product photo AND model swap → hold ≥1s → click
+                        back to Black (grid products must stay distinct — the card reverts
+                        in place, nothing moves) → circles retract, label returns.
+     Beat 4 (9.3–11.6s) camera glides to the model card — her photo crossfades into the
+                        real smile clip (assets/model-smile.mp4, currentTime driven by the
+                        timeline — deterministic; assets/model-neutral.jpg == frame V_START).
+                        SWAPPABLE ASSET SLOT — drop in a new take, timeline untouched.
+     Beat 5 (11.6–13.9s) full-screen Diesel-red field slides up, DIESEL letterforms KNOCKED
+                        OUT (SVG mask) — the live PLP animates on inside the letters.
+     Beat 6 (13.9–15.7s) letterforms fill to solid white (L→R wipe), calm hold.
+     Beat 7 (15.7–17s)  seamless loop: hidden reset behind the solid logo card, red field
+                        slides off upward revealing the beat-1 model close-up. -->
+<html lang="en"><head><meta charset="utf-8">
+<title>DIESEL · Checkerboard Takeover</title>
+<!-- rem base = viewport/96 (or /54 by height) in pure CSS — no JS viewport
+     metrics (some embeds report innerWidth 0), auto-responds to resize -->
+<style>html{font-size:min(1.04167vw, 1.85185vh)}</style>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Oswald:wght@500;600;700&family=DM+Sans:wght@400;500;600;700&display=block" rel="stylesheet">
+<style>
+  *{box-sizing:border-box;margin:0;padding:0}
+  html,body{overflow:hidden;width:100%;height:100%}
+  :root{
+    --red:#E4002B; --redline:rgba(228,0,43,.55); --ink:#121212;
+    --grey-mid:#9a9a9a; --green:#178A3B;
+    --font-display:'Oswald',sans-serif; --font:'DM Sans',-apple-system,sans-serif;
+  }
+  body{background:#fff;font-family:var(--font);color:var(--ink);
+    -webkit-font-smoothing:antialiased}
+  #stage{position:fixed;inset:0;overflow:hidden;background:#fff}
+  #camera{position:absolute;inset:0;will-change:transform;transform-origin:50% 50%}
+  /* the canvas IS the diesel.com page — 96rem wide, 110rem tall */
+  #canvas{position:absolute;left:50%;top:50%;width:96rem;height:110rem;
+    margin:-27rem 0 0 -48rem;background:#fff}
+
+  /* ── page chrome (canvas-space, fades in as the page resolves) ── */
+  .chrome{opacity:0;will-change:opacity}
+  #annbar{position:absolute;left:0;top:0;width:96rem;height:2.1rem;background:var(--red);
+    display:flex;align-items:center;justify-content:center;color:#fff;
+    font-size:.68rem;font-weight:500;letter-spacing:.02rem}
+  /* the REAL diesel.com logo lockup (assets/diesel-logo.svg, 360×198 viewBox) */
+  #hlogo{position:absolute;left:1.4rem;top:2.1rem;width:9rem;line-height:0}
+  #hlogo img{width:100%;display:block}
+  #hnav{position:absolute;left:0;right:0;top:3.6rem;display:flex;justify-content:center;
+    gap:1.7rem;align-items:center;font-size:.82rem;font-weight:500;color:var(--ink)}
+  #hnav .sale{background:var(--red);color:#fff;font-weight:700;padding:.22rem .5rem}
+  #hnav .cur{text-decoration:underline;text-underline-offset:.3rem}
+  #hicons{position:absolute;right:1.6rem;top:3.4rem;display:flex;gap:1.15rem;align-items:center;
+    color:var(--red);font-size:.82rem;font-weight:500}
+  #hicons svg{width:1.05rem;height:1.05rem;display:block}
+  #hicons .q{width:1.15rem;height:1.15rem;border:1px solid var(--red);border-radius:50%;
+    display:grid;place-items:center;font-size:.68rem;font-weight:700}
+  #ptitle{position:absolute;left:0;right:0;top:7.6rem;text-align:center;color:var(--red)}
+  #ptitle h1{font-family:var(--font-display);font-weight:600;font-size:2.7rem;
+    letter-spacing:.02rem;line-height:1.1}
+  #ptitle p{margin:.55rem auto 0;max-width:44rem;font-size:.8rem;line-height:1.5;font-weight:500}
+  #pills{position:absolute;left:0;right:0;top:13.4rem;display:flex;justify-content:center;
+    gap:.55rem;align-items:center}
+  .pill{border:1px solid var(--red);color:var(--red);background:#fff;font-size:.8rem;
+    font-weight:500;padding:.5rem 1.05rem}
+  .pill.on{background:#7A1626;border-color:#7A1626;color:#fff}
+  #crumb{position:absolute;left:1.4rem;top:16.6rem;font-size:.72rem;color:var(--ink)}
+  #crumb b{font-weight:600}
+  #crumb i{color:var(--red);font-style:normal}
+  #frow{position:absolute;left:0;right:0;top:18rem;height:2.3rem;padding:0 1.4rem;
+    display:flex;align-items:center;justify-content:space-between}
+  .fbtn{display:inline-flex;align-items:center;gap:.4rem;border:1px solid var(--red);
+    color:var(--red);background:#fff;font-size:.78rem;font-weight:500;padding:.42rem .75rem}
+  .fbtn svg{width:.8rem;height:.8rem}
+  #frow .right{display:flex;align-items:center;gap:1rem}
+  #frow .count{font-size:.72rem;color:var(--ink)}
+  #gridline{position:absolute;left:0;top:20.55rem;width:96rem;height:1px;background:var(--redline)}
+
+  /* ── the product grid: 4 columns × 24rem, zero gap, red hairlines ── */
+  .pcard{position:absolute;width:24rem;height:44.8rem;background:#fff;overflow:hidden;
+    will-change:transform,opacity;opacity:0;transform:scale(.94);
+    border-right:1px solid var(--redline);border-bottom:1px solid var(--redline)}
+  .pcard.lastcol{border-right:none}
+  .pimg{position:relative;width:24rem;height:36rem;overflow:hidden;background:#fff}
+  .pimg .ph{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;
+    object-position:center top}
+  .pimg .ph2{opacity:0}
+  .pimg .heart{position:absolute;right:1.05rem;top:1.05rem;color:var(--red);line-height:0}
+  .pimg .heart svg{width:1.35rem;height:1.35rem}
+  .pmeta{padding:.85rem 1.05rem 0;position:relative;height:8.8rem}
+  .chiprow{display:flex;gap:.45rem;align-items:center;height:1.15rem}
+  .chip-resp{display:inline-flex;align-items:center;gap:.25rem;background:var(--green);
+    color:#fff;font-size:.58rem;font-weight:500;padding:.14rem .42rem;border-radius:.7rem}
+  .chip-resp svg{width:.5rem;height:.5rem}
+  .chip-unisex{font-size:.62rem;font-weight:600;letter-spacing:.04rem;color:var(--ink)}
+  .pname{margin-top:.5rem;font-size:.74rem;font-weight:500;color:var(--ink);
+    letter-spacing:.005rem}
+  .prow{display:flex;align-items:baseline;gap:.45rem;margin-top:.4rem}
+  .prow .val{font-size:.85rem;font-weight:500;color:var(--ink)}
+  .prow .val.sale{color:var(--red)}
+  .prow .was{font-size:.74rem;color:var(--grey-mid);text-decoration:line-through}
+  .prow .off{font-size:.74rem;font-weight:600;color:var(--red)}
+  /* colour row: plain "COLOR N" label by default; circles bloom in on hover */
+  .swrow{position:relative;display:flex;align-items:center;margin-top:.7rem;height:1.3rem}
+  .clabel{font-size:.62rem;font-weight:700;letter-spacing:.08rem;color:rgba(0,0,0,.65)}
+  .swrow .clabel{position:absolute;left:0;top:50%;transform:translateY(-50%)}
+  .sw{width:.92rem;height:.92rem;border-radius:50%;position:relative;margin-right:.55rem;
+    box-shadow:inset 0 0 0 1px rgba(0,0,0,.16);will-change:transform,opacity;
+    opacity:0;transform:scale(0)}
+  .sw.act::after{content:'';position:absolute;inset:-.24rem;border-radius:50%;
+    border:1px solid var(--red)}
+  .qadd{position:absolute;right:1.05rem;bottom:1.35rem;width:1.75rem;height:1.75rem;
+    border:1px solid var(--red);display:grid;place-items:center;color:var(--red)}
+  .qadd svg{width:.85rem;height:.85rem}
+
+  /* ── DIESEL knockout takeover ── */
+  #brand{position:absolute;inset:0;z-index:60;will-change:transform;
+    transform:translate3d(0,102%,0)}
+  #brand svg{position:absolute;inset:0;width:100%;height:100%}
+  #brand .ko-text{font-family:var(--font-display);font-weight:700;font-style:italic}
+  #whitefill{position:absolute;inset:0;clip-path:inset(0 100% 0 0);will-change:clip-path}
+
+  /* ── house cursor ── */
+  #wm-cursor{position:fixed;left:0;top:0;z-index:99;pointer-events:none;will-change:transform;
+    transform:translate(-200px,-200px);opacity:0}
+</style></head><body>
+<div id="stage">
+  <div id="camera">
+    <div id="canvas">
+      <!-- ── page chrome (pixel-true to id.diesel.com) ── -->
+      <div class="chrome" id="annbar">Pengiriman gratis ke Indonesia untuk semua pesanan di atas Rp3773585</div>
+      <div class="chrome" id="hlogo"><img src="assets/diesel-logo.svg" alt="DIESEL — For Successful Living"></div>
+      <div class="chrome" id="hnav">
+        <span class="sale">SALE</span><span>What's new</span><span>Denim</span><span>Men</span>
+        <span class="cur">Women</span><span>Gifts</span><span>Home</span><span>Sustainability</span>
+      </div>
+      <div class="chrome" id="hicons">
+        <span class="q">?</span>
+        <span style="display:inline-flex;align-items:center;gap:.35rem">
+          <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.6"><circle cx="9" cy="9" r="6"/><path d="M13.5 13.5L18 18"/></svg>Search</span>
+        <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="10" cy="6.5" r="3.4"/><path d="M3.5 17.6c1.2-3.4 3.6-5 6.5-5s5.3 1.6 6.5 5"/></svg>
+        <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M10 17s-6.5-4.2-6.5-8.6A3.4 3.4 0 0 1 10 6a3.4 3.4 0 0 1 6.5 2.4C16.5 12.8 10 17 10 17z"/></svg>
+        <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M4.5 6.5h11l-.9 11h-9.2z"/><path d="M7 6.5a3 3 0 0 1 6 0"/></svg>
+      </div>
+      <div class="chrome" id="ptitle">
+        <h1>Women's T-Shirts And Tops</h1>
+        <p>Go unafraid or understated but never underestimate the power of a well-played T-shirt. Our spectrum has all your jersey needs covered from relaxed or streamlined cuts and detailed finishes and bold prints.</p>
+      </div>
+      <div class="chrome" id="pills">
+        <span class="pill">View all</span><span class="pill on">T-shirts</span>
+        <span class="pill">Dresses</span><span class="pill">Skirts</span><span class="pill">Jackets</span>
+        <span class="pill">Denim Jackets</span><span class="pill">Leather Jackets</span>
+      </div>
+      <div class="chrome" id="crumb">Women <i>•</i> Ready-to-wear <i>•</i> <b>T-shirts and tops</b></div>
+      <div class="chrome" id="frow">
+        <span class="fbtn"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M5 2v12M11 2v12M2.5 5.5h5M8.5 10.5h5"/></svg>Filter</span>
+        <span class="right"><span class="count">178 items</span>
+          <span class="fbtn">Sort By <svg viewBox="0 0 12 8" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M1 1.5l5 5 5-5"/></svg></span></span>
+      </div>
+      <div class="chrome" id="gridline"></div>
+      <!-- product cards are generated by script (4 × 2 PLP, seeded pop order) -->
+    </div>
+  </div>
+
+  <!-- DIESEL knockout takeover (screen-space, above the camera) -->
+  <div id="brand">
+    <svg viewBox="0 0 1920 1080" preserveAspectRatio="xMidYMid slice">
+      <defs>
+        <mask id="ko">
+          <rect width="1920" height="1080" fill="#fff"/>
+          <text class="ko-text" x="960" y="648" text-anchor="middle" textLength="1150"
+            lengthAdjust="spacingAndGlyphs" font-size="316" fill="#000">DIESEL</text>
+        </mask>
+      </defs>
+      <rect width="1920" height="1080" fill="#E4002B" mask="url(#ko)"/>
+      <text class="ko-text" x="960" y="1010" text-anchor="middle"
+        font-size="26" letter-spacing="14" fill="rgba(255,255,255,.9)"
+        font-style="normal" font-weight="600">FOR SUCCESSFUL LIVING</text>
+    </svg>
+    <div id="whitefill">
+      <svg viewBox="0 0 1920 1080" preserveAspectRatio="xMidYMid slice">
+        <text class="ko-text" x="960" y="648" text-anchor="middle" textLength="1150"
+          lengthAdjust="spacingAndGlyphs" font-size="316" fill="#fff">DIESEL</text>
+      </svg>
+    </div>
+  </div>
+</div>
+
+<div id="wm-cursor"><svg width="26" height="30" viewBox="0 0 26 30"><path d="M2 2 L2 24 L8 18 L12 28 L16 26 L12 17 L21 17 Z" fill="#111" stroke="#fff" stroke-width="1.6"/></svg></div>
+
+<script src="wm-timeline.js"></script>
+<script>
+(() => {
+  const DUR = 17000;
+
+  /* ================= PLP build (deterministic) ================= */
+  const mulberry32 = a => () => {
+    a |= 0; a = a + 0x6D2B79F5 | 0;
+    let t = Math.imul(a ^ a >>> 15, 1 | a);
+    t = t + Math.imul(t ^ t >>> 7, 61 | t) ^ t;
+    return ((t ^ t >>> 14) >>> 0) / 4294967296;
+  };
+  const rand = mulberry32(7);
+
+  const HEART = '<span class="heart"><svg viewBox="0 0 22 22" fill="none" stroke="currentColor" stroke-width="1.4"><path d="M11 19s-7-4.4-7-9.3A3.7 3.7 0 0 1 11 7a3.7 3.7 0 0 1 7 2.7C18 14.6 11 19 11 19z"/></svg></span>';
+  const RESP = '<span class="chip-resp"><svg viewBox="0 0 12 12" fill="none" stroke="#fff" stroke-width="1.3"><path d="M6 1.5c2.5 1 4 3 3 6M6 1.5C3.5 2.5 2 4.5 3 7.5M6 1.5v9"/></svg>Responsible</span>';
+  const QADD = '<span class="qadd"><svg viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="1.4"><path d="M6 1.5v9M1.5 6h9"/></svg></span>';
+  const SW = { white:'#f6f6f4', brown:'#6b4a3a', lilac:'#b9a9c4', black:'#16161a' };
+  // plain "COLOR N" label by default; only the shop card carries the (hidden)
+  // swatch circles that bloom in on hover
+  const swatches = (act, id, n = 4) => `<div class="swrow"${id ? ` id="${id}"` : ''}>` +
+    `<span class="clabel"${id ? ' id="shoplabel"' : ''}>COLOR ${n}</span>` +
+    (id ? ['white','brown','lilac','black'].map(c =>
+      `<span class="sw${c === act ? ' act' : ''}" data-c="${c}" style="background:${SW[c]}"></span>`).join('') : '') +
+    QADD + '</div>';
+  const priceRow = p => p.sale
+    ? `<div class="prow"><span class="val sale">Rp ${p.sale}</span><span class="was">Rp ${p.was}</span><span class="off">-50%</span></div>`
+    : `<div class="prow"><span class="val">Rp ${p.val}</span></div>`;
+  const card = (img, name, price, o = {}) => `
+    <div class="pimg">
+      <img class="ph" src="assets/${img}" alt="">${o.extra || ''}${HEART}
+    </div>
+    <div class="pmeta">
+      <div class="chiprow">${RESP}${o.unisex ? '<span class="chip-unisex">UNISEX</span>' : ''}</div>
+      <div class="pname">${name}</div>
+      ${priceRow(price)}
+      ${swatches(o.act || 'black', o.swId, o.colors)}
+    </div>`;
+
+  /* 4 × 2 — real product names & Rp prices from the live listing */
+  const CARDS = [
+    { c:0, r:0, html: card('tee_100.jpg','T-shirt with Oval D logo',{val:'2,059,500'},{act:'white',colors:4}) },
+    { c:1, r:0, html: card('tee_9XX.jpg','T-shirt with embroidered D patch',{sale:'910,500',was:'1,842,700'},{unisex:true,colors:2}) },
+    { c:2, r:0, hero:true, html: card('model-neutral.jpg','T-shirt with cut-out embroidered logo',{sale:'1,018,900',was:'2,059,500'},
+        { colors:3, extra:'<video class="ph ph2" src="assets/model-smile.mp4" muted playsinline preload="auto"></video>' }) },
+    { c:3, r:0, html: card('tee_61J.jpg','Ribbed t-shirt with wrap-around laces',{sale:'1,344,100',was:'2,709,800'},{act:'brown',colors:3}) },
+    { c:0, r:1, html: card('tee_65C.jpg','T-shirt with maxi logo print',{val:'1,507,000'},{act:'lilac',colors:2}) },
+    { c:1, r:1, shop:true, html: card('tee_9XX.jpg','T-shirt with embroidered D patch',{val:'1,842,700'},
+        { swId:'shopsw', colors:4, extra:'<img class="ph ph2" src="assets/tee_65C.jpg" alt="">' }) },
+    { c:2, r:1, html: card('tee_100.jpg','T-shirt with mini D patch',{val:'1,690,000'},{act:'white',colors:4}) },
+    { c:3, r:1, html: card('tee_61J.jpg','T-shirt with peel-off effect logo',{val:'2,242,500'},{act:'brown',colors:2}) },
+  ];
+  const GRID_TOP = 20.55, CW = 24, CH = 44.8;
+  const canvas = document.getElementById('canvas');
+  const popTiles = [];
+  let heroEl = null;
+  CARDS.forEach(cd => {
+    const el = document.createElement('div');
+    el.className = 'pcard' + (cd.c === 3 ? ' lastcol' : '');
+    el.style.left = (cd.c * CW) + 'rem';
+    el.style.top  = (GRID_TOP + cd.r * CH) + 'rem';
+    el.innerHTML = cd.html;
+    if (cd.hero) { el.id = 't-hero'; heroEl = el; }
+    if (cd.shop) el.id = 't-shop';
+    canvas.appendChild(el);
+    if (!cd.hero) popTiles.push(el);
+  });
+  for (let i = popTiles.length - 1; i > 0; i--) {
+    const j = Math.floor(rand() * (i + 1));
+    [popTiles[i], popTiles[j]] = [popTiles[j], popTiles[i]];
+  }
+  const shopSw = [...document.querySelectorAll('#shopsw .sw')];
+  const swLilac = shopSw.find(s => s.dataset.c === 'lilac');
+  const swBlack = shopSw.find(s => s.dataset.c === 'black');
+  swLilac.id = 'sw-lilac';
+
+  /* ================= helpers ================= */
+  const numTL = (kfs, fn) => WM.tween({ at: 0, dur: DUR, ease: 'linear', apply(p, tc, t) {
+    let i = 0; while (i < kfs.length - 1 && t > kfs[i + 1].t) i++;
+    const a = kfs[i], b = kfs[Math.min(i + 1, kfs.length - 1)];
+    const seg = b.t === a.t ? 1 : Math.max(0, Math.min(1, (t - a.t) / (b.t - a.t)));
+    fn(a.v + (b.v - a.v) * WM.Easings[b.ease || 'smooth'](seg), t);
+  } });
+
+  /* ================= camera (analytic, rem-space) =================
+     Keyframes are page coords (rem) + scale; the transform is written in rem so
+     CSS resolves it at paint time (robust in embeds with broken window metrics).
+     model photo centre (60, 38.55) · full page (48, 32) · shop meta (36, 99.5) */
+  const cam = document.getElementById('camera');
+  const CAM = [
+    { t: 0,     mx: 60, my: 31.5, s: 3.2 },                      // beat 1 — model FACE close
+    { t: 800,   mx: 60, my: 31.5, s: 3.26, ease: 'linear' },
+    { t: 3300,  mx: 48, my: 32,   s: 1.0 },                      // beat 2 — full page lands
+    { t: 3550,  mx: 48, my: 32,   s: 1.006, ease: 'linear' },
+    { t: 4250,  mx: 36, my: 99.5, s: 2.45 },                     // beat 3 — shop card meta
+    { t: 8500,  mx: 36, my: 99.5, s: 2.55, ease: 'linear' },     //   (hover→lilac→back)
+    { t: 9300,  mx: 60, my: 30.5, s: 2.9 },                      // beat 4 — her face, smiling
+    { t: 10800, mx: 60, my: 30.5, s: 2.96, ease: 'linear' },
+    { t: 15540, mx: 60, my: 31,   s: 2.0, ease: 'linear' },      // beat 5/6 — pull in letters
+    { t: 15590, mx: 60, my: 31.5, s: 3.165, ease: 'linear' },    // hidden jump (covered)
+    { t: 17000, mx: 60, my: 31.5, s: 3.2, ease: 'linear' },      // arrive ON the frame-0 camera
+  ];
+  WM.tween({ at: 0, dur: DUR, ease: 'linear', apply(p, tc, t) {
+    let i = 0; while (i < CAM.length - 1 && t > CAM[i + 1].t) i++;
+    const a = CAM[i], b = CAM[Math.min(i + 1, CAM.length - 1)];
+    const seg = b.t === a.t ? 1 : Math.max(0, Math.min(1, (t - a.t) / (b.t - a.t)));
+    const e = WM.Easings[b.ease || 'cinematic'](seg);
+    const mx = a.mx + (b.mx - a.mx) * e, my = a.my + (b.my - a.my) * e,
+          s  = a.s  + (b.s  - a.s)  * e;
+    cam.style.transform = `translate3d(${((48 - mx) * s).toFixed(4)}rem,` +
+      `${((27 - my) * s).toFixed(4)}rem,0) scale(${s.toFixed(4)})`;
+  } });
+
+  /* ================= beat 2 · checkerboard pop ================= */
+  popTiles.forEach((el, i) => {
+    WM.style(el, 800 + i * 150, 640, {
+      opacity: [0, 1],
+      transform: (p, l) => `scale(${l(0.94, 1, p)})`,
+    }, 'out');
+  });
+  heroEl.style.opacity = '1'; heroEl.style.transform = 'none';
+  numTL([{ t: 0, v: 1 }, { t: 15700, v: 1 }, { t: 15760, v: 0, ease: 'linear' }],
+    v => popTiles.forEach(el => {
+      if (v >= 1) return;
+      el.style.opacity = String(Math.min(parseFloat(el.style.opacity || 1), v));
+    }));
+
+  // page chrome resolves in as the grid lands (loop-safe keyframed track)
+  const chrome = [...document.querySelectorAll('.chrome')];
+  numTL([{ t: 0, v: 0 }, { t: 2500, v: 0 }, { t: 3100, v: 1, ease: 'out' },
+         { t: 15700, v: 1 }, { t: 15760, v: 0, ease: 'linear' }],
+    v => chrome.forEach(el => { el.style.opacity = String(v); }));
+
+  /* ================= beat 3 · colour hover micro-interaction =================
+     "COLOR 4" plain label → hover: circles bloom in → click Lilac: photo AND
+     model swap → click back to Black so the grid keeps distinct products →
+     circles retract, label returns. The card itself never moves. */
+  const label = document.getElementById('shoplabel');
+  const ph2 = document.querySelector('#t-shop .ph2');
+  WM.style('#wm-cursor', 3700, 350, { opacity: [0, 1] }, 'out');
+  WM.cursorTo('#shoplabel', 3850, 700, 'smooth', { x: 6, y: 0 });
+  // hover: label gives way, swatch circles bloom one by one (springy)
+  WM.style('#shoplabel', 4650, 320, { opacity: [1, 0] }, 'smooth');
+  shopSw.forEach((d, i) =>
+    WM.style(d, 4750 + i * 120, 480, {
+      opacity: [0, 1],
+      transform: (p, l) => `scale(${l(0, 1, p)})`,
+    }, 'spring'));
+  // pick Lilac — photo and model swap
+  WM.cursorTo('#sw-lilac', 5600, 560);
+  WM.click('#sw-lilac', 6200);
+  WM.style('#t-shop .ph2', 6240, 480, { opacity: [0, 1] }, 'smooth');
+  // …hold the lilac colourway ≥1s, then back to Black — the grid should keep
+  // distinct products, so the card returns to its original photo (in place)
+  WM.cursorTo('#sw-black', 7350, 480);
+  WM.click('#sw-black', 7880);
+  WM.tween({ at: 7920, dur: 440, ease: 'smooth', apply(p, tc, t) {
+    if (t < 7920) return;
+    ph2.style.opacity = String(1 - p);
+  } });
+  // red ring follows the picked swatch (keyframed window — loop-safe)
+  numTL([{ t: 0, v: 0 }, { t: 6230, v: 0 }, { t: 6231, v: 1, ease: 'linear' },
+         { t: 7910, v: 1 }, { t: 7911, v: 0, ease: 'linear' }], v => {
+    swLilac.classList.toggle('act', v > 0.5);
+    swBlack.classList.toggle('act', v <= 0.5);
+  });
+  // cursor leaves → circles retract, "COLOR 4" label returns
+  WM.style('#wm-cursor', 8450, 380, { opacity: [1, 0] }, 'smooth');
+  shopSw.forEach((d, i) =>
+    WM.tween({ at: 8500 + i * 70, dur: 280, ease: 'in', apply(p, tc, t) {
+      if (t < 8500 + i * 70) return;
+      d.style.opacity = String(1 - p);
+      d.style.transform = `scale(${1 - p})`;
+    } }));
+  WM.tween({ at: 8850, dur: 300, ease: 'smooth', apply(p, tc, t) {
+    if (t < 8850) return;
+    label.style.opacity = String(p);
+  } });
+
+  /* ================= beat 4 · model smiles (deterministic video slot) ============
+     assets/model-neutral.jpg == frame V_START (0.3s) of assets/model-smile.mp4, so
+     the crossfade is invisible; the clip is scrubbed by the timeline (never
+     .play()) — every rendered frame reproducible.
+     TODO(asset): to swap the smile take, drop in a new model-smile.mp4 and a
+     matching model-neutral.jpg (same frame as V_START) — timeline untouched. */
+  const vid = heroEl.querySelector('video');
+  const V_START = 0.3, V_END = 3.0, T0 = 9400, T1 = 11600;
+  WM.style('#t-hero video', 9350, 420, { opacity: [0, 1] }, 'smooth');
+  numTL([{ t: 0, v: 0 }, { t: 15700, v: 0 }, { t: 15760, v: 1, ease: 'linear' }], v => {
+    if (v <= 0) return;
+    vid.style.opacity = '0';
+  });
+  WM.tween({ at: 0, dur: DUR, ease: 'linear', apply(p, tc, t) {
+    let target = V_START;
+    if (t >= T0) target = V_START + (Math.min(t, T1) - T0) / (T1 - T0) * (V_END - V_START);
+    if (Math.abs((vid.currentTime || 0) - target) > 0.034) vid.currentTime = target;
+  } });
+
+  /* ================= beats 5–7 · DIESEL knockout takeover ================= */
+  numTL([
+    { t: 0,     v: 102 },
+    { t: 11600, v: 102 },
+    { t: 12400, v: 0, ease: 'cinematic' },   // beat 5 — takeover slides up
+    { t: 16250, v: 0 },
+    { t: 16950, v: -104, ease: 'cinematic' } // beat 7 — slides off, revealing frame 0
+  ], v => { document.getElementById('brand').style.transform =
+      `translate3d(0,${v}%,0) scale(${1 + Math.max(0, -v) * 0.0002})`; });
+  numTL([{ t: 0, v: 100 }, { t: 13900, v: 100 }, { t: 15200, v: 0, ease: 'inOut' }],
+    v => { document.getElementById('whitefill').style.clipPath = `inset(0 ${v}% 0 0)`; });
+
+  WM.duration = DUR;
+  WM.seek(0);
+  if (!navigator.webdriver) WM.play(true);
+})();
+</script>
+</body></html>
