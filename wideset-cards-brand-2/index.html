@@ -1,0 +1,616 @@
+<!doctype html>
+<!-- wide-motion · "One system, infinite brands" · v2 · 16s
+     Remix of wideset-cards-brand: token beats 2x faster, silkier property
+     tweens, finale bento rebuilt from Figma (sm - p.brand · node 2155-37078):
+     MRR chart card · New shift modal · people select + dropdown · file chips.
+     All finale components are token-driven (accent / radius / light-dark). -->
+<html><head><meta charset="utf-8"><title>Wideset · One system, infinite brands · v2</title>
+<script>
+  document.documentElement.style.fontSize = Math.min(innerWidth/96, innerHeight/54) + 'px';
+  // some embeds report a 0-size viewport at parse time — reload once it exists
+  if (innerWidth < 2 || innerHeight < 2)
+    addEventListener('resize', () => location.reload(), {once:true});
+</script>
+<style>
+  @font-face{font-family:"Sequel Sans Disp";src:url("../fonts/SequelSans-RomanDisp.woff2") format("woff2");
+    font-weight:400;font-style:normal;font-display:swap}
+  @font-face{font-family:"Sequel Sans Disp";src:url("../fonts/SequelSans-MediumDisp.woff2") format("woff2");
+    font-weight:500;font-style:normal;font-display:swap}
+  *{box-sizing:border-box;margin:0;padding:0}
+  html,body{overflow:hidden;width:100%;height:100%}
+  :root{
+    --bg:#EFEFF2;
+    --accent:#5B45E0; --accent-soft:#EDE9FD;
+    --surface:#FFFFFF; --surface2:#F3F3F6;
+    --text:#1A1A1E; --muted:#75757D; --border:#E6E6EB;
+    --r:16px;
+  }
+  body{font-family:-apple-system,'SF Pro Text','Inter','Segoe UI',sans-serif;
+    -webkit-font-smoothing:antialiased;background:var(--bg)}
+  #stage{position:fixed;inset:0;overflow:hidden;background:var(--bg)}
+  #spot{position:absolute;inset:-25%;pointer-events:none;
+    background:radial-gradient(55% 50% at 40% 32%, rgba(255,255,255,.9), rgba(255,255,255,0) 70%)}
+  #vig{position:absolute;inset:0;pointer-events:none;
+    background:radial-gradient(120% 115% at 50% 45%, transparent 62%, rgba(10,10,18,.10))}
+  #camera{position:absolute;inset:0;will-change:transform;transform-origin:50% 50%}
+  #canvas{position:absolute;left:50%;top:50%;width:96rem;height:54rem;margin:-27rem 0 0 -48rem}
+
+  /* ---------- shared component kit ---------- */
+  .fl{position:absolute;will-change:transform}
+  .card{background:var(--surface);border:none;border-radius:var(--r);
+    color:var(--text);
+    box-shadow:0 1.4rem 3.2rem -1rem rgba(15,15,25,.16), 0 .2rem .6rem rgba(15,15,25,.05)}
+  .btn{display:inline-flex;align-items:center;gap:.3rem;font-weight:600;white-space:nowrap;
+    border-radius:calc(var(--r)*.5)}
+  .btn.sm{font-size:.62rem;padding:.34rem .6rem}
+  .btn.ghost{border:1px solid var(--border);color:var(--text);background:var(--surface)}
+  .btn.primary{background:var(--accent);color:#fff}
+  .spacer{flex:1}
+
+  /* upload widget (hero — kept from v1) */
+  .w-upload{width:20rem;padding:.9rem 1rem 1rem}
+  .uhead{display:flex;justify-content:space-between;align-items:flex-start}
+  .lbl{font-size:.6rem;color:var(--muted)}
+  .big{font-size:1.05rem;font-weight:650;margin-top:.12rem}
+  .uchart{display:block;width:100%;height:4.6rem;margin:.75rem 0 .8rem}
+  .mrow{display:flex;font-size:.6rem;padding:.15rem 0}
+  .mrow span{color:var(--muted);width:6.6rem;flex:none}
+  .mrow b{font-weight:600}
+
+  /* ---------- finale · MRR chart card (Figma 2155:35974) ---------- */
+  .w-chart{width:20rem}
+  .chead{display:flex;align-items:center;gap:.5rem;padding:.72rem 1rem;
+    border-bottom:1px solid var(--border)}
+  .chead b{font-size:.67rem;font-weight:650;letter-spacing:-.005em}
+  .cico{color:var(--text);display:grid;place-items:center;width:1rem;height:1rem}
+  .cico svg{width:.62rem;height:.62rem}
+  .cplot{display:block;width:100%;padding:.35rem .5rem 0}
+  .cplot svg{display:block;width:100%}
+  .cfoot{display:flex;align-items:center;padding:.6rem 1rem .68rem;border-top:1px solid var(--border)}
+  .clink{font-size:.53rem;font-weight:500;color:var(--accent)}
+  .cfoot .btn{font-size:.53rem;padding:.3rem .55rem}
+  .cbar{transform-box:fill-box;transform-origin:50% 100%}
+  .cdot{transform-box:fill-box;transform-origin:50% 50%}
+
+  /* ---------- finale · New shift modal (Figma 2155:35985) ---------- */
+  .w-shift{width:16.4rem}
+  .shead{display:flex;align-items:center;justify-content:space-between;padding:.72rem .85rem .55rem}
+  .shead b{font-size:.62rem;font-weight:650;letter-spacing:-.005em}
+  .sx{width:1rem;height:1rem;border:1px solid var(--border);border-radius:.32rem;
+    display:grid;place-items:center;color:var(--text)}
+  .sx svg{width:.4rem;height:.4rem}
+  .srow{display:flex;align-items:center;gap:.38rem;padding:.26rem .85rem;font-size:.5rem}
+  .srow .ric{color:var(--text);display:grid;place-items:center;width:.7rem;height:.7rem;flex:none}
+  .ric svg{width:.56rem;height:.56rem}
+  .rlbl{color:var(--text)}
+  .rctl{margin-left:auto;width:8.4rem;display:flex;align-items:center;gap:.3rem;
+    border:1px solid var(--border);border-radius:calc(var(--r)*.5);
+    background:var(--surface);padding:.3rem .45rem;font-size:.5rem}
+  .rctl.focus{border-color:var(--accent);box-shadow:0 0 0 1px var(--accent) inset}
+  .rctl .mut{color:var(--muted);font-size:.44rem}
+  .rctl .cal{margin-left:auto;color:var(--text)}
+  .rctl .cal svg{width:.5rem;height:.5rem;display:block}
+  .sfoot{display:flex;align-items:center;gap:.4rem;margin-top:.55rem;padding:.5rem .85rem;
+    background:var(--surface2);border-radius:0 0 var(--r) var(--r)}
+  .tgl{position:relative;width:1.22rem;height:.68rem;border-radius:99rem;background:#B9B9C2;flex:none}
+  .tgl .ton{position:absolute;inset:0;border-radius:99rem;background:var(--accent);opacity:0}
+  .tgl .knob{position:absolute;left:.06rem;top:.06rem;width:.56rem;height:.56rem;border-radius:50%;
+    background:#fff;box-shadow:0 .04rem .12rem rgba(15,15,25,.3)}
+  .tlbl{font-size:.5rem}
+  .sfoot .btn{font-size:.5rem;padding:.28rem .5rem}
+
+  /* ---------- finale · people select + dropdown (Figma 2155:35983/84) ---------- */
+  .w-select{width:10rem;display:flex;align-items:center;gap:.34rem;color:var(--text);
+    background:var(--surface);border:1px solid var(--accent);box-shadow:0 0 0 1px var(--accent) inset,
+    0 1.4rem 3.2rem -1rem rgba(15,15,25,.16);
+    border-radius:calc(var(--r)*.5);padding:.26rem .45rem;font-size:.5rem;font-weight:500}
+  .sel-x{color:var(--text);margin-left:auto}
+  .sel-x svg,.sel-v svg{width:.36rem;height:.36rem;display:block}
+  .sel-v{color:var(--text)}
+  .av{position:relative;width:.8rem;height:.8rem;border-radius:50%;flex:none;
+    display:grid;place-items:center;color:#fff;font-size:.3rem;font-weight:650;letter-spacing:.01em}
+  .av i{position:absolute;left:-.05rem;bottom:-.05rem;width:.3rem;height:.3rem;border-radius:50%;
+    background:#3BB273;border:.07rem solid var(--surface);font-style:normal}
+  .w-menu{width:10rem;padding:.4rem;margin-top:.34rem}
+  .msearch{display:flex;align-items:center;gap:.3rem;border:1px solid var(--border);
+    border-radius:calc(var(--r)*.5);padding:.28rem .45rem;font-size:.5rem;color:var(--muted)}
+  .msearch svg{width:.44rem;height:.44rem;flex:none}
+  .mlist{margin-top:.3rem}
+  .prow{display:flex;align-items:center;gap:.36rem;padding:.24rem .35rem;border-radius:.32rem;
+    font-size:.5rem;font-weight:500}
+  .prow.sel{background:color-mix(in srgb, var(--accent) 12%, var(--surface))}
+  .prow .chk{margin-left:auto;color:var(--accent);display:grid;place-items:center}
+  .prow .chk svg{width:.5rem;height:.5rem;display:block}
+
+  /* ---------- finale · file chips (Figma 2155:35975..80) ---------- */
+  .chips{display:flex;flex-direction:column;gap:.5rem;align-items:flex-start}
+  .chip{display:inline-flex;align-items:center;gap:.3rem;padding:.24rem .45rem;
+    border-radius:calc(var(--r)*.5);font-size:.5rem;font-weight:600;white-space:nowrap;
+    box-shadow:0 .5rem 1.6rem -0.6rem rgba(15,15,25,.18)}
+  .chip svg.fx{width:.6rem;height:.6rem;flex:none;display:block}
+  .chip .cx{display:grid;place-items:center;margin-left:.08rem}
+  .chip .cx svg{width:.34rem;height:.34rem;display:block}
+  .chip.mp4{background:var(--accent);color:#fff}
+  .chip.json{background:var(--surface2);color:var(--text)}
+  .chip.pdf{background:var(--surface);color:var(--accent);
+    border:1px solid color-mix(in srgb, var(--accent) 45%, var(--surface))}
+  .chip.csv{background:var(--surface);color:var(--text);border:1px solid var(--border)}
+  .nico{width:.66rem;height:.66rem;border-radius:.14rem;background:#111;color:#fff;flex:none;
+    font-family:Georgia,'Times New Roman',serif;font-weight:700;font-size:.44rem;
+    display:grid;place-items:center}
+
+  /* ---------- scene chrome ---------- */
+  #dock{position:absolute;left:50%;top:36.6rem;display:flex;align-items:center;gap:.55rem;
+    background:var(--surface);border:1px solid var(--border);border-radius:99rem;
+    padding:.5rem .8rem;box-shadow:0 .9rem 2.4rem -0.8rem rgba(15,15,25,.22);
+    transform:translate3d(-50%,3rem,0);will-change:transform}
+  .sw{width:1.1rem;height:1.1rem;border-radius:50%;background:var(--c);position:relative;
+    will-change:transform}
+  .sw.on::after{content:'';position:absolute;inset:-.26rem;border:.09rem solid var(--c);border-radius:50%}
+  .dv{width:1px;height:1.2rem;background:var(--border)}
+  .dpill{font-size:.6rem;font-weight:600;padding:.3rem .55rem;border-radius:99rem;
+    border:1px solid var(--border);color:var(--text);display:inline-flex;align-items:center;gap:.3rem;
+    will-change:transform}
+  .dpill svg{width:.72rem;height:.72rem}
+
+  #sweep{position:absolute;top:-30%;bottom:-30%;width:36%;pointer-events:none;
+    background:linear-gradient(100deg,transparent,rgba(255,255,255,.5),transparent);
+    will-change:transform}
+
+  #wm-cursor{position:fixed;left:0;top:0;z-index:99;pointer-events:none;will-change:transform;
+    transform:translate(-200px,-200px);opacity:0}
+  #cur-exit{position:absolute;right:-6rem;top:20rem;width:1px;height:1px}
+</style></head><body>
+<div id="stage">
+  <div id="spot"></div>
+  <div id="camera">
+    <div id="canvas">
+
+      <!-- hero: upload widget — centre-anchored (translateX) so width changes
+           (mobile squeeze) stay centred; top edge fixed so height grows down -->
+      <div class="fl" id="fl-upload" style="left:48rem;top:19.4rem;transform:translateX(-50%)">
+        <div class="card w-upload" id="hero-upload">
+          <div class="uhead">
+            <div><div class="lbl">Finished</div><div class="big"><span id="pct">0</span>%</div></div>
+            <div class="btn sm ghost">
+              <svg width="8" height="9" viewBox="0 0 8 9" fill="currentColor"><rect width="2.6" height="9" rx="0.8"/><rect x="5.4" width="2.6" height="9" rx="0.8"/></svg>
+              Pause
+            </div>
+          </div>
+          <svg class="uchart" viewBox="0 0 320 84" preserveAspectRatio="none">
+            <rect id="ushade" x="0" y="0" width="0" height="84" fill="var(--surface2)"/>
+            <g stroke="var(--border)" stroke-width="1">
+              <line x1="0" y1="21" x2="320" y2="21"/><line x1="0" y1="42" x2="320" y2="42"/><line x1="0" y1="63" x2="320" y2="63"/>
+              <line x1="32" y1="0" x2="32" y2="84"/><line x1="64" y1="0" x2="64" y2="84"/><line x1="96" y1="0" x2="96" y2="84"/>
+              <line x1="128" y1="0" x2="128" y2="84"/><line x1="160" y1="0" x2="160" y2="84"/><line x1="192" y1="0" x2="192" y2="84"/>
+              <line x1="224" y1="0" x2="224" y2="84"/><line x1="256" y1="0" x2="256" y2="84"/><line x1="288" y1="0" x2="288" y2="84"/>
+              <rect x="0.5" y="0.5" width="319" height="83" fill="none"/>
+            </g>
+            <clipPath id="uclip"><rect id="uclipr" x="0" y="0" width="0" height="84"/></clipPath>
+            <path fill="var(--accent)" clip-path="url(#uclip)"
+              d="M0,84 L0,76 C14,74 22,66 34,67 C46,68 52,56 64,52 C76,48 86,44 99,40 C112,36 120,30 132,33 C150,37 160,24 178,22 C192,20 200,26 205,24 L205,84 Z"/>
+            <rect id="uedge" x="-3" y="0" width="1.5" height="84" fill="var(--accent)" opacity="0.55"/>
+          </svg>
+          <div class="meta">
+            <div class="mrow"><span>Speed</span><b>3,53 Mb/s</b></div>
+            <div class="mrow"><span>Estimated time</span><b id="eta">about 6 minutes</b></div>
+            <div class="mrow"><span># of files</span><b>89</b></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- finale · Monthly Recurring Revenue -->
+      <div class="fl" id="fl-chart" style="left:16.4rem;top:19.4rem">
+        <div class="card w-chart" id="c-chart">
+          <div class="chead">
+            <b>Monthly Recurring Revenue</b><span class="spacer"></span>
+            <span class="cico"><svg viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 1v6.2M3.4 5 6 7.6 8.6 5"/><path d="M1.5 9.2v.9c0 .5.4.9.9.9h7.2c.5 0 .9-.4.9-.9v-.9"/></svg></span>
+            <span class="cico"><svg viewBox="0 0 12 12" fill="currentColor"><circle cx="2" cy="6" r="1.1"/><circle cx="6" cy="6" r="1.1"/><circle cx="10" cy="6" r="1.1"/></svg></span>
+          </div>
+          <div class="cplot"><svg id="mrr" viewBox="0 0 560 244"></svg></div>
+          <div class="cfoot">
+            <span class="clink">View breakdown</span><span class="spacer"></span>
+            <div class="btn sm ghost" style="font-size:.53rem">Export Report</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- finale · New shift modal -->
+      <div class="fl" id="fl-shift" style="left:59.6rem;top:19.4rem">
+        <div class="card w-shift" id="c-shift">
+          <div class="shead"><b>New shift</b>
+            <span class="sx"><svg viewBox="0 0 8 8" stroke="currentColor" stroke-width="1.1" stroke-linecap="round"><path d="M1 1l6 6M7 1L1 7"/></svg></span>
+          </div>
+          <div class="srow">
+            <span class="ric"><svg viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="1"><path d="M2.5 10.5V2.4c0-.5.4-.9.9-.9h3.4c.5 0 .9.4.9.9v8.1"/><path d="M7.7 4.6h1.6c.5 0 .9.4.9.9v5"/><path d="M1 10.5h10"/><path d="M4.2 3.5h1.4M4.2 5.5h1.4"/></svg></span>
+            <span class="rlbl">Department</span>
+            <span class="rctl"><span>Montreal</span><span class="cal" style="margin-left:auto;display:flex;gap:.3rem;align-items:center">
+              <svg viewBox="0 0 8 8" stroke="currentColor" stroke-width="1" stroke-linecap="round"><path d="M1.4 1.4l5.2 5.2M6.6 1.4L1.4 6.6"/></svg>
+              <svg viewBox="0 0 8 8" fill="none" stroke="currentColor" stroke-width="1.1" stroke-linecap="round" stroke-linejoin="round"><path d="M1.5 3 4 5.5 6.5 3"/></svg></span></span>
+          </div>
+          <div class="srow">
+            <span class="ric"><svg viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="1"><rect x="1.5" y="2.2" width="9" height="8.3" rx="1.2"/><path d="M1.5 4.9h9M3.9 1.1v2.2M8.1 1.1v2.2"/></svg></span>
+            <span class="rlbl">Date</span>
+            <span class="rctl focus"><span>August 17, 2024</span><span class="cal">
+              <svg viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="1"><rect x="1.5" y="2.2" width="9" height="8.3" rx="1.2"/><path d="M1.5 4.9h9M3.9 1.1v2.2M8.1 1.1v2.2"/></svg></span></span>
+          </div>
+          <div class="sfoot">
+            <span class="tgl"><span class="ton" id="tgl-on"></span><span class="knob" id="tgl-knob"></span></span>
+            <span class="tlbl">Is recurring?</span><span class="spacer"></span>
+            <div class="btn ghost">Cancel</div><div class="btn primary">Create</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- finale · people select + dropdown -->
+      <div class="fl" id="fl-select" style="left:59.6rem;top:28.9rem">
+        <div id="c-select">
+          <div class="w-select">
+            <span class="av" style="background:linear-gradient(135deg,#C08A6B,#96604A)">SN<i></i></span>
+            <span>Savannah Nguyen</span>
+            <span class="sel-x"><svg viewBox="0 0 8 8" stroke="currentColor" stroke-width="1.1" stroke-linecap="round"><path d="M1 1l6 6M7 1L1 7"/></svg></span>
+            <span class="sel-v"><svg viewBox="0 0 8 8" fill="none" stroke="currentColor" stroke-width="1.1" stroke-linecap="round" stroke-linejoin="round"><path d="M1.5 3 4 5.5 6.5 3"/></svg></span>
+          </div>
+          <div class="card w-menu">
+            <div class="msearch">
+              <svg viewBox="0 0 10 10" fill="none" stroke="currentColor" stroke-width="1.1" stroke-linecap="round"><circle cx="4.2" cy="4.2" r="3"/><path d="M6.6 6.6 9 9"/></svg>
+              Search
+            </div>
+            <div class="mlist">
+              <div class="prow"><span class="av" style="background:linear-gradient(135deg,#8B6C5C,#66493A)">RF<i></i></span>Robert Fox</div>
+              <div class="prow sel"><span class="av" style="background:linear-gradient(135deg,#C08A6B,#96604A)">SN<i></i></span>Savannah Nguyen
+                <span class="chk" id="pchk"><svg viewBox="0 0 10 10" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"><path d="M1.5 5.4 4 7.9 8.5 2.6"/></svg></span></div>
+              <div class="prow"><span class="av" style="background:linear-gradient(135deg,#4E8FA6,#33677C)">JJ<i></i></span>Jacob Jones</div>
+              <div class="prow"><span class="av" style="background:linear-gradient(135deg,#B86B8E,#8E4A6B)">TW<i></i></span>Theresa Webb</div>
+              <div class="prow"><span class="av" style="background:linear-gradient(135deg,#C7A252,#A67F33)">JC<i></i></span>Jane Cooper</div>
+              <div class="prow"><span class="av" style="background:linear-gradient(135deg,#7D8593,#565E6C)">GH<i></i></span>Guy Hawkins</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- finale · file chips -->
+      <div class="fl" id="fl-chips" style="left:71.4rem;top:28.9rem">
+        <div class="chips" id="c-chips">
+          <div class="chip mp4">
+            <svg class="fx" viewBox="0 0 14 10"><rect width="14" height="10" rx="2.6" fill="#FF2D2D"/><path d="M5.6 2.9 9.6 5 5.6 7.1Z" fill="#fff"/></svg>
+            video.mp4
+            <span class="cx"><svg viewBox="0 0 8 8" stroke="currentColor" stroke-width="1.2" stroke-linecap="round" opacity=".85"><path d="M1 1l6 6M7 1L1 7"/></svg></span>
+          </div>
+          <div class="chip json">
+            <svg class="fx" viewBox="0 0 16 16" fill="var(--text)"><path d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27s1.36.09 2 .27c1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.01 8.01 0 0 0 16 8c0-4.42-3.58-8-8-8z"/></svg>
+            file-x.json
+            <span class="cx"><svg viewBox="0 0 8 8" stroke="currentColor" stroke-width="1.2" stroke-linecap="round" opacity=".7"><path d="M1 1l6 6M7 1L1 7"/></svg></span>
+          </div>
+          <div class="chip pdf">
+            <span class="nico">N</span>
+            plan0.pdf
+            <span class="cx"><svg viewBox="0 0 8 8" stroke="currentColor" stroke-width="1.2" stroke-linecap="round" opacity=".8"><path d="M1 1l6 6M7 1L1 7"/></svg></span>
+          </div>
+          <div class="chip csv">
+            <svg class="fx" viewBox="0 0 12 12" fill="#F5691B"><path d="M6 0c.4 0 .74.3.8.7l.32 2.4c.05.4.5.6.83.36l1.94-1.46a.81.81 0 0 1 1.13 1.13L9.56 5.07c-.24.32-.05.79.36.84l2.39.31a.81.81 0 0 1 0 1.6l-2.4.32c-.4.05-.6.51-.35.83l1.46 1.94a.81.81 0 0 1-1.13 1.13L7.95 10.6c-.32-.24-.78-.05-.83.36l-.32 2.39a.81.81 0 0 1-1.6 0l-.31-2.4c-.06-.4-.52-.6-.84-.35l-1.94 1.46a.81.81 0 0 1-1.13-1.13L2.44 8.98c.24-.32.05-.78-.36-.83L-.3 7.83a.81.81 0 0 1 0-1.6l2.39-.31c.4-.06.6-.52.36-.84L.99 3.14a.81.81 0 0 1 1.13-1.13l1.94 1.46c.32.24.78.05.84-.36L5.2.72C5.26.3 5.6 0 6 0z" transform="scale(.92) translate(.5 .5)"/></svg>
+            metric.csv
+            <span class="cx"><svg viewBox="0 0 8 8" stroke="currentColor" stroke-width="1.2" stroke-linecap="round" opacity=".7"><path d="M1 1l6 6M7 1L1 7"/></svg></span>
+          </div>
+        </div>
+      </div>
+
+      <!-- token dock -->
+      <div id="dock">
+        <span class="sw on" id="sw-violet" style="--c:#5B45E0"></span>
+        <span class="sw" id="sw-coral" style="--c:#E8590C"></span>
+        <span class="sw" id="sw-forest" style="--c:#0F9D8C"></span>
+        <span class="dv"></span>
+        <span class="dpill" id="d-rad">Radius</span>
+        <span class="dv"></span>
+        <span class="dpill" id="d-space">Spacing</span>
+        <span class="dv"></span>
+        <span class="dpill" id="d-font">Aa&nbsp;Font</span>
+        <span class="dv"></span>
+        <span class="dpill" id="d-dark"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M20.2 13.6A8.4 8.4 0 1 1 10.4 3.8a6.9 6.9 0 0 0 9.8 9.8z"/></svg>Dark</span>
+        <span class="dv"></span>
+        <span class="dpill" id="d-view"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="7" y="3" width="10" height="18" rx="2.4"/><line x1="10.5" y1="18" x2="13.5" y2="18"/></svg>Mobile</span>
+      </div>
+
+      <div id="cur-exit"></div>
+    </div>
+  </div>
+  <div id="sweep"></div>
+  <div id="vig"></div>
+  <div id="loopfade" style="position:absolute;inset:0;background:#EFEFF2;opacity:0;pointer-events:none;z-index:90"></div>
+</div>
+<div id="wm-cursor"><svg width="26" height="30" viewBox="0 0 26 30"><path d="M2 2 L2 24 L8 18 L12 28 L16 26 L12 17 L21 17 Z" fill="#111" stroke="#fff" stroke-width="1.6"/></svg></div>
+
+<script src="wm-timeline.js"></script>
+<script>
+(() => {
+  const REM = parseFloat(document.documentElement.style.fontSize);
+  const W = innerWidth, H = innerHeight, CXp = W/2, CYp = H/2;
+
+  // ---- helpers -------------------------------------------------------
+  const hx = h => [parseInt(h.slice(1,3),16), parseInt(h.slice(3,5),16), parseInt(h.slice(5,7),16)];
+  const mix = (a,b,p) => { const A=hx(a),B=hx(b);
+    return `rgb(${A.map((v,i)=>Math.round(v+(B[i]-v)*p)).join(',')})`; };
+  // set-if-changed: avoids style invalidation on every seek frame
+  const setVar = (el,k,v) => { if(el.__wm===undefined) el.__wm={};
+    if(el.__wm[k]!==v){ el.__wm[k]=v; el.style.setProperty(k,v); } };
+  const tweenVars = (at,dur,pairs,ease='smooth',el=document.documentElement) =>
+    WM.tween({at,dur,ease,apply(p){ for(const k in pairs){ const [a,b]=pairs[k];
+      setVar(el,k,mix(a,b,p)); }}});
+  // keyframed CSS-var timeline — safe for multi-step changes of the SAME var
+  const CANVAS = document.getElementById('canvas');
+  const varTL = (name, kfs, unit=null, el=CANVAS) => {
+    const end = kfs[kfs.length-1].t;
+    WM.tween({at:0, dur:end, ease:'linear', apply(p, tc, t){
+      let i=0; while(i<kfs.length-1 && t>kfs[i+1].t) i++;
+      const a=kfs[i], b=kfs[Math.min(i+1,kfs.length-1)];
+      const seg = b.t===a.t ? 1 : Math.max(0,Math.min(1,(t-a.t)/(b.t-a.t)));
+      const e = WM.Easings[b.ease||'smooth'](seg);
+      const val = unit===null ? mix(a.v,b.v,e) : (a.v+(b.v-a.v)*e).toFixed(3)+unit;
+      setVar(el,name,val);
+    }});
+  };
+  // gated tween: inert (applies nothing) before its start time — for exit
+  // tweens whose p=0 state would otherwise stomp earlier tweens
+  const gatedStyle = (sel,at,dur,props,ease) => {
+    const el=document.querySelector(sel);
+    WM.tween({at,dur,ease,apply(p,tc,t){ if(t<at||!el) return;
+      for(const k in props){ const v=props[k];
+        el.style[k] = typeof v==='function' ? v(p,(a,b,pp)=>a+(b-a)*pp)
+          : String(v[0]+(v[1]-v[0])*p); }}});
+  };
+  const F = (sel,s,dx=0,dy=0) => { const r=document.querySelector(sel).getBoundingClientRect();
+    return { x:(CXp-(r.x+r.width/2+dx*REM))*s, y:(CYp-(r.y+r.height/2+dy*REM))*s, scale:s }; };
+  const rise = (sel,at,dur=800,dy=2.2,sc=null) => WM.style(sel,at,dur,{
+    opacity:[0,1],
+    transform:(p,l)=>`translate3d(0,${l(dy,0,p)}rem,0)`+(sc?` scale(${l(sc,1,p)})`:'')
+  },'out');
+  // smooth press pulse — replaces the old snap class-toggle on dock controls
+  const press = (sel,at) => WM.style(sel,at,300,{
+    transform:(p)=>`scale(${1-0.09*Math.sin(Math.min(1,p)*Math.PI)})`},'smooth');
+
+  // ---- palettes ------------------------------------------------------
+  const PAL = {
+    violet:{acc:'#5B45E0', soft:'#EDE9FD'},
+    coral :{acc:'#E8590C', soft:'#FDEBDD'},
+    forest:{acc:'#0F9D8C', soft:'#DDF3EF'},
+  };
+  const LIGHT = {bg:'#EFEFF2',s:'#FFFFFF',s2:'#F3F3F6',t:'#1A1A1E',m:'#75757D',b:'#E6E6EB'};
+  const DARK  = {bg:'#131316',s:'#212126',s2:'#2C2C32',t:'#F3F3F5',m:'#9D9DA7',b:'#3A3A41'};
+
+  // widget refs (spacing / viewport tweens drive these directly)
+  const hero   = document.getElementById('hero-upload');
+  const uchart = document.querySelector('#hero-upload .uchart');
+
+  // ---- MRR chart: deterministic seeded build -------------------------
+  // (seeded PRNG => identical every load; noisy line matches the Figma comp)
+  const mrr = document.getElementById('mrr');
+  (() => {
+    let seed = 20240817;
+    const rnd = () => (seed = (seed*1664525 + 1013904223) >>> 0) / 4294967296;
+    const NS = 'http://www.w3.org/2000/svg';
+    const el = (tag,attrs,parent=mrr) => { const n=document.createElementNS(NS,tag);
+      for(const k in attrs) n.setAttribute(k,attrs[k]); parent.appendChild(n); return n; };
+    const X0=36, X1=548, Y0=10, Y1=192;               // plot box
+    const yOf = v => Y1 - v*(Y1-Y0)/100;              // v in "k"
+    // defs: area gradient + reveal clips
+    const defs = el('defs',{});
+    const grad = el('linearGradient',{id:'gA',x1:0,y1:0,x2:0,y2:1},defs);
+    el('stop',{offset:'0%','stop-color':'var(--accent)','stop-opacity':.18},grad);
+    el('stop',{offset:'100%','stop-color':'var(--accent)','stop-opacity':0},grad);
+    const clipA = el('clipPath',{id:'clA'},defs), clipB = el('clipPath',{id:'clB'},defs);
+    const clAr = el('rect',{x:0,y:0,width:0,height:244},clipA);
+    const clBr = el('rect',{x:0,y:0,width:0,height:244},clipB);
+    // gridlines + y labels
+    [0,25,50,75,100].forEach(v=>{
+      el('line',{x1:X0,y1:yOf(v),x2:X1,y2:yOf(v),stroke:'var(--border)','stroke-width':1});
+      const t = el('text',{x:X0-8,y:yOf(v)+4,'text-anchor':'end','font-size':12,fill:'var(--muted)'});
+      t.textContent = v+'k';
+    });
+    // series: keypoint base + jitter
+    const line = (kps,jit) => { const pts=[];
+      for(let x=X0;x<=X1;x+=6){
+        let i=0; while(i<kps.length-2 && x>kps[i+1][0]) i++;
+        const [xa,va]=kps[i],[xb,vb]=kps[i+1];
+        const v = va + (vb-va)*Math.max(0,Math.min(1,(x-xa)/(xb-xa)));
+        pts.push([x, yOf(v) + (rnd()*2-1)*jit]);
+      } pts[pts.length-1][0]=X1; return pts; };
+    const path = pts => pts.map((p,i)=>(i?'L':'M')+p[0].toFixed(1)+','+p[1].toFixed(1)).join('');
+    const kV = [[X0,60],[70,64],[110,59],[150,76],[185,77],[215,60],[245,48],[275,52],[305,62],
+                [335,73],[365,70],[395,77],[425,84],[455,90],[485,93],[515,95],[535,86],[X1,81]];
+    const kG = [[X0,30],[90,33],[130,29],[170,32],[210,30],[250,33],[290,31],[330,36],[370,40],
+                [400,56],[420,45],[450,50],[475,42],[505,50],[530,56],[X1,61]];
+    const pV = line(kV,3.2), pG = line(kG,2.6);
+    // bars (behind lines), grey, thin
+    const bars = el('g',{fill:'var(--surface2)'});
+    for(let x=X0+6;x<X1-4;x+=13){
+      const h = 6 + rnd()*30;
+      el('rect',{x:x,y:(Y1-h).toFixed(1),width:6,height:h.toFixed(1),rx:1.4,class:'cbar'},bars);
+    }
+    // grey series (clipped reveal)
+    const gG = el('g',{'clip-path':'url(#clB)'});
+    el('path',{d:path(pG),fill:'none',stroke:'#A9A9B2','stroke-width':2,
+      'stroke-linejoin':'round','stroke-linecap':'round'},gG);
+    // violet series + area (clipped reveal)
+    const gV = el('g',{'clip-path':'url(#clA)'});
+    el('path',{d:path(pV)+`L${X1},${Y1}L${X0},${Y1}Z`,fill:'url(#gA)',stroke:'none'},gV);
+    el('path',{d:path(pV),fill:'none',stroke:'var(--accent)','stroke-width':2.6,
+      'stroke-linejoin':'round','stroke-linecap':'round'},gV);
+    // endpoint dots
+    el('circle',{cx:X1,cy:pG[pG.length-1][1],r:5,fill:'#A9A9B2',stroke:'var(--surface)',
+      'stroke-width':2,class:'cdot',id:'dotG'});
+    el('circle',{cx:X1,cy:pV[pV.length-1][1],r:5.5,fill:'var(--accent)',stroke:'var(--surface)',
+      'stroke-width':2,class:'cdot',id:'dotV'});
+    // x labels
+    const months=['12 Feb','12 Mar','9 Apr','7 May','11 Jun'];
+    months.forEach((m,i)=>{ const t=el('text',{x:X0+50+i*104,y:226,'font-size':12,
+      fill:'var(--muted)','text-anchor':'middle'}); t.textContent=m; });
+    window.__mrrClips = {clAr, clBr, X1};
+  })();
+
+  // ================= TIMELINE (16 000 ms) =============================
+  // Part 1 (open -> dark click) runs ~2x faster than v1; the property
+  // transitions themselves stay 550-850ms with silky eases — only the
+  // gaps between beats were compressed.
+
+  // camera — open large on the component, then pull back to reveal the dock
+  const kUp   = F('#hero-upload', 1.9);
+  const kUp2  = F('#hero-upload', 1.95);
+  const kDock = F('#hero-upload', 1.3, 0, 3.2);   // widget + dock group centred in frame
+  const kDock2= {x:kDock.x*1.006, y:kDock.y*1.006, scale:1.315};
+  const kDock3= {x:kDock.x*1.012, y:kDock.y*1.012, scale:1.33};
+  WM.camera([
+    {t:0,     ...kUp},
+    {t:1300,  ...kUp2, ease:'linear'},
+    {t:2600,  ...kUp2, ease:'linear'},
+    {t:3000,  ...kDock},
+    {t:5450,  ...kDock2, ease:'linear'},
+    {t:9560,  ...kDock3, ease:'linear'},
+    {t:10660, scale:1.38, x:2.48*REM, y:-3.1*REM},
+    {t:16000, scale:1.42, x:2.56*REM, y:-3.4*REM, ease:'linear'},
+  ]);
+
+  // scene 1 · upload widget assembles
+  WM.style('#stage',0,400,{opacity:[0,1]},'out');
+  rise('#hero-upload',250,750,2.6,0.965);
+  WM.count('#pct',450,750,0,31,n=>String(Math.round(n)));
+  WM.tween({at:450,dur:1000,ease:'cinematic',apply(p){
+    const w=99*p;
+    uclipr.setAttribute('width',w); ushade.setAttribute('width',w);
+    uedge.setAttribute('x',Math.max(0,w-1.5));
+  }});
+  WM.stagger('#hero-upload .mrow',400,90,(el,i,at)=>WM.style(el,at,450,{
+    opacity:[0,1],transform:(p,l)=>`translate3d(0,${l(0.5,0,p)}rem,0)`},'out'));
+
+  // scene 2 · settings dock reveals — every token is a live control
+  WM.style('#dock',2600,600,{opacity:[0,1],
+    transform:(p,l)=>`translate3d(-50%,${l(3,0,p)}rem,0)`},'out');
+  WM.style('#wm-cursor',2800,350,{opacity:[0,1]},'out');
+
+  // deterministic swatch "on" ring — time-gated so it resets cleanly on loop
+  const SWAP_CORAL = 3300, SWAP_FOREST = 3910;
+  WM.tween({at:0,dur:16000,ease:'linear',apply(p,tc,t){
+    const on = t>=SWAP_FOREST ? 'sw-forest' : t>=SWAP_CORAL ? 'sw-coral' : 'sw-violet';
+    if(this.__on!==on){ this.__on=on;
+      ['sw-violet','sw-coral','sw-forest'].forEach(id=>
+        document.getElementById(id).classList.toggle('on', id===on)); }}});
+
+  // 2a · colour  (violet -> coral -> forest)
+  WM.cursorTo('#sw-coral',2850,420);
+  WM.click('#sw-coral',3270);  press('#sw-coral',3270);
+  WM.cursorTo('#sw-forest',3500,380);
+  WM.click('#sw-forest',3880); press('#sw-forest',3880);
+  varTL('--accent',[
+    {t:0,v:PAL.violet.acc},{t:3300,v:PAL.violet.acc},{t:3850,v:PAL.coral.acc,ease:'out'},
+    {t:3910,v:PAL.coral.acc},{t:4460,v:PAL.forest.acc,ease:'out'}]);
+  varTL('--accent-soft',[
+    {t:0,v:PAL.violet.soft},{t:3300,v:PAL.violet.soft},{t:3850,v:PAL.coral.soft,ease:'out'},
+    {t:3910,v:PAL.coral.soft},{t:4460,v:PAL.forest.soft,ease:'out'}]);
+
+  // 2b · radius  (sharp 6px -> round 16px)
+  WM.cursorTo('#d-rad',4150,420);
+  WM.click('#d-rad',4570); press('#d-rad',4570);
+  varTL('--r',[{t:0,v:6},{t:4620,v:6},{t:5320,v:16,ease:'out'}],'px');
+
+  // 2c · spacing  (comfortable -> compact)
+  WM.cursorTo('#d-space',4900,420);
+  WM.click('#d-space',5320); press('#d-space',5320);
+  WM.tween({at:5370,dur:620,ease:'out',apply(p){
+    const k=1-0.40*p;
+    hero.style.padding = `${(.9*k).toFixed(3)}rem ${(1*k).toFixed(3)}rem ${(1*k).toFixed(3)}rem`;
+    uchart.style.margin = `${(.75*k).toFixed(3)}rem 0 ${(.8*k).toFixed(3)}rem`; }});
+
+  // 2d · font-family  (system -> Sequel Sans — time-gated, loop-safe)
+  const FONT_AT = 6120;
+  const F_SYS = `-apple-system,'SF Pro Text','Inter','Segoe UI',sans-serif`;
+  const F_SEQ = `"Sequel Sans Disp",-apple-system,'Segoe UI',sans-serif`;
+  WM.tween({at:0,dur:16000,ease:'linear',apply(p,tc,t){
+    const f = t>=FONT_AT ? F_SEQ : F_SYS;
+    if(this.__f!==f){ this.__f=f; document.body.style.fontFamily=f; }}});
+  WM.cursorTo('#d-font',5650,420);
+  WM.click('#d-font',6070); press('#d-font',6070);
+  WM.style('#hero-upload',6070,360,{
+    transform:(p,l)=>`scale(${1-0.012*Math.sin(Math.min(1,p)*Math.PI)})`},'inOut');
+
+  // 2e · dark mode sweep
+  WM.cursorTo('#d-dark',6350,420);
+  WM.click('#d-dark',6770); press('#d-dark',6770);
+  tweenVars(6820,850,{
+    '--bg':[LIGHT.bg,DARK.bg], '--surface':[LIGHT.s,DARK.s], '--surface2':[LIGHT.s2,DARK.s2],
+    '--text':[LIGHT.t,DARK.t], '--muted':[LIGHT.m,DARK.m], '--border':[LIGHT.b,DARK.b]});
+  WM.style('#spot',6820,850,{opacity:[1,0.07]},'smooth');
+  WM.style('#sweep',6770,950,{
+    opacity:(p,l)=>String(Math.sin(Math.min(1,p)*Math.PI)*0.55),
+    transform:(p,l)=>`translate3d(${l(-0.55*W,1.35*W,p)}px,0,0) rotate(0.001deg)`},'inOut');
+
+  // 2f · viewport  (desktop -> mobile width) — original pacing from here on
+  WM.cursorTo('#d-view',8060,560);
+  WM.click('#d-view',8620); press('#d-view',8620);
+  WM.tween({at:8670,dur:700,ease:'smooth',apply(p){
+    hero.style.width = (20-6*p).toFixed(3)+'rem'; }});   // 20rem -> 14rem
+
+  // cursor + dock leave (gated — must not stomp entrance states before t)
+  WM.cursorTo('#cur-exit',9560,700);
+  gatedStyle('#wm-cursor',9760,450,{opacity:[1,0]},'smooth');
+  gatedStyle('#dock',9910,550,{opacity:[1,0],
+    transform:(p,l)=>`translate3d(-50%,${l(0,2.6,p)}rem,0)`},'in');
+
+  // scene 3 · bento finale — widget snaps back to desktop / comfortable as it joins the grid
+  gatedStyle('#hero-upload',10260,650,{
+    width:(p,l)=>l(14,20,p).toFixed(3)+'rem',
+    padding:(p,l)=>`${l(.9*.6,.9,p).toFixed(3)}rem ${l(1*.6,1,p).toFixed(3)}rem ${l(1*.6,1,p).toFixed(3)}rem`
+  },'smooth');
+  gatedStyle('#hero-upload .uchart',10260,650,{
+    margin:(p,l)=>`${l(.75*.6,.75,p).toFixed(3)}rem 0 ${l(.8*.6,.8,p).toFixed(3)}rem`
+  },'smooth');
+
+  rise('#c-chart',10610,850,2.2,0.955);
+  rise('#c-shift',10910,850,2.2,0.955);
+  rise('#c-select',11160,850,2.2,0.955);
+
+  // chart draws: left->right reveal (area+line together), grey trails, bars, dots
+  WM.tween({at:11150,dur:1200,ease:'cinematic',apply(p){
+    __mrrClips.clAr.setAttribute('width',(__mrrClips.X1+8)*p); }});
+  WM.tween({at:11330,dur:1150,ease:'cinematic',apply(p){
+    __mrrClips.clBr.setAttribute('width',(__mrrClips.X1+8)*p); }});
+  WM.stagger('#mrr .cbar',11350,42,(el,i,at)=>WM.style(el,at,520,{
+    transform:(p,l)=>`scaleY(${l(0,1,p)})`},'out'));
+  WM.style('#dotG',12300,420,{transform:(p,l)=>`scale(${l(0,1,p)})`},'spring');
+  WM.style('#dotV',12420,420,{transform:(p,l)=>`scale(${l(0,1,p)})`},'spring');
+
+  // dropdown rows cascade, check pops
+  WM.stagger('#c-select .prow',11550,55,(el,i,at)=>WM.style(el,at,420,{
+    opacity:[0,1],transform:(p,l)=>`translate3d(0,${l(0.35,0,p)}rem,0)`},'out'));
+  WM.style('#pchk',12150,450,{transform:(p,l)=>`scale(${l(0,1,p)})`},'spring');
+
+  // chips slap in
+  WM.stagger('#c-chips .chip',11500,110,(el,i,at)=>WM.style(el,at,560,{
+    opacity:[0,1],
+    transform:(p,l)=>`translate3d(0,${l(0.7,0,p)}rem,0) scale(${l(0.9,1,p)})`},'out'));
+
+  // "Is recurring?" flips on — small life inside the modal
+  WM.style('#tgl-knob',12600,450,{
+    transform:(p,l)=>`translate3d(${l(0,0.54,p)}rem,0,0)`},'smooth');
+  WM.style('#tgl-on',12600,450,{opacity:[0,1]},'smooth');
+
+  // ambient float on all cards during finale
+  // (fl-upload keeps its translateX(-50%) centre anchor under the float)
+  [['#fl-upload',0],['#fl-chart',1.7],['#fl-shift',3.4],['#fl-select',5.1],['#fl-chips',2.6]]
+  .forEach(([sel,ph])=>{
+    const pre = sel==='#fl-upload' ? 'translateX(-50%) ' : '';
+    WM.tween({at:9960,dur:6040,ease:'linear',apply(p){
+      const el=document.querySelector(sel);
+      el.style.transform=`${pre}translate3d(0,${Math.sin(p*Math.PI*2*1.4+ph)*0.13*REM}px,0)`;
+    }});
+  });
+
+  // loop fade — bridge the dark ending back to the light opening
+  WM.tween({at:15360,dur:600,ease:'smooth',apply(p){
+    document.getElementById('loopfade').style.opacity=String(p); }});
+
+  WM.duration = 16000;
+  WM.seek(0);
+  if (!navigator.webdriver) WM.play(true);
+})();
+</script>
+</body></html>
