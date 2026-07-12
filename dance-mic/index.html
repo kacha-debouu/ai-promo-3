@@ -1,0 +1,100 @@
+<!doctype html>
+<!-- Dance App · the silver microphone — standalone loop.
+     The silver mic hero from the Dance App voice flow, isolated: the looping
+     macro video breathes at center stage on a silver gradient, listening rings
+     pulse, and the assistant state cycles LISTENING → ON IT → CHOREOGRAPHING →
+     CHOREO READY with soft crossfades. ~12s ambient loop. -->
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Dance App · silver microphone</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html, body { width: 100%; height: 100%; overflow: hidden; }
+  body {
+    font-family: -apple-system, 'SF Pro Text', 'Inter', 'Segoe UI', sans-serif;
+    background: radial-gradient(120% 130% at 50% 18%, #f4f5f7 0%, #e2e4e8 46%, #c9ccd2 100%);
+    display: flex; align-items: center; justify-content: center;
+    -webkit-font-smoothing: antialiased;
+  }
+  #scene { display: flex; flex-direction: column; align-items: center; }
+
+  .mic-wrap {
+    position: relative; width: 320px; height: 320px;
+    display: flex; align-items: center; justify-content: center;
+    animation: breathe 12s ease-in-out infinite;
+  }
+  @keyframes breathe {
+    0%, 100% { transform: scale(1); }
+    50%      { transform: scale(1.045); }
+  }
+  .mic-wrap video {
+    width: 100%; height: 100%; object-fit: cover; border-radius: 50%;
+    box-shadow: 0 40px 90px -30px rgba(35, 40, 52, .45),
+                0 12px 34px rgba(35, 40, 52, .18),
+                inset 0 0 0 1px rgba(255, 255, 255, .55);
+  }
+  .ring {
+    position: absolute; inset: 0; border-radius: 50%;
+    border: 1.5px solid rgba(48, 52, 62, .38); opacity: 0; pointer-events: none;
+    animation: pulse 3.2s cubic-bezier(.4, 0, .2, 1) infinite;
+  }
+  .ring.r2 { animation-delay: 1.06s; }
+  .ring.r3 { animation-delay: 2.13s; }
+  @keyframes pulse {
+    0%   { transform: scale(1);    opacity: 0; }
+    12%  { opacity: .55; }
+    100% { transform: scale(1.55); opacity: 0; }
+  }
+
+  .label {
+    margin-top: 44px; height: 18px; position: relative; width: 340px; text-align: center;
+  }
+  .label span {
+    position: absolute; inset: 0;
+    font-size: 13px; font-weight: 600; letter-spacing: .24em; text-transform: uppercase;
+    color: rgba(35, 38, 46, .52); opacity: 0; transform: translateY(6px);
+    transition: opacity .6s ease, transform .6s cubic-bezier(.22, 1, .36, 1);
+  }
+  .label span.on { opacity: 1; transform: none; }
+  .label b { font-weight: 600; }
+
+  /* soft floor reflection */
+  #floor {
+    position: fixed; left: 50%; bottom: 6%; width: 520px; height: 60px;
+    transform: translateX(-50%);
+    background: radial-gradient(50% 100% at 50% 0%, rgba(40, 44, 54, .16), transparent 70%);
+    filter: blur(6px); pointer-events: none;
+  }
+</style>
+</head>
+<body>
+  <div id="floor"></div>
+  <div id="scene">
+    <div class="mic-wrap">
+      <span class="ring r1"></span><span class="ring r2"></span><span class="ring r3"></span>
+      <video src="assets/mic-anim.mp4" muted playsinline loop autoplay preload="auto"></video>
+    </div>
+    <div class="label" id="label"></div>
+  </div>
+
+<script>
+  const STATES = ['Listening…', 'On it ✦', 'Choreographing…', 'Choreo ready ✦'];
+  const label = document.getElementById('label');
+  label.innerHTML = STATES.map(s => `<span>${s}</span>`).join('');
+  const spans = [...label.children];
+  let i = 0;
+  spans[0].classList.add('on');
+  setInterval(() => {
+    spans[i].classList.remove('on');
+    i = (i + 1) % spans.length;
+    spans[i].classList.add('on');
+  }, 3000);
+  // belt & braces: some embeds block autoplay until a tick later
+  const v = document.querySelector('video');
+  const kick = () => v.play().catch(() => setTimeout(kick, 500));
+  kick();
+</script>
+</body>
+</html>

@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1" />
-<title>Dance App · pixel calibration</title>
+<title>Dance App · cards on grey</title>
 <link rel="preconnect" href="https://fonts.googleapis.com" />
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
@@ -222,6 +222,12 @@
   @media (prefers-reduced-motion: reduce) {
     * { animation: none !important; transition-duration: .01ms !important; }
   }
+
+  /* ── cards-on-grey variant: no pixel display, no per-style tint — one calm
+        neutral grey stage so the cards themselves carry every scene ── */
+  #px, #pxgrid, #flood { display: none !important; }
+  html, body { background: #e2e3e6; }
+  #stage { background: #e2e3e6 !important; }
 </style>
 </head>
 <body>
@@ -787,8 +793,21 @@ async function sceneVoice() {
   curHide();
   await wait(900);
 
-  // finale — the display's own pixels flood up from the bottom
-  await floodWave(prepOriginal);
+  // finale (grey variant) — no pixel flood: the card dips out, resets, re-emerges
+  await greyReset(prepOriginal);
+}
+
+/* grey-stage loop closure: fade the card down, swap it back to the opening
+   state behind the fade, and let the boot-emerge animation bring it back */
+async function greyReset(prep) {
+  card.style.transition = 'opacity .5s ease, transform .5s cubic-bezier(.22,1,.36,1)';
+  card.style.opacity = '0';
+  card.style.transform = 'scale(.955) translateY(10px)';
+  await wait(560);
+  prep();
+  card.style.transition = '';
+  card.style.opacity = '';
+  card.style.transform = '';
 }
 
 /* reset behind the fully-flooded screen */
@@ -805,7 +824,7 @@ async function loop() {
     try {
       await shots();                 // PYK: dark / bento / glass — instant states
       await sceneVoice();            // mic → silver → wave floods the screen
-      await floodResolve();          // pixels resolve out into the next pass
+      await wait(150);               // grey variant: no pixel resolve
       await new Promise(r => requestAnimationFrame(() => requestAnimationFrame(r)));
       card.classList.remove('boot'); // card emerges from the display again
       await wait(620);
